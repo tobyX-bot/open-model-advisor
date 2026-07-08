@@ -6,26 +6,31 @@
   <title>Open Model Advisor</title>
   <style>
     :root {
-      --bg: #f6f7f4;
-      --panel: #ffffff;
-      --ink: #17211b;
-      --muted: #5c665f;
-      --line: #d8ded8;
-      --accent: #176b52;
-      --accent-2: #214f8f;
-      --warn: #9a5a00;
-      --bad: #a43c36;
-      --good: #1e6b43;
-      --shadow: 0 16px 40px rgba(29, 39, 32, 0.08);
+      --bg: #f3f1ec;
+      --panel: #fffdf8;
+      --panel-soft: #f8f6f0;
+      --ink: #20231f;
+      --muted: #687067;
+      --line: #d8d3c7;
+      --line-strong: #bdb5a5;
+      --accent: #28524a;
+      --accent-2: #536f7f;
+      --accent-soft: #e5ece7;
+      --warn: #946016;
+      --bad: #9c443f;
+      --good: #2f6c55;
+      --shadow: 0 18px 42px rgba(56, 52, 43, 0.08);
     }
 
     * { box-sizing: border-box; }
 
     body {
       margin: 0;
-      background: var(--bg);
+      background:
+        linear-gradient(180deg, rgba(255, 253, 248, 0.8), rgba(243, 241, 236, 0.95) 34rem),
+        var(--bg);
       color: var(--ink);
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: Avenir Next, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       line-height: 1.45;
     }
 
@@ -45,7 +50,7 @@
       justify-content: space-between;
       gap: 1rem;
       padding: 1rem clamp(1rem, 3vw, 2rem);
-      background: rgba(246, 247, 244, 0.94);
+      background: rgba(243, 241, 236, 0.92);
       border-bottom: 1px solid var(--line);
       backdrop-filter: blur(12px);
     }
@@ -60,6 +65,13 @@
     .brand strong {
       font-size: 1.05rem;
       letter-spacing: 0;
+    }
+
+    .brand-line {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.75rem;
     }
 
     .topmeta {
@@ -81,6 +93,29 @@
       border-radius: 999px;
       background: var(--panel);
       white-space: nowrap;
+    }
+
+    .language-toggle {
+      display: inline-flex;
+      padding: 0.2rem;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--panel);
+    }
+
+    .language-toggle button {
+      min-height: 2rem;
+      padding: 0.35rem 0.65rem;
+      border: 0;
+      border-radius: 999px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    .language-toggle button.active {
+      background: var(--accent);
+      color: #fff;
     }
 
     .dot {
@@ -166,12 +201,28 @@
     input[type="number"] {
       width: 100%;
       min-height: 2.65rem;
-      border: 1px solid #bac4bd;
-      border-radius: 7px;
-      background: #fff;
+      border: 1px solid var(--line-strong);
+      border-radius: 6px;
+      background: #fffefb;
       color: var(--ink);
       padding: 0.55rem 0.65rem;
       font: inherit;
+    }
+
+    input[type="text"],
+    textarea {
+      width: 100%;
+      border: 1px solid var(--line-strong);
+      border-radius: 6px;
+      background: #fffefb;
+      color: var(--ink);
+      padding: 0.65rem;
+      font: inherit;
+    }
+
+    textarea {
+      min-height: 8rem;
+      resize: vertical;
     }
 
     .field-grid {
@@ -198,7 +249,7 @@
       border: 1px solid var(--line);
       border-radius: 7px;
       font-weight: 600;
-      background: #fbfcfb;
+      background: var(--panel-soft);
     }
 
     .preset-row {
@@ -227,9 +278,85 @@
     }
 
     button.secondary {
-      background: #fff;
+      background: #fffefb;
       color: var(--ink);
-      border-color: #bac4bd;
+      border-color: var(--line-strong);
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+
+    .helper-chips,
+    .detected-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin-top: 0.75rem;
+    }
+
+    .chip,
+    .detected-item {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--panel-soft);
+      color: var(--ink);
+      padding: 0.4rem 0.65rem;
+      font-size: 0.84rem;
+      font-weight: 700;
+    }
+
+    .chip {
+      min-height: auto;
+      cursor: pointer;
+    }
+
+    .scanner-actions {
+      margin-top: 0.75rem;
+    }
+
+    .scan-summary {
+      margin: 0.75rem 0 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .detected-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      border-radius: 6px;
+    }
+
+    .confidence {
+      color: var(--muted);
+      font-weight: 650;
+    }
+
+    .try-first {
+      margin: 0 0 0.9rem;
+      padding: 0.85rem;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--accent-soft);
+    }
+
+    .try-first b {
+      display: block;
+      color: var(--accent);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      margin-bottom: 0.2rem;
+    }
+
+    .try-first h4 {
+      margin: 0 0 0.35rem;
+      font-size: 1rem;
+    }
+
+    .try-first p {
+      margin: 0.2rem 0;
     }
 
     .results-head {
@@ -432,11 +559,17 @@
 <body>
   <header class="topbar">
     <div class="brand">
-      <strong>Open Model Advisor</strong>
-      <span class="muted">Practical local model starting points</span>
+      <div class="brand-line">
+        <strong>Open Model Advisor</strong>
+        <div class="language-toggle" role="group" aria-label="Language">
+          <button type="button" class="active" data-language="en">EN</button>
+          <button type="button" data-language="zh">中文</button>
+        </div>
+      </div>
+      <span class="muted" data-i18n="tagline">Practical local model starting points</span>
     </div>
     <div class="topmeta">
-      <span class="status-pill"><span class="dot" aria-hidden="true"></span> Inputs stay local in this browser</span>
+      <span class="status-pill"><span class="dot" aria-hidden="true"></span> <span data-i18n="privacyPill">Inputs stay local in this browser</span></span>
       <span class="status-pill" id="catalogFreshness">Catalog freshness: loading...</span>
     </div>
   </header>
@@ -444,133 +577,150 @@
   <main>
     <div class="app-grid">
       <section class="panel" aria-labelledby="toolTitle">
-        <h1 id="toolTitle">Find a workable open model</h1>
-        <p class="lede">Recommendations are practical starting points. Performance is approximate, and licenses must be verified before use.</p>
+        <h1 id="toolTitle" data-i18n="title">Find a workable open model</h1>
+        <p class="lede" data-i18n="lede">Recommendations are practical starting points. Performance is approximate, and licenses must be verified before use.</p>
 
         <form id="advisorForm">
           <fieldset>
-            <legend>Hardware preset</legend>
+            <legend data-i18n="presetLegend">Hardware preset</legend>
             <div class="preset-row">
-              <label for="preset">Preset
+              <label for="preset"><span data-i18n="presetLabel">Preset</span>
                 <select id="preset" name="preset">
-                  <option value="basic-laptop">Basic laptop</option>
-                  <option value="cpu-only">CPU-only machine</option>
-                  <option value="apple-16">16GB Apple Silicon MacBook</option>
-                  <option value="gaming-8">Gaming PC with 8GB VRAM</option>
-                  <option value="creator-16">Creator workstation with 16GB VRAM</option>
-                  <option value="server-24">Server/workstation with 24GB+ VRAM</option>
-                  <option value="custom">Custom</option>
+                  <option value="basic-laptop" data-i18n="presetBasic">Basic laptop</option>
+                  <option value="cpu-only" data-i18n="presetCpuOnly">CPU-only machine</option>
+                  <option value="apple-16" data-i18n="presetApple">16GB Apple Silicon MacBook</option>
+                  <option value="gaming-8" data-i18n="presetGaming">Gaming PC with 8GB VRAM</option>
+                  <option value="creator-16" data-i18n="presetCreator">Creator workstation with 16GB VRAM</option>
+                  <option value="server-24" data-i18n="presetServer">Server/workstation with 24GB+ VRAM</option>
+                  <option value="custom" data-i18n="presetCustom">Custom</option>
                 </select>
               </label>
-              <button type="button" class="secondary" id="resetPreset">Reset</button>
+              <button type="button" class="secondary" id="resetPreset" data-i18n="reset">Reset</button>
             </div>
           </fieldset>
 
           <fieldset>
-            <legend>Manual inputs</legend>
+            <legend data-i18n="scannerLegend">Paste setup scanner</legend>
+            <label for="setupPaste"><span data-i18n="setupPasteLabel">Paste computer setup</span>
+              <textarea id="setupPaste" name="setupPaste" placeholder="MacBook Pro M3 Pro, 36GB unified memory, coding assistant"></textarea>
+            </label>
+            <div class="button-row scanner-actions">
+              <button type="button" id="scanSetup" data-i18n="scanSetup">Scan setup</button>
+              <button type="button" class="secondary" id="applyDetected" disabled data-i18n="applyDetected">Apply detected setup</button>
+              <button type="button" class="secondary" id="clearDetected" data-i18n="clear">Clear</button>
+            </div>
+            <p class="scan-summary" id="scanSummary" data-i18n="scanIdle">Paste specs, scan locally, then review detected fields before applying.</p>
+            <div id="detectedFields" class="detected-grid" aria-live="polite"></div>
+          </fieldset>
+
+          <fieldset>
+            <legend data-i18n="manualLegend">Manual inputs</legend>
+            <div class="helper-chips" aria-label="Common setup helpers">
+              <button type="button" class="chip" data-helper="m3-pro-36">M3 Pro 36GB</button>
+              <button type="button" class="chip" data-helper="rtx-4070">RTX 4070 12GB</button>
+              <button type="button" class="chip" data-helper="intel-cpu-only">Intel i5 CPU-only</button>
+            </div>
             <div class="field-grid">
-              <label for="os">OS
+              <label for="os"><span data-i18n="osLabel">OS</span>
                 <select id="os" name="os">
                   <option value="macos">macOS</option>
                   <option value="windows">Windows</option>
                   <option value="linux">Linux</option>
                 </select>
               </label>
-              <label for="deviceType">Device type
+              <label for="deviceType"><span data-i18n="deviceLabel">Device type</span>
                 <select id="deviceType" name="deviceType">
-                  <option value="laptop">Laptop</option>
-                  <option value="desktop">Desktop</option>
-                  <option value="workstation">Workstation</option>
-                  <option value="server">Server</option>
+                  <option value="laptop" data-i18n="deviceLaptop">Laptop</option>
+                  <option value="desktop" data-i18n="deviceDesktop">Desktop</option>
+                  <option value="workstation" data-i18n="deviceWorkstation">Workstation</option>
+                  <option value="server" data-i18n="deviceServer">Server</option>
                 </select>
               </label>
-              <label for="cpu">CPU tier
-                <select id="cpu" name="cpu">
-                  <option value="low">Low power</option>
-                  <option value="mid">Mainstream</option>
-                  <option value="high">High-end</option>
-                  <option value="server">Server class</option>
-                </select>
+              <label for="cpuModel"><span data-i18n="cpuModelLabel">CPU model</span>
+                <input id="cpuModel" name="cpuModel" type="text" placeholder="Apple M3 Pro, Ryzen 7 7800X3D, Intel i7-12700H">
               </label>
-              <label for="ram">RAM / unified memory (GB)
+              <label for="ram"><span data-i18n="ramLabel">RAM / unified memory (GB)</span>
                 <input id="ram" name="ram" type="number" min="2" max="512" step="1">
               </label>
-              <label for="gpuVendor">GPU vendor
+              <label for="gpuVendor"><span data-i18n="gpuVendorLabel">GPU vendor</span>
                 <select id="gpuVendor" name="gpuVendor">
-                  <option value="none">None / CPU only</option>
-                  <option value="apple">Apple unified GPU</option>
+                  <option value="none" data-i18n="gpuNone">None / CPU only</option>
+                  <option value="apple" data-i18n="gpuApple">Apple unified GPU</option>
                   <option value="nvidia">NVIDIA</option>
                   <option value="amd">AMD</option>
                   <option value="intel">Intel</option>
                 </select>
               </label>
-              <label for="vram">VRAM / usable unified memory (GB)
+              <label for="gpuModel"><span data-i18n="gpuModelLabel">GPU model</span>
+                <input id="gpuModel" name="gpuModel" type="text" placeholder="RTX 4070, Radeon RX 7800 XT, Apple M3 Pro GPU">
+              </label>
+              <label for="vram"><span data-i18n="vramLabel">VRAM / usable unified memory (GB)</span>
                 <input id="vram" name="vram" type="number" min="0" max="128" step="1">
               </label>
-              <label for="storage">Free storage (GB)
+              <label for="storage"><span data-i18n="storageLabel">Free storage (GB)</span>
                 <input id="storage" name="storage" type="number" min="1" max="4096" step="1">
               </label>
-              <label for="internet">Internet availability
+              <label for="internet"><span data-i18n="internetLabel">Internet availability</span>
                 <select id="internet" name="internet">
-                  <option value="available">Available for setup and fallback</option>
-                  <option value="setup-only">Setup only, then offline</option>
-                  <option value="offline">Offline / air-gapped</option>
+                  <option value="available" data-i18n="internetAvailable">Available for setup and fallback</option>
+                  <option value="setup-only" data-i18n="internetSetup">Setup only, then offline</option>
+                  <option value="offline" data-i18n="internetOffline">Offline / air-gapped</option>
                 </select>
               </label>
-              <label for="deployment">Deployment preference
+              <label for="deployment"><span data-i18n="deploymentLabel">Deployment preference</span>
                 <select id="deployment" name="deployment">
-                  <option value="local-only">Local only</option>
-                  <option value="local-first">Local first, cloud acceptable</option>
-                  <option value="cloud-ok">Cloud acceptable</option>
+                  <option value="local-only" data-i18n="deploymentLocalOnly">Local only</option>
+                  <option value="local-first" data-i18n="deploymentLocalFirst">Local first, cloud acceptable</option>
+                  <option value="cloud-ok" data-i18n="deploymentCloudOk">Cloud acceptable</option>
                 </select>
               </label>
             </div>
           </fieldset>
 
           <fieldset>
-            <legend>Task category</legend>
-            <label for="task">Primary task
+            <legend data-i18n="taskLegend">Task category</legend>
+            <label for="task"><span data-i18n="taskLabel">Primary task</span>
               <select id="task" name="task">
-                <option value="">Select a task...</option>
-                <option value="chat-llm">Chat LLM</option>
-                <option value="coding-llm">Coding LLM</option>
-                <option value="image-generation">Image generation</option>
-                <option value="speech-to-text">Speech to text</option>
-                <option value="embeddings">Embeddings</option>
+                <option value="" data-i18n="taskPlaceholder">Select a task...</option>
+                <option value="chat-llm" data-i18n="taskChat">Chat LLM</option>
+                <option value="coding-llm" data-i18n="taskCoding">Coding LLM</option>
+                <option value="image-generation" data-i18n="taskImage">Image generation</option>
+                <option value="speech-to-text" data-i18n="taskSpeech">Speech to text</option>
+                <option value="embeddings" data-i18n="taskEmbeddings">Embeddings</option>
               </select>
             </label>
           </fieldset>
 
           <fieldset>
-            <legend>Workload</legend>
-            <label for="workload">Expected use
+            <legend data-i18n="workloadLegend">Workload</legend>
+            <label for="workload"><span data-i18n="workloadLabel">Expected use</span>
               <select id="workload" name="workload">
-                <option value="casual">Casual</option>
-                <option value="daily">Daily</option>
-                <option value="batch">Batch</option>
-                <option value="production">Production</option>
-                <option value="latency">Latency-sensitive</option>
-                <option value="quality">Quality-sensitive</option>
+                <option value="casual" data-i18n="workloadCasual">Casual</option>
+                <option value="daily" data-i18n="workloadDaily">Daily</option>
+                <option value="batch" data-i18n="workloadBatch">Batch</option>
+                <option value="production" data-i18n="workloadProduction">Production</option>
+                <option value="latency" data-i18n="workloadLatency">Latency-sensitive</option>
+                <option value="quality" data-i18n="workloadQuality">Quality-sensitive</option>
               </select>
             </label>
           </fieldset>
 
           <fieldset>
-            <legend>Priorities</legend>
+            <legend data-i18n="prioritiesLegend">Priorities</legend>
             <div class="check-grid" id="priorities">
-              <label><input type="checkbox" name="priority" value="privacy" checked> Privacy</label>
-              <label><input type="checkbox" name="priority" value="quality"> Quality</label>
-              <label><input type="checkbox" name="priority" value="speed"> Speed</label>
-              <label><input type="checkbox" name="priority" value="ease"> Ease</label>
-              <label><input type="checkbox" name="priority" value="commercial"> Commercial</label>
-              <label><input type="checkbox" name="priority" value="low-cost"> Low cost</label>
-              <label><input type="checkbox" name="priority" value="low-hardware"> Low hardware</label>
+              <label><input type="checkbox" name="priority" value="privacy" checked> <span data-i18n="priorityPrivacy">Privacy</span></label>
+              <label><input type="checkbox" name="priority" value="quality"> <span data-i18n="priorityQuality">Quality</span></label>
+              <label><input type="checkbox" name="priority" value="speed"> <span data-i18n="prioritySpeed">Speed</span></label>
+              <label><input type="checkbox" name="priority" value="ease"> <span data-i18n="priorityEase">Ease</span></label>
+              <label><input type="checkbox" name="priority" value="commercial"> <span data-i18n="priorityCommercial">Commercial</span></label>
+              <label><input type="checkbox" name="priority" value="low-cost"> <span data-i18n="priorityLowCost">Low cost</span></label>
+              <label><input type="checkbox" name="priority" value="low-hardware"> <span data-i18n="priorityLowHardware">Low hardware</span></label>
             </div>
           </fieldset>
 
           <div class="button-row">
-            <button type="submit">Update recommendations</button>
-            <button type="button" class="secondary" id="clearTask">Clear task</button>
+            <button type="submit" data-i18n="updateRecommendations">Update recommendations</button>
+            <button type="button" class="secondary" id="clearTask" data-i18n="clearTask">Clear task</button>
           </div>
         </form>
       </section>
@@ -578,7 +728,7 @@
       <section aria-labelledby="resultsTitle">
         <div class="results-head">
           <div>
-            <h2 id="resultsTitle">Recommendations</h2>
+            <h2 id="resultsTitle" data-i18n="recommendationsTitle">Recommendations</h2>
             <p id="summaryText">Choose a task to generate local-first recommendations.</p>
           </div>
           <span class="status-pill" id="selectedPreset">Preset: Basic laptop</span>
@@ -591,42 +741,382 @@
   </main>
 
   <script>
-    const weights = {
-      task: 25,
-      hardware: 25,
-      memory: 15,
-      workload: 10,
-      priority: 15,
-      runtime: 5,
-      license: 5
+    const weights = { task: 25, hardware: 25, memory: 15, workload: 10, priority: 15, runtime: 5, license: 5 };
+
+    const i18n = {
+      en: {
+        tagline: "Practical local model starting points",
+        privacyPill: "Inputs stay local in this browser",
+        title: "Find a workable open model",
+        lede: "Recommendations are practical starting points. Performance is approximate, and licenses must be verified before use.",
+        presetLegend: "Hardware preset",
+        presetLabel: "Preset",
+        presetBasic: "Basic laptop",
+        presetCpuOnly: "CPU-only machine",
+        presetApple: "16GB Apple Silicon MacBook",
+        presetGaming: "Gaming PC with 8GB VRAM",
+        presetCreator: "Creator workstation with 16GB VRAM",
+        presetServer: "Server/workstation with 24GB+ VRAM",
+        presetCustom: "Custom",
+        reset: "Reset",
+        scannerLegend: "Paste setup scanner",
+        setupPasteLabel: "Paste computer setup",
+        scanSetup: "Scan setup",
+        applyDetected: "Apply detected setup",
+        clear: "Clear",
+        scanIdle: "Paste specs, scan locally, then review detected fields before applying.",
+        scanEmpty: "Paste a computer setup first. The scanner runs locally in this browser.",
+        scanFound: "Detected {count} field(s). Review confidence, then apply.",
+        scanApplied: "Detected setup applied. Manual edits now count as Custom.",
+        scanCleared: "Scanner cleared.",
+        scanTaskSkipped: "Task phrase detected, but the current task was kept because you already selected one.",
+        manualLegend: "Manual inputs",
+        osLabel: "OS",
+        deviceLabel: "Device type",
+        deviceLaptop: "Laptop",
+        deviceDesktop: "Desktop",
+        deviceWorkstation: "Workstation",
+        deviceServer: "Server",
+        cpuModelLabel: "CPU model",
+        ramLabel: "RAM / unified memory (GB)",
+        gpuVendorLabel: "GPU vendor",
+        gpuNone: "None / CPU only",
+        gpuApple: "Apple unified GPU",
+        gpuModelLabel: "GPU model",
+        vramLabel: "VRAM / usable unified memory (GB)",
+        storageLabel: "Free storage (GB)",
+        internetLabel: "Internet availability",
+        internetAvailable: "Available for setup and fallback",
+        internetSetup: "Setup only, then offline",
+        internetOffline: "Offline / air-gapped",
+        deploymentLabel: "Deployment preference",
+        deploymentLocalOnly: "Local only",
+        deploymentLocalFirst: "Local first, cloud acceptable",
+        deploymentCloudOk: "Cloud acceptable",
+        taskLegend: "Task category",
+        taskLabel: "Primary task",
+        taskPlaceholder: "Select a task...",
+        taskChat: "Chat LLM",
+        taskCoding: "Coding LLM",
+        taskImage: "Image generation",
+        taskSpeech: "Speech to text",
+        taskEmbeddings: "Embeddings",
+        workloadLegend: "Workload",
+        workloadLabel: "Expected use",
+        workloadCasual: "Casual",
+        workloadDaily: "Daily",
+        workloadBatch: "Batch",
+        workloadProduction: "Production",
+        workloadLatency: "Latency-sensitive",
+        workloadQuality: "Quality-sensitive",
+        prioritiesLegend: "Priorities",
+        priorityPrivacy: "Privacy",
+        priorityQuality: "Quality",
+        prioritySpeed: "Speed",
+        priorityEase: "Ease",
+        priorityCommercial: "Commercial",
+        priorityLowCost: "Low cost",
+        priorityLowHardware: "Low hardware",
+        updateRecommendations: "Update recommendations",
+        clearTask: "Clear task",
+        recommendationsTitle: "Recommendations",
+        catalogLoading: "Catalog freshness: loading...",
+        catalogFreshness: "Catalog freshness: {freshness}",
+        catalogUnavailable: "Catalog freshness: unavailable",
+        selectedPreset: "Preset: {preset}",
+        chooseTask: "Choose a task to generate local-first recommendations.",
+        initialPromptTitle: "Initial prompt",
+        initialPromptBody: "Select a task category and adjust exact hardware fields. The advisor will score local options deterministically.",
+        noCoverageTitle: "Missing task coverage",
+        noCoverageBody: "models.json does not contain entries for the selected V1 task category.",
+        catalogLoadTitle: "Missing catalog / models.json load failure",
+        catalogLoadBody: "Could not load models.json. If you opened index.html from file://, start a local server such as `python3 -m http.server` in this folder and visit http://localhost:8000/.",
+        productionTitle: "Production boundary warning",
+        productionBody: "Treat these as starting points only. Production systems need evaluation, observability, data policy review, and license verification.",
+        weakHardwareTitle: "Weak hardware warning",
+        weakHardwareBody: "Your hardware is below the recommended range for most matching local entries. Expect slower performance or smaller model variants.",
+        noLocalFitTitle: "No local fit",
+        noLocalFitBody: "No matching local catalog entry clears the minimum practical fit threshold for this hardware and task.",
+        localOnlyTitle: "Local-only limitation",
+        localOnlyBody: "Cloud fallback is hidden because deployment is set to local only. Upgrade hardware, reduce workload, or choose a lighter task.",
+        hostedFallbackTitle: "Hosted fallback",
+        hostedFallbackWeak: "A hosted open-weight model service may be more practical for this task and hardware. This is a fallback note, not a local recommendation. Hosted providers may receive prompts, files, or outputs you send to them.",
+        hostedFallbackOk: "Cloud is acceptable, but local recommendations are still sorted first. Hosted options are not shown as local recommendations, and hosted providers may receive prompts, files, or outputs you send to them.",
+        lowConfidenceTitle: "Low-confidence hardware parsing",
+        lowConfidenceBody: "The CPU or GPU model was not recognized with high confidence. Scoring falls back to RAM, VRAM, storage, and selected vendor.",
+        noCompatibleSummary: "No local catalog entries are compatible with this {task} setup. Scores are deterministic and approximate.",
+        leastBadSummary: "{count} least-bad local entries for {task}; none are recommended locally for this setup. Scores are deterministic and approximate.",
+        resultsSummary: "{count} local recommendation(s) for {task}. Scores are deterministic and approximate.",
+        tryFirst: "Try first",
+        sizeRuntime: "{size} via {runtime}.",
+        fit: "Fit",
+        performance: "Performance",
+        score: "Score",
+        examples: "Examples",
+        category: "Category",
+        family: "Model family",
+        localFeasibility: "Local feasibility",
+        setupPath: "Setup path",
+        hardwareReasoning: "Hardware reasoning",
+        workloadReasoning: "Workload reasoning",
+        priorityMatch: "Priority match",
+        privacyNote: "Privacy note",
+        privacyBody: "Local execution can keep prompts and files on this machine after setup, depending on runtime and extensions.",
+        licenseNote: "License note",
+        avoidGuidance: "Avoid guidance",
+        hostedFallback: "Hosted fallback",
+        lastReviewed: "Last reviewed",
+        sources: "Sources",
+        staleTitle: "Stale-data warning",
+        staleBody: "This entry was last reviewed more than 180 days ago. Verify current model files, licenses, and runtime support.",
+        capTitle: "Hardware cap applied",
+        scoreBreakdown: "Score breakdown",
+        rule: "Rule",
+        reason: "Reason",
+        points: "Points",
+        memory: "Memory",
+        runtime: "Runtime",
+        localFeasibilityCap: "Local feasibility cap",
+        setupEasy: "easy",
+        setupModerate: "moderate",
+        setupAdvanced: "advanced",
+        strong: "strong",
+        usable: "usable",
+        weak: "weak",
+        notRecommended: "not recommended",
+        smooth: "smooth",
+        acceptable: "acceptable",
+        slow: "slow",
+        unsuitable: "unsuitable"
+      },
+      zh: {
+        tagline: "实用的本地开源模型起点",
+        privacyPill: "输入只保留在此浏览器中",
+        title: "找到可运行的开放模型",
+        lede: "推荐是实用起点，不是权威排行。性能为近似估计，使用前必须核对许可证。",
+        presetLegend: "硬件预设",
+        presetLabel: "预设",
+        presetBasic: "基础笔记本",
+        presetCpuOnly: "仅 CPU 机器",
+        presetApple: "16GB Apple Silicon MacBook",
+        presetGaming: "8GB 显存游戏 PC",
+        presetCreator: "16GB 显存创作者工作站",
+        presetServer: "24GB+ 显存工作站/服务器",
+        presetCustom: "自定义",
+        reset: "重置",
+        scannerLegend: "粘贴配置扫描",
+        setupPasteLabel: "粘贴电脑配置",
+        scanSetup: "扫描配置",
+        applyDetected: "应用识别结果",
+        clear: "清空",
+        scanIdle: "粘贴配置后在本地扫描，先检查识别字段再应用。",
+        scanEmpty: "请先粘贴电脑配置。扫描只在此浏览器本地运行。",
+        scanFound: "识别到 {count} 个字段。请检查置信度后再应用。",
+        scanApplied: "识别结果已应用。之后的手动编辑会标记为自定义。",
+        scanCleared: "扫描内容已清空。",
+        scanTaskSkipped: "识别到了任务描述，但你已经选择了任务，所以没有覆盖。",
+        manualLegend: "手动输入",
+        osLabel: "操作系统",
+        deviceLabel: "设备类型",
+        deviceLaptop: "笔记本",
+        deviceDesktop: "台式机",
+        deviceWorkstation: "工作站",
+        deviceServer: "服务器",
+        cpuModelLabel: "CPU 型号",
+        ramLabel: "内存 / 统一内存 (GB)",
+        gpuVendorLabel: "GPU 厂商",
+        gpuNone: "无 / 仅 CPU",
+        gpuApple: "Apple 统一 GPU",
+        gpuModelLabel: "GPU 型号",
+        vramLabel: "显存 / 可用统一内存 (GB)",
+        storageLabel: "可用存储 (GB)",
+        internetLabel: "网络可用性",
+        internetAvailable: "可用于安装和备用方案",
+        internetSetup: "仅安装时联网，之后离线",
+        internetOffline: "离线 / 隔离环境",
+        deploymentLabel: "部署偏好",
+        deploymentLocalOnly: "仅本地",
+        deploymentLocalFirst: "本地优先，可接受云端",
+        deploymentCloudOk: "可接受云端",
+        taskLegend: "任务类别",
+        taskLabel: "主要任务",
+        taskPlaceholder: "选择任务...",
+        taskChat: "聊天 LLM",
+        taskCoding: "编程 LLM",
+        taskImage: "图像生成",
+        taskSpeech: "语音转文字",
+        taskEmbeddings: "向量 / 搜索",
+        workloadLegend: "工作负载",
+        workloadLabel: "预计用途",
+        workloadCasual: "偶尔使用",
+        workloadDaily: "日常使用",
+        workloadBatch: "批处理",
+        workloadProduction: "生产/团队",
+        workloadLatency: "低延迟敏感",
+        workloadQuality: "质量敏感",
+        prioritiesLegend: "优先级",
+        priorityPrivacy: "隐私",
+        priorityQuality: "质量",
+        prioritySpeed: "速度",
+        priorityEase: "易用",
+        priorityCommercial: "商业使用",
+        priorityLowCost: "低成本",
+        priorityLowHardware: "低硬件要求",
+        updateRecommendations: "更新推荐",
+        clearTask: "清空任务",
+        recommendationsTitle: "推荐",
+        catalogLoading: "目录新鲜度：加载中...",
+        catalogFreshness: "目录新鲜度：{freshness}",
+        catalogUnavailable: "目录新鲜度：不可用",
+        selectedPreset: "预设：{preset}",
+        chooseTask: "选择任务后生成本地优先推荐。",
+        initialPromptTitle: "开始",
+        initialPromptBody: "请选择任务类别并调整具体硬件字段。推荐逻辑会在本地按规则评分。",
+        noCoverageTitle: "任务覆盖缺失",
+        noCoverageBody: "models.json 没有包含所选 V1 任务类别的条目。",
+        catalogLoadTitle: "无法加载模型目录",
+        catalogLoadBody: "无法加载 models.json。如果你直接用 file:// 打开，请在此文件夹运行 `python3 -m http.server`，然后访问 http://localhost:8000/。",
+        productionTitle: "生产边界提醒",
+        productionBody: "这些只是起点。生产系统还需要评估、可观测性、数据政策审查和许可证核对。",
+        weakHardwareTitle: "硬件偏弱提醒",
+        weakHardwareBody: "你的硬件低于多数本地条目的建议范围。预计速度较慢，或需要更小模型变体。",
+        noLocalFitTitle: "没有合适的本地方案",
+        noLocalFitBody: "没有匹配的本地目录条目达到此硬件和任务的最低实用阈值。",
+        localOnlyTitle: "仅本地限制",
+        localOnlyBody: "由于部署偏好为仅本地，已隐藏云端备用建议。请升级硬件、降低负载或选择更轻任务。",
+        hostedFallbackTitle: "托管备用方案",
+        hostedFallbackWeak: "对该任务和硬件，托管开放权重服务可能更现实。这是备用提示，不是本地推荐。托管服务可能接收你发送的提示、文件或输出。",
+        hostedFallbackOk: "云端可接受，但本地推荐仍优先排序。托管选项不会标为本地推荐，且托管服务可能接收你发送的提示、文件或输出。",
+        lowConfidenceTitle: "硬件识别置信度较低",
+        lowConfidenceBody: "CPU 或 GPU 型号未被高置信度识别。评分会回退到内存、显存、存储和所选厂商。",
+        noCompatibleSummary: "没有与此 {task} 配置兼容的本地目录条目。分数为确定性近似估计。",
+        leastBadSummary: "为 {task} 找到 {count} 个勉强可参考的本地条目；此配置下没有明确推荐的本地方案。分数为确定性近似估计。",
+        resultsSummary: "为 {task} 找到 {count} 个本地推荐。分数为确定性近似估计。",
+        tryFirst: "优先尝试",
+        sizeRuntime: "{size}，建议运行方式：{runtime}。",
+        fit: "适配度",
+        performance: "性能",
+        score: "分数",
+        examples: "示例",
+        category: "类别",
+        family: "模型家族",
+        localFeasibility: "本地可行性",
+        setupPath: "安装路径",
+        hardwareReasoning: "硬件依据",
+        workloadReasoning: "负载依据",
+        priorityMatch: "优先级匹配",
+        privacyNote: "隐私说明",
+        privacyBody: "本地运行通常可在安装后把提示和文件留在本机，具体取决于运行时和扩展。",
+        licenseNote: "许可证说明",
+        avoidGuidance: "避免情况",
+        hostedFallback: "托管备用",
+        lastReviewed: "最后审阅",
+        sources: "来源",
+        staleTitle: "数据陈旧提醒",
+        staleBody: "该条目已超过 180 天未审阅。请核对当前模型文件、许可证和运行时支持。",
+        capTitle: "已应用硬件上限",
+        scoreBreakdown: "评分明细",
+        rule: "规则",
+        reason: "原因",
+        points: "分数",
+        memory: "内存",
+        runtime: "运行时",
+        localFeasibilityCap: "本地可行性上限",
+        setupEasy: "容易",
+        setupModerate: "中等",
+        setupAdvanced: "较复杂",
+        strong: "强",
+        usable: "可用",
+        weak: "偏弱",
+        notRecommended: "不推荐",
+        smooth: "流畅",
+        acceptable: "可接受",
+        slow: "较慢",
+        unsuitable: "不适合"
+      }
     };
 
     const presets = {
-      "basic-laptop": { os: "windows", deviceType: "laptop", cpu: "mid", ram: 8, gpuVendor: "none", vram: 0, storage: 40, internet: "available", deployment: "local-first" },
-      "cpu-only": { os: "linux", deviceType: "desktop", cpu: "high", ram: 16, gpuVendor: "none", vram: 0, storage: 100, internet: "available", deployment: "local-only" },
-      "apple-16": { os: "macos", deviceType: "laptop", cpu: "high", ram: 16, gpuVendor: "apple", vram: 12, storage: 120, internet: "available", deployment: "local-first" },
-      "gaming-8": { os: "windows", deviceType: "desktop", cpu: "high", ram: 32, gpuVendor: "nvidia", vram: 8, storage: 200, internet: "available", deployment: "local-first" },
-      "creator-16": { os: "windows", deviceType: "workstation", cpu: "high", ram: 64, gpuVendor: "nvidia", vram: 16, storage: 500, internet: "available", deployment: "local-first" },
-      "server-24": { os: "linux", deviceType: "server", cpu: "server", ram: 128, gpuVendor: "nvidia", vram: 24, storage: 1000, internet: "available", deployment: "local-first" }
+      "basic-laptop": { os: "windows", deviceType: "laptop", cpuModel: "Intel Core i5 laptop CPU", ram: 8, gpuVendor: "none", gpuModel: "No dedicated GPU", vram: 0, storage: 40, internet: "available", deployment: "local-first" },
+      "cpu-only": { os: "linux", deviceType: "desktop", cpuModel: "Ryzen 7 CPU", ram: 16, gpuVendor: "none", gpuModel: "No dedicated GPU", vram: 0, storage: 100, internet: "available", deployment: "local-only" },
+      "apple-16": { os: "macos", deviceType: "laptop", cpuModel: "Apple M-series", ram: 16, gpuVendor: "apple", gpuModel: "Apple unified GPU", vram: 12, storage: 120, internet: "available", deployment: "local-first" },
+      "gaming-8": { os: "windows", deviceType: "desktop", cpuModel: "Ryzen 7 / Intel i7 gaming CPU", ram: 32, gpuVendor: "nvidia", gpuModel: "NVIDIA RTX 4060 Ti / RTX 3070 class", vram: 8, storage: 200, internet: "available", deployment: "local-first" },
+      "creator-16": { os: "windows", deviceType: "workstation", cpuModel: "Intel i9 / Ryzen 9 creator CPU", ram: 64, gpuVendor: "nvidia", gpuModel: "NVIDIA RTX 4080 / RTX 4090 class", vram: 16, storage: 500, internet: "available", deployment: "local-first" },
+      "server-24": { os: "linux", deviceType: "server", cpuModel: "Xeon / Threadripper server CPU", ram: 128, gpuVendor: "nvidia", gpuModel: "NVIDIA RTX 4090 / A-series 24GB+ GPU", vram: 24, storage: 1000, internet: "available", deployment: "local-first" }
     };
 
+    const helperSetups = {
+      "m3-pro-36": "MacBook Pro M3 Pro, 36GB unified memory, macOS, coding assistant",
+      "rtx-4070": "Ryzen 7 7800X3D desktop, NVIDIA RTX 4070 12GB VRAM, 32GB RAM, 1TB SSD, image generation",
+      "intel-cpu-only": "Intel i5 laptop, 16GB RAM, no dedicated GPU, 512GB SSD, chat"
+    };
+
+    function readStoredLanguage() {
+      try {
+        return localStorage.getItem("oma-language") || "en";
+      } catch (error) {
+        return "en";
+      }
+    }
+
+    function writeStoredLanguage(lang) {
+      try {
+        localStorage.setItem("oma-language", lang);
+      } catch (error) {
+        // Language persistence is optional; blocked storage should not break the app.
+      }
+    }
+
     let catalog = null;
+    let currentLanguage = readStoredLanguage();
+    let pendingScan = null;
     const form = document.getElementById("advisorForm");
     const resultsEl = document.getElementById("results");
     const messageArea = document.getElementById("messageArea");
     const summaryText = document.getElementById("summaryText");
     const selectedPreset = document.getElementById("selectedPreset");
+    const scanSummary = document.getElementById("scanSummary");
+    const detectedFields = document.getElementById("detectedFields");
+    const applyDetected = document.getElementById("applyDetected");
 
-    const labels = {
-      "chat-llm": "Chat LLM",
-      "coding-llm": "Coding LLM",
-      "image-generation": "Image generation",
-      "speech-to-text": "Speech to text",
-      embeddings: "Embeddings"
-    };
+    function t(key, vars = {}) {
+      const value = (i18n[currentLanguage] && i18n[currentLanguage][key]) || i18n.en[key] || key;
+      return Object.entries(vars).reduce((text, [name, replacement]) => text.replaceAll(`{${name}}`, replacement), value);
+    }
+
+    function taskLabels() {
+      return {
+        "chat-llm": t("taskChat"),
+        "coding-llm": t("taskCoding"),
+        "image-generation": t("taskImage"),
+        "speech-to-text": t("taskSpeech"),
+        embeddings: t("taskEmbeddings")
+      };
+    }
+
+    function applyLanguage(lang) {
+      currentLanguage = lang;
+      writeStoredLanguage(lang);
+      document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
+      document.querySelectorAll("[data-i18n]").forEach(node => {
+        node.textContent = t(node.dataset.i18n);
+      });
+      document.querySelectorAll("[data-language]").forEach(button => {
+        button.classList.toggle("active", button.dataset.language === lang);
+        button.setAttribute("aria-pressed", String(button.dataset.language === lang));
+      });
+      document.getElementById("setupPaste").placeholder = lang === "zh"
+        ? "例如：MacBook Pro M3 Pro，36GB 统一内存，想做编程助手"
+        : "MacBook Pro M3 Pro, 36GB unified memory, coding assistant";
+      updatePresetLabel();
+      updateCatalogFreshness();
+      renderScan();
+      render();
+    }
 
     function setField(id, value) {
-      document.getElementById(id).value = value;
+      const field = document.getElementById(id);
+      if (field) field.value = value;
     }
 
     function applyPreset(name) {
@@ -639,7 +1129,8 @@
 
     function updatePresetLabel() {
       const select = document.getElementById("preset");
-      selectedPreset.textContent = `Preset: ${select.options[select.selectedIndex].text}`;
+      const presetName = select.options[select.selectedIndex] ? select.options[select.selectedIndex].textContent : t("presetCustom");
+      selectedPreset.textContent = t("selectedPreset", { preset: presetName });
     }
 
     function markCustom() {
@@ -649,21 +1140,31 @@
 
     function syncVramAvailability() {
       const vramInput = document.getElementById("vram");
-      const noGpu = document.getElementById("gpuVendor").value === "none";
+      const gpuProfile = deriveGpuProfile(document.getElementById("gpuModel").value, document.getElementById("gpuVendor").value);
+      const noGpu = gpuProfile.vendor === "none";
       if (noGpu) vramInput.value = 0;
       vramInput.disabled = noGpu;
       vramInput.setAttribute("aria-disabled", String(noGpu));
     }
 
     function getState() {
-      const gpuVendor = form.gpuVendor.value;
+      const selectedGpuVendor = form.gpuVendor.value;
+      const cpuModel = form.cpuModel.value.trim();
+      const gpuModel = form.gpuModel.value.trim();
+      const cpuProfile = deriveCpuProfile(cpuModel);
+      const gpuProfile = deriveGpuProfile(gpuModel, selectedGpuVendor);
+      const effectiveGpuVendor = gpuProfile.vendor || selectedGpuVendor;
       return {
         os: form.os.value,
         deviceType: form.deviceType.value,
-        cpu: form.cpu.value,
+        cpuModel,
+        gpuModel,
+        cpuProfile,
+        gpuProfile,
         ram: Number(form.ram.value || 0),
-        gpuVendor,
-        vram: gpuVendor === "none" ? 0 : Number(form.vram.value || 0),
+        gpuVendor: effectiveGpuVendor,
+        selectedGpuVendor,
+        vram: effectiveGpuVendor === "none" ? 0 : Number(form.vram.value || 0),
         storage: Number(form.storage.value || 0),
         internet: form.internet.value,
         deployment: form.deployment.value,
@@ -671,6 +1172,238 @@
         workload: form.workload.value,
         priorities: Array.from(form.querySelectorAll('input[name="priority"]:checked')).map(input => input.value)
       };
+    }
+
+    function deriveCpuProfile(cpuModel) {
+      const text = cpuModel.toLowerCase();
+      if (!text) return { level: "unknown", label: "Unknown CPU", confidence: "low" };
+      if (/threadripper|epyc|xeon/.test(text)) return { level: "server", label: cpuModel, confidence: "high" };
+      if (/m[1-4]\s*(ultra|max)/.test(text)) return { level: "server", label: cpuModel, confidence: "high" };
+      if (/m[1-4]\s*pro/.test(text)) return { level: "high", label: cpuModel, confidence: "high" };
+      if (/apple|m[1-4]/.test(text)) return { level: "mid", label: cpuModel, confidence: "medium" };
+      if (/i9|ryzen\s*9/.test(text)) return { level: "high", label: cpuModel, confidence: "high" };
+      if (/i7|ryzen\s*7/.test(text)) return { level: "high", label: cpuModel, confidence: "high" };
+      if (/i5|ryzen\s*5/.test(text)) return { level: "mid", label: cpuModel, confidence: "high" };
+      if (/i3|ryzen\s*3|celeron|pentium/.test(text)) return { level: "low", label: cpuModel, confidence: "high" };
+      return { level: "unknown", label: cpuModel, confidence: "low" };
+    }
+
+    function deriveGpuProfile(gpuModel, selectedVendor) {
+      const text = gpuModel.toLowerCase();
+      if (/no dedicated|cpu only|cpu-only|none|without gpu|no gpu/.test(text) || selectedVendor === "none" && !text) {
+        return { vendor: "none", level: "none", label: gpuModel || "CPU only", confidence: "high" };
+      }
+      let vendor = selectedVendor === "none" ? "" : selectedVendor;
+      if (/rtx|gtx|nvidia|quadro|tesla|a\d{3,5}/.test(text)) vendor = "nvidia";
+      if (/radeon|rx\s*\d|amd/.test(text)) vendor = "amd";
+      if (/arc\s*[a-z]?\d|iris|uhd|intel/.test(text)) vendor = vendor || "intel";
+      if (/apple|m[1-4]\s*(pro|max|ultra)?/.test(text)) vendor = "apple";
+      if (!vendor) return { vendor: selectedVendor, level: "unknown", label: gpuModel || "Unknown GPU", confidence: "low" };
+      let level = "unknown";
+      if (vendor === "apple") level = /ultra|max/.test(text) ? "high" : /pro/.test(text) ? "mid" : "integrated";
+      if (vendor === "nvidia") {
+        if (/4090|4080|3090|3080|a5000|a6000/.test(text)) level = "high";
+        else if (/4070|4060|3070|3060|2080|2070/.test(text)) level = "mid";
+        else if (/gtx|3050|2060/.test(text)) level = "entry";
+      }
+      if (vendor === "amd") {
+        if (/7900|6900|6800/.test(text)) level = "high";
+        else if (/7800|7700|6700|6600/.test(text)) level = "mid";
+        else level = "entry";
+      }
+      if (vendor === "intel") level = /arc/.test(text) ? "mid" : "integrated";
+      return { vendor, level, label: gpuModel || vendor, confidence: level === "unknown" ? "low" : "high" };
+    }
+
+    function scanSetupText(text) {
+      const fields = {};
+      const warnings = [];
+      const add = (field, value, confidence, reason) => { fields[field] = { value, confidence, reason }; };
+      const normalized = text.replace(/\s+/g, " ").trim();
+      const lower = normalized.toLowerCase();
+      if (/macbook|macos|mac os|apple silicon|m[1-4]\s*(pro|max|ultra)?/.test(lower)) add("os", "macos", "high", "Apple/macOS wording found.");
+      else if (/windows|win11|win10/.test(lower)) add("os", "windows", "high", "Windows wording found.");
+      else if (/linux|ubuntu|debian|fedora|arch/.test(lower)) add("os", "linux", "high", "Linux wording found.");
+      if (/macbook|laptop|notebook/.test(lower)) add("deviceType", "laptop", "high", "Portable device wording found.");
+      else if (/server|rack/.test(lower)) add("deviceType", "server", "high", "Server wording found.");
+      else if (/workstation/.test(lower)) add("deviceType", "workstation", "high", "Workstation wording found.");
+      else if (/desktop|pc|tower/.test(lower)) add("deviceType", "desktop", "medium", "Desktop wording found.");
+
+      const appleCpu = normalized.match(/\b(?:Apple\s*)?M[1-4]\s*(?:Ultra|Max|Pro)?\b/i);
+      const ryzenCpu = normalized.match(/\b(?:AMD\s*)?Ryzen\s*(?:Threadripper\s*)?[3579]\s*[A-Z0-9-]*\b/i);
+      const intelCpu = normalized.match(/\b(?:Intel\s*)?(?:Core\s*)?i[3579][-\s]?[0-9A-Z]{3,8}\b/i) || normalized.match(/\b(?:Intel\s*)?(?:Core\s*)?i[3579]\b/i);
+      const serverCpu = normalized.match(/\b(?:Xeon|Threadripper|EPYC)\s*[A-Z0-9-]*\b/i);
+      const appleCpuLabel = appleCpu ? (appleCpu[0].match(/^Apple\s/i) ? appleCpu[0].replace(/\s+/g, " ").trim() : `Apple ${appleCpu[0].replace(/\s+/g, " ").trim()}`) : "";
+      if (appleCpu) add("cpuModel", appleCpuLabel, "high", "Apple M-series CPU found.");
+      else if (serverCpu) add("cpuModel", serverCpu[0], "high", "Workstation/server CPU found.");
+      else if (ryzenCpu) add("cpuModel", ryzenCpu[0], "high", "Ryzen CPU found.");
+      else if (intelCpu) add("cpuModel", intelCpu[0], "medium", "Intel Core CPU wording found.");
+
+      if (/no dedicated gpu|no gpu|cpu only|cpu-only|integrated graphics only/.test(lower)) {
+        add("gpuVendor", "none", "high", "No dedicated GPU wording found.");
+        add("gpuModel", "No dedicated GPU", "high", "CPU-only graphics detected.");
+        add("vram", 0, "high", "No dedicated GPU implies 0GB VRAM.");
+      } else {
+        const nvidiaGpu = normalized.match(/\b(?:NVIDIA\s*)?(?:RTX|GTX)\s*[0-9]{3,4}\s*(?:Ti|SUPER|Super)?\b/i);
+        const amdGpu = normalized.match(/\b(?:AMD\s*)?(?:Radeon\s*)?RX\s*[0-9]{3,4}\s*(?:XT)?\b/i);
+        const intelGpu = normalized.match(/\bIntel\s*(?:Arc\s*[A-Z]?[0-9]{3,4}|Iris|UHD)[A-Z0-9\s-]*\b/i);
+        if (nvidiaGpu) {
+          add("gpuVendor", "nvidia", "high", "NVIDIA GPU found.");
+          add("gpuModel", nvidiaGpu[0].replace(/\s+/g, " ").trim(), "high", "NVIDIA GPU model found.");
+        } else if (amdGpu) {
+          add("gpuVendor", "amd", "high", "AMD Radeon GPU found.");
+          add("gpuModel", amdGpu[0].replace(/\s+/g, " ").trim(), "high", "AMD GPU model found.");
+        } else if (intelGpu) {
+          add("gpuVendor", "intel", "medium", "Intel GPU found.");
+          add("gpuModel", intelGpu[0].replace(/\s+/g, " ").trim(), "medium", "Intel GPU model found.");
+        } else if (appleCpu) {
+          add("gpuVendor", "apple", "high", "Apple Silicon uses unified GPU memory.");
+          add("gpuModel", `${appleCpuLabel} GPU`, "medium", "Apple unified GPU inferred.");
+        }
+      }
+
+      const unified = normalized.match(/(\d{1,3})\s*(?:gb|g)\s*unified memory/i) || normalized.match(/unified memory[^0-9]{0,12}(\d{1,3})\s*(?:gb|g)/i);
+      const ramMatches = [...normalized.matchAll(/(\d{1,3})\s*(?:gb|g)\s*(?:ram|memory)/gi)].map(match => Number(match[1]));
+      const ramLabeled = normalized.match(/(?:ram|memory)[^0-9]{0,12}(\d{1,3})\s*(?:gb|g)/i);
+      if (unified) {
+        const ram = Number(unified[1]);
+        add("ram", ram, "high", "Unified memory amount found.");
+        add("vram", Math.max(4, Math.floor(ram * 0.75)), "medium", "Usable unified memory estimate for local models.");
+      } else if (ramLabeled) {
+        add("ram", Number(ramLabeled[1]), "high", "RAM label found.");
+      } else if (ramMatches.length) {
+        add("ram", Math.max(...ramMatches), "medium", "Memory wording found.");
+      }
+      if (ramMatches.length > 1 && new Set(ramMatches).size > 1) warnings.push("Multiple RAM-like values found; review the detected memory fields.");
+
+      const labeledVram = normalized.match(/(\d{1,3})\s*(?:gb|g)\s*(?:vram|gpu memory|graphics memory|gddr)/i) || normalized.match(/(?:vram|gpu memory|graphics memory|gddr)[^0-9]{0,20}(\d{1,3})\s*(?:gb|g)/i);
+      if (labeledVram) add("vram", Number(labeledVram[1]), "high", "VRAM/GPU memory label found.");
+      else if (fields.gpuModel && fields.gpuVendor && fields.gpuVendor.value !== "apple") {
+        const modelText = String(fields.gpuModel.value).toLowerCase();
+        const gpuIndex = lower.indexOf(modelText);
+        const nearGpu = gpuIndex >= 0 ? normalized.slice(gpuIndex, gpuIndex + Math.min(64, fields.gpuModel.value.length + 24)) : "";
+        const nearby = nearGpu.match(/(\d{1,2})\s*(?:gb|g)\b(?!\s*(?:ram|memory))/i);
+        if (nearby) add("vram", Number(nearby[1]), "medium", "Memory amount near GPU model found.");
+      }
+
+      const storage = normalized.match(/(\d+(?:\.\d+)?)\s*(tb|gb)\s*(?:ssd|storage|drive|disk)/i) || normalized.match(/(?:ssd|storage|drive|disk)[^0-9]{0,16}(\d+(?:\.\d+)?)\s*(tb|gb)/i);
+      if (storage) add("storage", Math.round(Number(storage[1]) * (storage[2].toLowerCase() === "tb" ? 1000 : 1)), "medium", "Storage wording found.");
+      if (/coding assistant|code assistant|programming|coding/.test(lower)) add("task", "coding-llm", "medium", "Coding task phrase found.");
+      else if (/image generation|stable diffusion|sdxl|flux|text-to-image/.test(lower)) add("task", "image-generation", "medium", "Image generation phrase found.");
+      else if (/transcription|speech to text|speech-to-text|whisper/.test(lower)) add("task", "speech-to-text", "medium", "Speech-to-text phrase found.");
+      else if (/rag|search|embedding|retrieval/.test(lower)) add("task", "embeddings", "medium", "RAG/search phrase found.");
+      else if (/chat|writing|assistant/.test(lower)) add("task", "chat-llm", "low", "General assistant phrase found.");
+      return { fields, warnings };
+    }
+
+    function renderScan() {
+      if (!pendingScan) {
+        detectedFields.innerHTML = "";
+        applyDetected.disabled = true;
+        return;
+      }
+      const names = {
+        os: t("osLabel"),
+        deviceType: t("deviceLabel"),
+        cpuModel: t("cpuModelLabel"),
+        gpuVendor: t("gpuVendorLabel"),
+        gpuModel: t("gpuModelLabel"),
+        ram: t("ramLabel"),
+        vram: t("vramLabel"),
+        storage: t("storageLabel"),
+        task: t("taskLabel")
+      };
+      const values = pendingScan.fields;
+      detectedFields.innerHTML = Object.entries(values).map(([field, detected]) => `
+        <span class="detected-item"><b>${escapeHtml(names[field] || field)}</b> ${escapeHtml(formatDetectedValue(field, detected.value))} <span class="confidence">${escapeHtml(detected.confidence)}</span></span>
+      `).join("");
+      applyDetected.disabled = !Object.keys(values).length;
+    }
+
+    function formatDetectedValue(field, value) {
+      if (field === "task") return taskLabels()[value] || value;
+      if (["ram", "vram", "storage"].includes(field)) return `${value}GB`;
+      return value;
+    }
+
+    function applyPendingScan() {
+      if (!pendingScan) return;
+      const currentTask = form.task.value;
+      Object.entries(pendingScan.fields).forEach(([field, detected]) => {
+        if (field === "task" && currentTask) return;
+        setField(field, detected.value);
+      });
+      syncVramAvailability();
+      markCustom();
+      const skippedTask = Boolean(pendingScan.fields.task && currentTask);
+      scanSummary.textContent = skippedTask ? `${t("scanApplied")} ${t("scanTaskSkipped")}` : t("scanApplied");
+      render();
+    }
+
+    function setupDifficultyLabel(value) {
+      return {
+        easy: t("setupEasy"),
+        moderate: t("setupModerate"),
+        advanced: t("setupAdvanced")
+      }[value] || value;
+    }
+
+    function modelCategoryText(model) {
+      if (currentLanguage !== "zh") return model.modelCategory || model.recommendationCategory;
+      const byCategory = {
+        "chat-llm": "本地量化聊天大模型",
+        "coding-llm": model.sizeClass === "large" ? "本地中大型编程模型" : "本地量化编程模型",
+        "image-generation": model.id === "sdxl-base-1-0" ? "成熟本地图像生成模型" : "GPU 优先的本地图像生成模型",
+        "speech-to-text": "本地语音转文字模型",
+        embeddings: "本地向量与搜索模型"
+      };
+      return byCategory[model.category] || model.modelCategory || model.recommendationCategory;
+    }
+
+    function modelSizeNoteText(model) {
+      if (currentLanguage !== "zh") return model.modelSizeNote;
+      const categoryNotes = {
+        "chat-llm": `${model.parameterRange || model.sizeClass}，适合从量化本地版本开始尝试。`,
+        "coding-llm": `${model.parameterRange || model.sizeClass}，偏向代码补全、解释和局部改写。`,
+        "image-generation": "本地图像模型，显存和工作流优化会明显影响体验。",
+        "speech-to-text": "本地转录模型，速度取决于 CPU/GPU 与音频长度。",
+        embeddings: "本地向量模型，适合 RAG、搜索和小型索引。"
+      };
+      return categoryNotes[model.category] || model.modelSizeNote;
+    }
+
+    function starterRecommendationText(model, field) {
+      const starter = model.starterRecommendation;
+      if (currentLanguage !== "zh") return starter[field];
+      if (field === "family") return starter.family;
+      if (field === "preferredRuntime") return starter.preferredRuntime;
+      if (field === "sizeAndQuantization") {
+        if (model.category === "image-generation") return `${starter.family}，优先使用显存优化的本地工作流。`;
+        if (model.category === "speech-to-text") return `${starter.family}，内存紧张时选择更小或量化版本。`;
+        if (model.category === "embeddings") return `${starter.family}，优先选择本地友好的运行方式。`;
+        return `${starter.family}，优先选择 4-bit/GGUF 或其他量化版本。`;
+      }
+      if (field === "hardwareFitNote") {
+        return `适合先在 ${model.recommendedRamGb}GB 内存、${model.recommendedVramGb}GB 显存/统一内存左右的机器上尝试；最低约 ${model.minRamGb}GB 内存、${model.minVramGb}GB 显存。`;
+      }
+      if (field === "avoidNote") {
+        if (model.gpuImportance === "required" || model.gpuImportance === "high") return "如果没有合适 GPU 或显存不足，不建议把它作为第一个本地方案。";
+        if (model.sizeClass === "large") return "如果只是基础笔记本或仅 CPU 机器，不建议从这个较重模型开始。";
+        return "如果你需要权威基准第一名或生产级保证，不应把这个起点当成最终结论。";
+      }
+      return starter[field];
+    }
+
+    function localFitText(model) {
+      if (currentLanguage !== "zh") return model.localFitNotes;
+      return `本地建议范围：至少 ${model.minRamGb}GB 内存、${model.minVramGb}GB 显存/统一内存，约 ${model.estimatedStorageGb}GB 存储；更舒适的目标是 ${model.recommendedRamGb}GB 内存、${model.recommendedVramGb}GB 显存/统一内存。`;
+    }
+
+    function avoidText(model) {
+      if (currentLanguage !== "zh") return model.avoidNotes;
+      if (model.gpuImportance === "required" || model.gpuImportance === "high") return "避免在 CPU-only、低显存或驱动/运行时不明确的机器上优先尝试。";
+      if (model.sizeClass === "large") return "避免在基础笔记本上期待流畅体验。";
+      return "避免把它理解为最佳模型排行；仍需按你的任务验证效果。";
     }
 
     function compatible(model, state) {
@@ -685,81 +1418,60 @@
       const breakdown = [];
       let total = 0;
       const caps = [];
-
       const add = (name, max, points, reason) => {
         const value = Math.max(0, Math.min(max, Math.round(points)));
         breakdown.push({ name, max, value, reason });
         total += value;
       };
-
-      add("Task", weights.task, weights.task, `Matches ${labels[state.task]}.`);
-
+      add(t("taskLegend"), weights.task, weights.task, currentLanguage === "zh" ? `匹配${taskLabels()[state.task]}。` : `Matches ${taskLabels()[state.task]}.`);
       let hardware = weights.hardware;
       if (!model.supportedGpuVendors.includes(state.gpuVendor)) {
         hardware = state.gpuVendor === "intel" && model.gpuImportance !== "required" ? 12 : 4;
       } else if (model.gpuImportance === "required" && state.gpuVendor === "none") {
         hardware = 0;
         caps.push("No suitable GPU for a GPU-required model.");
-      } else if (model.gpuImportance === "required" && !model.supportedGpuVendors.includes(state.gpuVendor)) {
-        hardware = 0;
-        caps.push("The selected GPU vendor is not listed as supported for this required-GPU category.");
       } else if (model.gpuImportance === "high" && state.gpuVendor === "none") {
         hardware = 6;
         caps.push("This category strongly prefers GPU acceleration; CPU-only use is likely slow or awkward.");
       } else if (model.gpuImportance === "none") {
         hardware = 25;
-      } else if (state.cpu === "low" && state.gpuVendor === "none") {
+      } else if (state.cpuProfile.level === "low" && state.gpuVendor === "none") {
         hardware = 12;
+      } else if (state.cpuProfile.level === "server" || state.gpuProfile.level === "high") {
+        hardware = Math.min(25, hardware + 2);
       }
-      add("Hardware", weights.hardware, hardware, `${model.gpuImportance} GPU importance; ${state.gpuVendor} selected.`);
-
+      if (state.cpuProfile.confidence === "low") hardware -= 3;
+      if (state.gpuProfile.confidence === "low" && state.gpuVendor !== "none") hardware -= 5;
+      if ((model.gpuImportance === "high" || model.gpuImportance === "required") && ["integrated", "entry", "unknown"].includes(state.gpuProfile.level)) hardware -= 6;
+      add(t("hardwareReasoning"), weights.hardware, hardware, currentLanguage === "zh"
+        ? `GPU 重要性：${model.gpuImportance}；识别到 ${state.gpuProfile.label}（${state.gpuVendor}）和 ${state.cpuProfile.label}。`
+        : `${model.gpuImportance} GPU importance; ${state.gpuProfile.label} (${state.gpuVendor}) and ${state.cpuProfile.label}.`);
       let memory = weights.memory;
-      if (state.ram < model.minRamGb || state.storage < model.estimatedStorageGb) {
-        memory = 0;
-      } else if (state.ram < model.recommendedRamGb) {
-        memory -= 5;
-      }
-      if (model.minVramGb > 0 && state.vram < model.minVramGb) {
-        memory -= model.gpuImportance === "required" ? 10 : 5;
-      } else if (model.recommendedVramGb > 0 && state.vram < model.recommendedVramGb) {
-        memory -= 3;
-      }
-      if (state.ram < model.minRamGb) caps.push(`RAM below minimum (${state.ram}GB available, ${model.minRamGb}GB minimum).`);
-      if (state.vram < model.minVramGb) caps.push(`VRAM/unified memory below minimum (${state.vram}GB available, ${model.minVramGb}GB minimum).`);
-      if (state.storage < model.estimatedStorageGb) caps.push(`Storage below estimated model footprint (${state.storage}GB free, about ${model.estimatedStorageGb}GB needed).`);
-      add("Memory", weights.memory, memory, `${model.memoryTier}; storage estimate ${model.estimatedStorageGb}GB.`);
-
+      if (state.ram < model.minRamGb || state.storage < model.estimatedStorageGb) memory = 0;
+      else if (state.ram < model.recommendedRamGb) memory -= 5;
+      if (model.minVramGb > 0 && state.vram < model.minVramGb) memory -= model.gpuImportance === "required" ? 10 : 5;
+      else if (model.recommendedVramGb > 0 && state.vram < model.recommendedVramGb) memory -= 3;
+      if (state.ram < model.minRamGb) caps.push(currentLanguage === "zh" ? `内存低于最低要求（可用 ${state.ram}GB，最低 ${model.minRamGb}GB）。` : `RAM below minimum (${state.ram}GB available, ${model.minRamGb}GB minimum).`);
+      if (state.vram < model.minVramGb) caps.push(currentLanguage === "zh" ? `显存/统一内存低于最低要求（可用 ${state.vram}GB，最低 ${model.minVramGb}GB）。` : `VRAM/unified memory below minimum (${state.vram}GB available, ${model.minVramGb}GB minimum).`);
+      if (state.storage < model.estimatedStorageGb) caps.push(currentLanguage === "zh" ? `存储低于模型估算占用（可用 ${state.storage}GB，约需 ${model.estimatedStorageGb}GB）。` : `Storage below estimated model footprint (${state.storage}GB free, about ${model.estimatedStorageGb}GB needed).`);
+      add(t("memory"), weights.memory, memory, currentLanguage === "zh" ? `${model.memoryTier}；模型存储估算 ${model.estimatedStorageGb}GB。` : `${model.memoryTier}; storage estimate ${model.estimatedStorageGb}GB.`);
       const workloadExact = model.workloadFit.includes(state.workload);
       const workloadRelated = (state.workload === "production" && model.workloadFit.includes("daily")) || (state.workload === "quality" && model.qualityTier >= 4) || (state.workload === "latency" && model.speedTier >= 4);
-      add("Workload", weights.workload, workloadExact ? 10 : workloadRelated ? 7 : 4, workloadExact ? "Explicitly fits this workload." : "Partial workload fit.");
-
+      add(t("workloadLegend"), weights.workload, workloadExact ? 10 : workloadRelated ? 7 : 4, currentLanguage === "zh" ? (workloadExact ? "目录明确标记为适合该负载。" : "与该负载部分匹配。") : (workloadExact ? "Explicit workload fit." : "Partial workload fit."));
       const priorityPoints = scorePriority(model, state);
-      add("Priority", weights.priority, priorityPoints.points, priorityPoints.reason);
-
+      add(t("prioritiesLegend"), weights.priority, priorityPoints.points, priorityPoints.reason);
       const runtimePoints = model.setupDifficulty === "easy" ? 5 : model.setupDifficulty === "moderate" ? 3 : 1;
-      add("Runtime", weights.runtime, runtimePoints, `${model.runtimeOptions.join(", ")}; setup is ${model.setupDifficulty}.`);
-
+      add(t("runtime"), weights.runtime, runtimePoints, currentLanguage === "zh" ? `${model.runtimeOptions.join(", ")}；安装难度：${setupDifficultyLabel(model.setupDifficulty)}。` : `${model.runtimeOptions.join(", ")}; setup is ${model.setupDifficulty}.`);
       const licensePoints = model.commercialUse === "likely-allowed" ? 5 : state.priorities.includes("commercial") ? 2 : 3;
-      add("License", weights.license, licensePoints, model.licenseNotes);
-
+      add(t("licenseNote"), weights.license, licensePoints, licenseSummary(model));
       if (caps.length) {
         const capValue = capScore(model, state);
         if (total > capValue) {
-          breakdown.push({
-            name: "Local feasibility cap",
-            max: 100,
-            value: capValue,
-            reason: `Pre-cap score ${Math.round(total)}/100 was capped because: ${caps.join(" ")}`
-          });
+          breakdown.push({ name: t("localFeasibilityCap"), max: 100, value: capValue, reason: currentLanguage === "zh" ? `封顶前分数 ${Math.round(total)}/100；原因：${caps.join(" ")}` : `Pre-cap score ${Math.round(total)}/100 was capped because: ${caps.join(" ")}` });
           total = capValue;
         }
       }
-
-      return {
-        total: Math.max(0, Math.min(100, Math.round(total))),
-        breakdown,
-        caps
-      };
+      return { total: Math.max(0, Math.min(100, Math.round(total))), breakdown, caps };
     }
 
     function capScore(model, state) {
@@ -771,38 +1483,17 @@
     }
 
     function scorePriority(model, state) {
-      if (!state.priorities.length) return { points: 8, reason: "No extra priorities selected." };
+      if (!state.priorities.length) return { points: 8, reason: currentLanguage === "zh" ? "未选择额外优先级。" : "No extra priorities selected." };
       let points = 0;
       const reasons = [];
       state.priorities.forEach(priority => {
-        if (priority === "privacy") {
-          points += model.deploymentModes.includes("local") ? 2.5 : 0;
-          reasons.push("local mode supports privacy");
-        }
-        if (priority === "quality") {
-          points += model.qualityTier >= 5 ? 2.5 : model.qualityTier >= 4 ? 2 : 1;
-          reasons.push(`quality tier ${model.qualityTier}/5`);
-        }
-        if (priority === "speed") {
-          points += model.speedTier >= 5 ? 2.5 : model.speedTier >= 4 ? 2 : 1;
-          reasons.push(`speed tier ${model.speedTier}/5`);
-        }
-        if (priority === "ease") {
-          points += model.setupDifficulty === "easy" ? 2.5 : model.setupDifficulty === "moderate" ? 1.6 : 0.7;
-          reasons.push(`${model.setupDifficulty} setup`);
-        }
-        if (priority === "commercial") {
-          points += model.commercialUse === "likely-allowed" ? 2.5 : model.commercialUse === "check-license" ? 1.4 : 0.4;
-          reasons.push("license requires verification");
-        }
-        if (priority === "low-cost") {
-          points += model.deploymentModes.includes("local") && !model.internetRequired ? 2.2 : 0.8;
-          reasons.push("can run locally after setup");
-        }
-        if (priority === "low-hardware") {
-          points += model.minRamGb <= 8 && model.minVramGb === 0 ? 2.5 : model.minRamGb <= 16 ? 1.5 : 0.5;
-          reasons.push(`${model.minRamGb}GB RAM minimum`);
-        }
+        if (priority === "privacy") { points += model.deploymentModes.includes("local") ? 2.5 : 0; reasons.push(currentLanguage === "zh" ? "本地模式有利于隐私" : "local mode supports privacy"); }
+        if (priority === "quality") { points += model.qualityTier >= 5 ? 2.5 : model.qualityTier >= 4 ? 2 : 1; reasons.push(currentLanguage === "zh" ? `质量层级 ${model.qualityTier}/5` : `quality tier ${model.qualityTier}/5`); }
+        if (priority === "speed") { points += model.speedTier >= 5 ? 2.5 : model.speedTier >= 4 ? 2 : 1; reasons.push(currentLanguage === "zh" ? `速度层级 ${model.speedTier}/5` : `speed tier ${model.speedTier}/5`); }
+        if (priority === "ease") { points += model.setupDifficulty === "easy" ? 2.5 : model.setupDifficulty === "moderate" ? 1.6 : 0.7; reasons.push(currentLanguage === "zh" ? `安装难度 ${setupDifficultyLabel(model.setupDifficulty)}` : `${model.setupDifficulty} setup`); }
+        if (priority === "commercial") { points += model.commercialUse === "likely-allowed" ? 2.5 : model.commercialUse === "check-license" ? 1.4 : 0.4; reasons.push(currentLanguage === "zh" ? "许可证需要核对" : "license requires verification"); }
+        if (priority === "low-cost") { points += model.deploymentModes.includes("local") && !model.internetRequired ? 2.2 : 0.8; reasons.push(currentLanguage === "zh" ? "安装后可本地运行" : "can run locally after setup"); }
+        if (priority === "low-hardware") { points += model.minRamGb <= 8 && model.minVramGb === 0 ? 2.5 : model.minRamGb <= 16 ? 1.5 : 0.5; reasons.push(currentLanguage === "zh" ? `最低内存 ${model.minRamGb}GB` : `${model.minRamGb}GB RAM minimum`); }
       });
       return { points: Math.min(weights.priority, points), reason: reasons.join("; ") + "." };
     }
@@ -811,7 +1502,7 @@
       if (score >= 80) return "strong";
       if (score >= 60) return "usable";
       if (score >= 40) return "weak";
-      return "not recommended";
+      return "notRecommended";
     }
 
     function performanceLabel(model, state, score) {
@@ -823,8 +1514,7 @@
 
     function stale(model) {
       const reviewed = new Date(model.lastReviewed + "T00:00:00Z");
-      const ageMs = Date.now() - reviewed.getTime();
-      return ageMs > 180 * 24 * 60 * 60 * 1000;
+      return Date.now() - reviewed.getTime() > 180 * 24 * 60 * 60 * 1000;
     }
 
     function renderNotice(type, title, body) {
@@ -836,57 +1526,42 @@
       const state = getState();
       messageArea.innerHTML = "";
       resultsEl.innerHTML = "";
-
       if (!state.task) {
-        summaryText.textContent = "Choose a task to generate local-first recommendations.";
-        messageArea.innerHTML = renderNotice("", "Initial prompt", "Select a task category and adjust hardware fields. The advisor will score local options deterministically.");
+        summaryText.textContent = t("chooseTask");
+        messageArea.innerHTML = renderNotice("", t("initialPromptTitle"), t("initialPromptBody"));
         return;
       }
-
       const categoryCount = catalog.models.filter(model => model.taskCategories.includes(state.task)).length;
       if (categoryCount === 0) {
         summaryText.textContent = "No catalog coverage for this task.";
-        messageArea.innerHTML = renderNotice("bad", "Missing task coverage", "models.json does not contain entries for the selected V1 task category.");
+        messageArea.innerHTML = renderNotice("bad", t("noCoverageTitle"), t("noCoverageBody"));
         return;
       }
-
       const scored = catalog.models
         .map(model => ({ model, compatibility: compatible(model, state) }))
         .filter(item => item.compatibility.ok)
         .map(item => ({ ...item, score: scoreModel(item.model, state) }))
         .sort((a, b) => b.score.total - a.score.total || a.model.displayName.localeCompare(b.model.displayName));
-
       const local = scored.filter(item => item.model.deploymentModes.includes("local"));
       const top = local.slice(0, 3);
-      const weakHardware = top.every(item => item.score.total < 60);
+      const weakHardware = top.length > 0 && top.every(item => item.score.total < 60);
       const noLocalFit = !top.length || top.every(item => item.score.total < 40);
       const fallbackNeeded = noLocalFit || weakHardware;
       const messages = [];
-
-      if (state.workload === "production") {
-        messages.push(renderNotice("warn", "Production boundary warning", "Treat these as starting points only. Production systems need evaluation, observability, data policy review, and license verification."));
-      }
-      if (weakHardware) {
-        messages.push(renderNotice("warn", "Weak hardware warning", "Your hardware is below the recommended range for most matching local entries. Expect slower performance or smaller model variants."));
-      }
-      if (noLocalFit) {
-        messages.push(renderNotice("bad", "No local fit", "No matching local catalog entry clears the minimum practical fit threshold for this hardware and task."));
-      }
-      if (state.deployment === "local-only" && noLocalFit) {
-        messages.push(renderNotice("warn", "Local-only limitation", "Cloud fallback is hidden because deployment is set to local only. Upgrade hardware, reduce workload, or choose a lighter task."));
-      }
-      if (state.deployment !== "local-only" && fallbackNeeded) {
-        messages.push(renderNotice("", "Hosted fallback", "A hosted open-weight model service may be more practical for this task and hardware. This is a fallback note, not a local recommendation. Hosted providers may receive prompts, files, or outputs you send to them."));
-      } else if (state.deployment === "cloud-ok") {
-        messages.push(renderNotice("", "Hosted fallback", "Cloud is acceptable, but local recommendations are still sorted first. Hosted options are not shown as local recommendations, and hosted providers may receive prompts, files, or outputs you send to them."));
-      }
-
+      if (state.workload === "production") messages.push(renderNotice("warn", t("productionTitle"), t("productionBody")));
+      if (state.cpuProfile.confidence === "low" || state.gpuProfile.confidence === "low") messages.push(renderNotice("warn", t("lowConfidenceTitle"), t("lowConfidenceBody")));
+      if (weakHardware) messages.push(renderNotice("warn", t("weakHardwareTitle"), t("weakHardwareBody")));
+      if (noLocalFit) messages.push(renderNotice("bad", t("noLocalFitTitle"), t("noLocalFitBody")));
+      if (state.deployment === "local-only" && noLocalFit) messages.push(renderNotice("warn", t("localOnlyTitle"), t("localOnlyBody")));
+      if (state.deployment !== "local-only" && fallbackNeeded) messages.push(renderNotice("", t("hostedFallbackTitle"), t("hostedFallbackWeak")));
+      else if (state.deployment === "cloud-ok") messages.push(renderNotice("", t("hostedFallbackTitle"), t("hostedFallbackOk")));
       messageArea.innerHTML = messages.join("");
+      const taskName = taskLabels()[state.task];
       summaryText.textContent = !top.length
-        ? `No local catalog entries are compatible with this ${labels[state.task]} setup. Scores are deterministic and approximate.`
+        ? t("noCompatibleSummary", { task: taskName })
         : noLocalFit
-        ? `${top.length} least-bad local entr${top.length === 1 ? "y" : "ies"} for ${labels[state.task]}; none are recommended locally for this setup. Scores are deterministic and approximate.`
-        : `${top.length} local recommendation${top.length === 1 ? "" : "s"} for ${labels[state.task]}. Scores are deterministic and approximate.`;
+        ? t("leastBadSummary", { count: top.length, task: taskName })
+        : t("resultsSummary", { count: top.length, task: taskName });
       resultsEl.innerHTML = top.map((item, index) => renderCard(item, state, index + 1)).join("");
     }
 
@@ -894,102 +1569,107 @@
       const { model, score } = item;
       const fit = fitLabel(score.total);
       const perf = performanceLabel(model, state, score.total);
-      const staleWarning = stale(model) ? `<div class="notice warn"><strong>Stale-data warning</strong><span>This entry was last reviewed more than 180 days ago. Verify current model files, licenses, and runtime support.</span></div>` : "";
-      const capText = score.caps.length ? `<div class="notice warn"><strong>Hardware cap applied</strong><span>${escapeHtml(score.caps.join(" "))}</span></div>` : "";
-
+      const starter = model.starterRecommendation;
+      const staleWarning = stale(model) ? `<div class="notice warn"><strong>${escapeHtml(t("staleTitle"))}</strong><span>${escapeHtml(t("staleBody"))}</span></div>` : "";
+      const capText = score.caps.length ? `<div class="notice warn"><strong>${escapeHtml(t("capTitle"))}</strong><span>${escapeHtml(score.caps.join(" "))}</span></div>` : "";
       return `
         <article class="result-card">
           <div class="card-top">
             <span class="rank" aria-label="Rank ${rank}">${rank}</span>
             <div>
-              <h3>${escapeHtml(model.modelCategory || model.recommendationCategory)}</h3>
-              <p class="muted">Examples: ${escapeHtml(model.exampleModels.join(", "))}</p>
+              <h3>${escapeHtml(modelCategoryText(model))}</h3>
+              <p class="muted">${escapeHtml(t("examples"))}: ${escapeHtml(model.exampleModels.join(", "))}</p>
             </div>
             <div class="tag-stack">
-              <span class="tag ${fitClass(fit)}">Fit: ${escapeHtml(fit)}</span>
-              <span class="tag ${perf}">Performance: ${escapeHtml(perf)}</span>
-              <span class="tag">Score ${score.total}/100</span>
+              <span class="tag ${fitClass(fit)}">${escapeHtml(t("fit"))}: ${escapeHtml(t(fit))}</span>
+              <span class="tag ${perf}">${escapeHtml(t("performance"))}: ${escapeHtml(t(perf))}</span>
+              <span class="tag">${escapeHtml(t("score"))} ${score.total}/100</span>
             </div>
+          </div>
+          <div class="try-first">
+            <b>${escapeHtml(t("tryFirst"))}</b>
+            <h4>${escapeHtml(starterRecommendationText(model, "family"))}</h4>
+            <p>${escapeHtml(t("sizeRuntime", { size: starterRecommendationText(model, "sizeAndQuantization"), runtime: starterRecommendationText(model, "preferredRuntime") }))}</p>
+            <p>${escapeHtml(starterRecommendationText(model, "hardwareFitNote"))}</p>
+            <p class="muted">${escapeHtml(starterRecommendationText(model, "avoidNote"))}</p>
           </div>
           ${staleWarning}
           ${capText}
           <div class="card-grid">
-            <div class="fact"><b>Category</b><p>${escapeHtml(model.modelCategory || model.recommendationCategory)}</p></div>
-            <div class="fact"><b>Example family</b><p>${escapeHtml(model.displayName)} - ${escapeHtml(model.modelSizeNote)}</p></div>
-            <div class="fact"><b>Local feasibility</b><p>${escapeHtml(model.localFitNotes)}</p></div>
-            <div class="fact"><b>Setup path</b><p>${escapeHtml(model.runtimeOptions.join(" / "))}</p></div>
-            <div class="fact"><b>Hardware reasoning</b><p>${escapeHtml(hardwareReason(model, state))}</p></div>
-            <div class="fact"><b>Workload reasoning</b><p>${escapeHtml(workloadReason(model, state))}</p></div>
-            <div class="fact"><b>Priority match</b><p>${escapeHtml(prioritySummary(model, state))}</p></div>
-            <div class="fact"><b>Privacy note</b><p>Local execution can keep prompts and files on this machine after setup, depending on runtime and extensions.</p></div>
-            <div class="fact"><b>License note</b><p>${escapeHtml(licenseSummary(model))}</p></div>
-            <div class="fact"><b>Avoid guidance</b><p>${escapeHtml(model.avoidNotes)}</p></div>
-            <div class="fact"><b>Hosted fallback</b><p>${escapeHtml(fallbackSummary(model, state, score.total))}</p></div>
-            <div class="fact"><b>Last reviewed</b><p>${escapeHtml(model.lastReviewed)}</p></div>
-            <div class="fact"><b>Sources</b><ul>${model.sourceLinks.map(renderSourceLink).join("")}</ul></div>
+            <div class="fact"><b>${escapeHtml(t("category"))}</b><p>${escapeHtml(modelCategoryText(model))}</p></div>
+            <div class="fact"><b>${escapeHtml(t("family"))}</b><p>${escapeHtml(model.displayName)} - ${escapeHtml(modelSizeNoteText(model))}</p></div>
+            <div class="fact"><b>${escapeHtml(t("localFeasibility"))}</b><p>${escapeHtml(localFitText(model))}</p></div>
+            <div class="fact"><b>${escapeHtml(t("setupPath"))}</b><p>${escapeHtml(model.runtimeOptions.join(" / "))}</p></div>
+            <div class="fact"><b>${escapeHtml(t("hardwareReasoning"))}</b><p>${escapeHtml(hardwareReason(model, state))}</p></div>
+            <div class="fact"><b>${escapeHtml(t("workloadReasoning"))}</b><p>${escapeHtml(workloadReason(model, state))}</p></div>
+            <div class="fact"><b>${escapeHtml(t("priorityMatch"))}</b><p>${escapeHtml(prioritySummary(model, state))}</p></div>
+            <div class="fact"><b>${escapeHtml(t("privacyNote"))}</b><p>${escapeHtml(t("privacyBody"))}</p></div>
+            <div class="fact"><b>${escapeHtml(t("licenseNote"))}</b><p>${escapeHtml(licenseSummary(model))}</p></div>
+            <div class="fact"><b>${escapeHtml(t("avoidGuidance"))}</b><p>${escapeHtml(avoidText(model))}</p></div>
+            <div class="fact"><b>${escapeHtml(t("hostedFallback"))}</b><p>${escapeHtml(fallbackSummary(model, state, score.total))}</p></div>
+            <div class="fact"><b>${escapeHtml(t("lastReviewed"))}</b><p>${escapeHtml(model.lastReviewed)}</p></div>
+            <div class="fact"><b>${escapeHtml(t("sources"))}</b><ul>${model.sourceLinks.map(renderSourceLink).join("")}</ul></div>
           </div>
           <details>
-            <summary>Score breakdown</summary>
+            <summary>${escapeHtml(t("scoreBreakdown"))}</summary>
             <table class="score-table">
-              <thead><tr><th>Rule</th><th>Reason</th><th>Points</th></tr></thead>
-              <tbody>
-                ${score.breakdown.map(row => `<tr><td>${escapeHtml(row.name)}</td><td>${escapeHtml(row.reason)}</td><td>${row.value}/${row.max}</td></tr>`).join("")}
-              </tbody>
+              <thead><tr><th>${escapeHtml(t("rule"))}</th><th>${escapeHtml(t("reason"))}</th><th>${escapeHtml(t("points"))}</th></tr></thead>
+              <tbody>${score.breakdown.map(row => `<tr><td>${escapeHtml(row.name)}</td><td>${escapeHtml(row.reason)}</td><td>${row.value}/${row.max}</td></tr>`).join("")}</tbody>
             </table>
           </details>
-        </article>
-      `;
+        </article>`;
     }
 
     function fitClass(fit) {
-      if (fit === "not recommended") return "not";
-      return fit;
+      return fit === "notRecommended" ? "not" : fit;
     }
 
     function hardwareReason(model, state) {
-      return `${state.ram}GB RAM, ${state.vram}GB VRAM/unified memory, ${state.storage}GB storage; model minimums are ${model.minRamGb}GB RAM, ${model.minVramGb}GB VRAM, about ${model.estimatedStorageGb}GB storage.`;
+      if (currentLanguage === "zh") {
+        return `${state.cpuProfile.label}；${state.gpuProfile.label}；${state.ram}GB 内存、${state.vram}GB 显存/统一内存、${state.storage}GB 存储。模型最低要求：${model.minRamGb}GB 内存、${model.minVramGb}GB 显存、约 ${model.estimatedStorageGb}GB 存储。`;
+      }
+      return `${state.cpuProfile.label}; ${state.gpuProfile.label}; ${state.ram}GB RAM, ${state.vram}GB VRAM/unified memory, ${state.storage}GB storage. Model minimums: ${model.minRamGb}GB RAM, ${model.minVramGb}GB VRAM, about ${model.estimatedStorageGb}GB storage.`;
     }
 
     function workloadReason(model, state) {
-      return model.workloadFit.includes(state.workload)
-        ? `The catalog marks this entry as suitable for ${state.workload} workloads.`
-        : `The catalog does not mark this as a direct ${state.workload} fit; treat the score as a cautious estimate.`;
+      if (currentLanguage === "zh") {
+        return model.workloadFit.includes(state.workload) ? `目录将该条目标记为适合当前负载。` : `目录没有把它标记为当前负载的直接适配项；请把分数视为谨慎估计。`;
+      }
+      return model.workloadFit.includes(state.workload) ? `The catalog marks this entry as suitable for ${state.workload} workloads.` : `The catalog does not mark this as a direct ${state.workload} fit; treat the score as a cautious estimate.`;
     }
 
     function prioritySummary(model, state) {
+      if (currentLanguage === "zh") {
+        if (!state.priorities.length) return "未选择额外优先级。";
+        return `已选优先级：${state.priorities.join(", ")}。质量层级 ${model.qualityTier}/5，速度层级 ${model.speedTier}/5，安装难度 ${setupDifficultyLabel(model.setupDifficulty)}。`;
+      }
       if (!state.priorities.length) return "No optional priorities selected.";
       return `Selected priorities: ${state.priorities.join(", ")}. Quality tier ${model.qualityTier}/5, speed tier ${model.speedTier}/5, setup ${model.setupDifficulty}.`;
     }
 
     function licenseSummary(model) {
-      const status = {
-        "likely-allowed": "Commercial use appears likely allowed in this static catalog.",
-        "check-license": "Check the linked license before commercial use.",
-        restricted: "This entry may have commercial or redistribution restrictions.",
-        unknown: "Commercial-use status is unknown."
-      }[model.commercialUse] || "Commercial-use status needs review.";
+      if (currentLanguage === "zh") {
+        const status = { "likely-allowed": "此静态目录显示商业使用可能允许。", "check-license": "商业使用前请核对链接中的许可证。", restricted: "该条目可能有商业或再分发限制。", unknown: "商业使用状态未知。" }[model.commercialUse] || "商业使用状态需要复核。";
+        return `${status} 这不是法律建议。`;
+      }
+      const status = { "likely-allowed": "Commercial use appears likely allowed in this static catalog.", "check-license": "Check the linked license before commercial use.", restricted: "This entry may have commercial or redistribution restrictions.", unknown: "Commercial-use status is unknown." }[model.commercialUse] || "Commercial-use status needs review.";
       return `${status} ${model.licenseNotes} This is not legal advice.`;
     }
 
     function fallbackSummary(model, state, score) {
-      if (state.deployment === "local-only") {
-        return "Hidden by local-only preference. Consider lighter settings or stronger local hardware before hosted options.";
+      if (currentLanguage === "zh") {
+        if (state.deployment === "local-only") return "由于选择仅本地，已隐藏托管备用方案。请先考虑更轻设置或更强本地硬件。";
+        if (score >= 60 && state.deployment !== "cloud-ok") return "当前本地适配不需要备用方案；如果要扩展规模或简化运维，可再考虑托管开放权重服务。";
+        return "本地运行不现实或体验较弱时，可考虑托管开放权重服务。托管服务可能接收你发送的提示、文件或输出；使用前仍需核对许可证。";
       }
-      if (score >= 60 && state.deployment !== "cloud-ok") {
-        return "Not needed for this local fit, but hosted open-weight options may help with scale or convenience.";
-      }
+      if (state.deployment === "local-only") return "Hidden by local-only preference. Consider lighter settings or stronger local hardware before hosted options.";
+      if (score >= 60 && state.deployment !== "cloud-ok") return "Not needed for this local fit, but hosted open-weight options may help with scale or convenience.";
       const note = model.cloudFallback && model.cloudFallback.note ? model.cloudFallback.note : "Use a hosted open-weight option when local execution is not practical.";
       return `${note} Hosted providers may receive prompts, files, or outputs you send to them. Verify license terms first.`;
     }
 
     function escapeHtml(value) {
-      return String(value).replace(/[&<>"']/g, char => ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#039;"
-      })[char]);
+      return String(value).replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[char]);
     }
 
     function escapeAttr(value) {
@@ -1008,14 +1688,8 @@
     }
 
     function validateCatalog(data) {
-      const required = [
-        "id", "displayName", "category", "categoryLabel", "modelCategory", "recommendationCategory",
-        "taskCategories", "modalities", "exampleModels", "sizeClass", "memoryTier", "minRamGb",
-        "recommendedRamGb", "minVramGb", "recommendedVramGb", "estimatedStorageGb", "gpuImportance",
-        "supportedGpuVendors", "runtimeOptions", "setupDifficulty", "qualityTier", "speedTier",
-        "commercialUse", "deploymentModes", "workloadFit", "localFitNotes", "licenseNotes",
-        "sourceLinks", "lastReviewed", "avoidNotes", "cloudFallback"
-      ];
+      const required = ["id", "displayName", "category", "categoryLabel", "modelCategory", "recommendationCategory", "taskCategories", "modalities", "exampleModels", "sizeClass", "memoryTier", "minRamGb", "recommendedRamGb", "minVramGb", "recommendedVramGb", "estimatedStorageGb", "gpuImportance", "supportedGpuVendors", "runtimeOptions", "setupDifficulty", "qualityTier", "speedTier", "commercialUse", "deploymentModes", "workloadFit", "localFitNotes", "licenseNotes", "sourceLinks", "lastReviewed", "avoidNotes", "cloudFallback", "starterRecommendation"];
+      const starterFields = ["family", "sizeAndQuantization", "preferredRuntime", "hardwareFitNote", "avoidNote"];
       const allowedCategories = new Set(["chat-llm", "coding-llm", "image-generation", "speech-to-text", "embeddings"]);
       const allowedCommercial = new Set(["likely-allowed", "check-license", "restricted", "unknown"]);
       const allowedWorkloads = new Set(["casual", "daily", "batch", "production", "latency", "quality"]);
@@ -1023,24 +1697,27 @@
       const allowedGpuImportance = new Set(["none", "low", "medium", "high", "required"]);
       if (!data || !Array.isArray(data.models)) throw new Error("Catalog root must include models array");
       data.models.forEach(model => {
-        required.forEach(field => {
-          if (!(field in model)) throw new Error(`Catalog entry ${model.id || "unknown"} is missing ${field}`);
-        });
+        required.forEach(field => { if (!(field in model)) throw new Error(`Catalog entry ${model.id || "unknown"} is missing ${field}`); });
+        starterFields.forEach(field => { if (!model.starterRecommendation[field]) throw new Error(`${model.id} starterRecommendation is missing ${field}`); });
         if (!allowedCategories.has(model.category)) throw new Error(`Unsupported category ${model.category}`);
         if (!allowedCommercial.has(model.commercialUse)) throw new Error(`Unsupported commercialUse ${model.commercialUse}`);
         ["taskCategories", "exampleModels", "supportedGpuVendors", "runtimeOptions", "deploymentModes", "workloadFit", "sourceLinks"].forEach(field => {
           if (!Array.isArray(model[field])) throw new Error(`${model.id} ${field} must be an array`);
         });
         if (!allowedGpuImportance.has(model.gpuImportance)) throw new Error(`${model.id} has unsupported gpuImportance`);
-        model.supportedGpuVendors.forEach(vendor => {
-          if (!allowedGpuVendors.has(vendor)) throw new Error(`${model.id} has unsupported GPU vendor ${vendor}`);
-        });
-        model.workloadFit.forEach(workload => {
-          if (!allowedWorkloads.has(workload)) throw new Error(`${model.id} has unsupported workload ${workload}`);
-        });
+        model.supportedGpuVendors.forEach(vendor => { if (!allowedGpuVendors.has(vendor)) throw new Error(`${model.id} has unsupported GPU vendor ${vendor}`); });
+        model.workloadFit.forEach(workload => { if (!allowedWorkloads.has(workload)) throw new Error(`${model.id} has unsupported workload ${workload}`); });
         if (!model.sourceLinks.length) throw new Error(`${model.id} requires at least one source link`);
+        model.sourceLinks.forEach((link, index) => {
+          if (!link || typeof link !== "object") throw new Error(`${model.id} sourceLinks[${index}] must be an object`);
+          if (typeof link.url !== "string" || typeof link.label !== "string") throw new Error(`${model.id} sourceLinks[${index}] requires string label and url`);
+        });
       });
       return data;
+    }
+
+    function updateCatalogFreshness() {
+      document.getElementById("catalogFreshness").textContent = catalog ? t("catalogFreshness", { freshness: catalog.catalogFreshness || "unknown" }) : t("catalogLoading");
     }
 
     async function loadCatalog() {
@@ -1048,16 +1725,52 @@
         const response = await fetch("models.json", { cache: "no-store" });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         catalog = validateCatalog(await response.json());
-        document.getElementById("catalogFreshness").textContent = `Catalog freshness: ${catalog.catalogFreshness || "unknown"}`;
+        updateCatalogFreshness();
         render();
       } catch (error) {
         catalog = null;
         summaryText.textContent = "Catalog could not be loaded.";
-        messageArea.innerHTML = renderNotice("bad", "Missing catalog / models.json load failure", "Could not load models.json. If you opened index.html from file://, start a local server such as `python3 -m http.server` in this folder and visit http://localhost:8000/.");
+        messageArea.innerHTML = renderNotice("bad", t("catalogLoadTitle"), t("catalogLoadBody"));
         resultsEl.innerHTML = "";
-        document.getElementById("catalogFreshness").textContent = "Catalog freshness: unavailable";
+        document.getElementById("catalogFreshness").textContent = t("catalogUnavailable");
       }
     }
+
+    document.querySelectorAll("[data-language]").forEach(button => {
+      button.addEventListener("click", () => applyLanguage(button.dataset.language));
+    });
+
+    document.querySelectorAll("[data-helper]").forEach(button => {
+      button.addEventListener("click", () => {
+        document.getElementById("setupPaste").value = helperSetups[button.dataset.helper];
+        pendingScan = scanSetupText(helperSetups[button.dataset.helper]);
+        scanSummary.textContent = t("scanFound", { count: Object.keys(pendingScan.fields).length });
+        renderScan();
+      });
+    });
+
+    document.getElementById("scanSetup").addEventListener("click", () => {
+      const text = document.getElementById("setupPaste").value.trim();
+      if (!text) {
+        pendingScan = null;
+        scanSummary.textContent = t("scanEmpty");
+        renderScan();
+        return;
+      }
+      pendingScan = scanSetupText(text);
+      const warning = pendingScan.warnings.length ? ` ${pendingScan.warnings.join(" ")}` : "";
+      scanSummary.textContent = `${t("scanFound", { count: Object.keys(pendingScan.fields).length })}${warning}`;
+      renderScan();
+    });
+
+    applyDetected.addEventListener("click", applyPendingScan);
+
+    document.getElementById("clearDetected").addEventListener("click", () => {
+      document.getElementById("setupPaste").value = "";
+      pendingScan = null;
+      scanSummary.textContent = t("scanCleared");
+      renderScan();
+    });
 
     document.getElementById("preset").addEventListener("change", event => {
       if (event.target.value !== "custom") applyPreset(event.target.value);
@@ -1065,7 +1778,7 @@
       render();
     });
 
-    ["os", "deviceType", "cpu", "ram", "gpuVendor", "vram", "storage", "internet", "deployment"].forEach(id => {
+    ["os", "deviceType", "cpuModel", "ram", "gpuVendor", "gpuModel", "vram", "storage", "internet", "deployment"].forEach(id => {
       document.getElementById(id).addEventListener("input", () => {
         syncVramAvailability();
         markCustom();
@@ -1094,6 +1807,7 @@
     });
 
     applyPreset("basic-laptop");
+    applyLanguage(currentLanguage);
     loadCatalog();
   </script>
 </body>
