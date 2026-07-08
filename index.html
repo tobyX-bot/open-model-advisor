@@ -915,7 +915,7 @@
           ${capText}
           <div class="card-grid">
             <div class="fact"><b>Category</b><p>${escapeHtml(model.modelCategory || model.recommendationCategory)}</p></div>
-            <div class="fact"><b>Example family</b><p>${escapeHtml(model.displayName)} · ${escapeHtml(model.modelSizeNote)}</p></div>
+            <div class="fact"><b>Example family</b><p>${escapeHtml(model.displayName)} - ${escapeHtml(model.modelSizeNote)}</p></div>
             <div class="fact"><b>Local feasibility</b><p>${escapeHtml(model.localFitNotes)}</p></div>
             <div class="fact"><b>Setup path</b><p>${escapeHtml(model.runtimeOptions.join(" / "))}</p></div>
             <div class="fact"><b>Hardware reasoning</b><p>${escapeHtml(hardwareReason(model, state))}</p></div>
