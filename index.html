@@ -237,7 +237,7 @@
               <input id="cpuModel" name="cpuModel" type="text" placeholder="Apple M3 Pro, Ryzen 7 7800X3D, Intel i7-12700H">
             </label>
             <label for="ram"><span data-i18n="ramLabel">RAM / unified memory (GB)</span>
-              <input id="ram" name="ram" type="number" min="2" max="512" step="1">
+              <input id="ram" name="ram" type="number" min="2" max="512" step="1" required>
             </label>
             <label for="gpuVendor"><span data-i18n="gpuVendorLabel">GPU vendor</span>
               <select id="gpuVendor" name="gpuVendor">
@@ -252,10 +252,10 @@
               <input id="gpuModel" name="gpuModel" type="text" placeholder="RTX 4070, Radeon RX 7800 XT, Apple M3 Pro GPU">
             </label>
             <label for="vram"><span data-i18n="vramLabel">VRAM / usable unified memory (GB)</span>
-              <input id="vram" name="vram" type="number" min="0" max="128" step="1">
+              <input id="vram" name="vram" type="number" min="0" max="128" step="1" required>
             </label>
             <label for="storage"><span data-i18n="storageLabel">Free storage (GB)</span>
-              <input id="storage" name="storage" type="number" min="1" max="4096" step="1">
+              <input id="storage" name="storage" type="number" min="1" max="4096" step="1" required>
             </label>
             <label for="internet"><span data-i18n="internetLabel">Internet availability</span>
               <select id="internet" name="internet">

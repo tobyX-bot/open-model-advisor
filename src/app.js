@@ -83,11 +83,22 @@ function getState() {
 
 function syncVramAvailability() {
   const vramInput = document.getElementById("vram");
-  const gpuProfile = deriveGpuProfile(document.getElementById("gpuModel").value, document.getElementById("gpuVendor").value);
+  const gpuVendorInput = document.getElementById("gpuVendor");
+  const gpuProfile = deriveGpuProfile(document.getElementById("gpuModel").value, gpuVendorInput.value);
+  if (gpuProfile.confidence !== "low" && gpuProfile.vendor && gpuProfile.vendor !== gpuVendorInput.value) {
+    gpuVendorInput.value = gpuProfile.vendor;
+  }
   const noGpu = gpuProfile.vendor === "none";
   if (noGpu) vramInput.value = 0;
   vramInput.disabled = noGpu;
   vramInput.setAttribute("aria-disabled", String(noGpu));
+}
+
+function hardwareInputsValid() {
+  return ["ram", "vram", "storage"].every((id) => {
+    const field = document.getElementById(id);
+    return field.disabled || field.checkValidity();
+  });
 }
 
 function applyPreset(name, options = {}) {
@@ -118,6 +129,7 @@ function updatePresetLabel() {
 
 function provenanceKey() {
   if (profileConfirmed && profileOrigin === "scan") return "provenanceScan";
+  if (profileOrigin === "scan") return "provenanceScanPending";
   if (profileConfirmed) return "provenanceConfirmed";
   if (profileOrigin === "preset") return "provenancePreset";
   if (profileOrigin === "manual") return "provenanceManual";
@@ -128,6 +140,8 @@ function updateProfileState() {
   provenanceLabel.textContent = t(provenanceKey());
   profileNote.textContent = profileConfirmed
     ? t("specsConfirmed")
+    : profileOrigin === "scan"
+      ? t("scanReviewNeeded")
     : hasConfirmedOnce
       ? t("changedAfterConfirmation")
       : t("confirmationNeeded");
@@ -258,8 +272,7 @@ function applyPendingScan() {
   syncVramAvailability();
   document.getElementById("preset").value = "custom";
   profileOrigin = "scan";
-  profileConfirmed = true;
-  hasConfirmedOnce = true;
+  profileConfirmed = false;
   const skippedTask = Boolean(pendingScan.fields.task && currentTask);
   pendingScan = null;
   setScanMessage(skippedTask ? "scanApplied" : "scanApplied", {}, skippedTask ? ["scanTaskSkipped"] : []);
@@ -309,6 +322,20 @@ function render(options = {}) {
     summaryText.textContent = t("chooseTask");
     resultsEl.innerHTML = "";
     setStage(derivedStage(state));
+    return;
+  }
+  if (!hasConfirmedOnce) {
+    summaryText.textContent = t("chooseTask");
+    messageArea.innerHTML = renderNotice("info", t("initialPromptTitle"), t("initialPromptBody"));
+    resultsEl.innerHTML = "";
+    setStage(derivedStage(state));
+    return;
+  }
+  if (!hardwareInputsValid()) {
+    summaryText.textContent = t("invalidHardwareSummary");
+    messageArea.innerHTML = renderNotice("bad", t("invalidHardwareTitle"), t("invalidHardwareBody"));
+    resultsEl.innerHTML = "";
+    setStage("match");
     return;
   }
   if (!state.task) {
@@ -417,12 +444,23 @@ function bindEvents() {
     render();
   });
 
-  ["os", "deviceType", "cpuModel", "ram", "gpuVendor", "gpuModel", "vram", "storage", "internet", "deployment"].forEach((id) => {
+  ["os", "deviceType", "cpuModel", "ram", "gpuModel", "vram", "storage"].forEach((id) => {
     document.getElementById(id).addEventListener("input", () => {
       syncVramAvailability();
       markCustom();
       render();
     });
+  });
+
+  document.getElementById("gpuVendor").addEventListener("change", (event) => {
+    document.getElementById("gpuModel").value = event.target.value === "apple" ? "Apple unified GPU" : "";
+    syncVramAvailability();
+    markCustom();
+    render();
+  });
+
+  ["internet", "deployment"].forEach((id) => {
+    document.getElementById(id).addEventListener("change", render);
   });
 
   form.addEventListener("submit", (event) => {
@@ -437,6 +475,18 @@ function bindEvents() {
   });
 
   confirmSpecs.addEventListener("click", () => {
+    const invalidField = ["ram", "vram", "storage"]
+      .map((id) => document.getElementById(id))
+      .find((field) => !field.disabled && !field.checkValidity());
+    if (invalidField) {
+      profileConfirmed = false;
+      manualDetails.open = true;
+      profileNote.textContent = t("invalidHardwareBody");
+      invalidField.reportValidity();
+      invalidField.focus();
+      announce(t("invalidHardwareBody"));
+      return;
+    }
     profileConfirmed = true;
     hasConfirmedOnce = true;
     updateProfileState();
