@@ -72,17 +72,17 @@ export function scanSetupText(text) {
 
   const unified = normalized.match(/(\d{1,3})\s*(?:gb|g)\s*(?:unified memory|统一内存|統一記憶體)/i)
     || normalized.match(/(?:unified memory|统一内存|統一記憶體)[^0-9]{0,12}(\d{1,3})\s*(?:gb|g)/i);
-  const ramMatches = [...normalized.matchAll(/(\d{1,3})\s*(?:gb|g)\s*(?:\bram\b|\bmemory\b|内存|記憶體)/gi)].map((match) => Number(match[1]));
+  const ramMatches = [...normalized.matchAll(/(\d{1,3})\s*(?:gb|g)\s*(?:\bsystem\s+memory\b|\bram\b|\bmemory\b|(?:系统|系統)\s*(?:内存|記憶體)|内存|記憶體)/gi)].map((match) => Number(match[1]));
   const ramLabeled = normalized.match(/(?:\bram\b|(?<!gpu\s)(?<!graphics\s)(?<!video\s)\bmemory\b|(?<!gpu)(?<!gpu\s)(?<!显)(?<!顯)内存|(?<!gpu)(?<!gpu\s)記憶體)[^0-9]{0,12}(\d{1,3})\s*(?:gb|g)/i);
 
   if (unified) {
     const ram = Number(unified[1]);
     add("ram", ram, "high", "reasonUnifiedMemory");
     add("vram", Math.max(4, Math.floor(ram * 0.75)), "medium", "reasonUnifiedVramEstimate");
-  } else if (ramLabeled) {
-    add("ram", Number(ramLabeled[1]), "high", "reasonRamLabel");
   } else if (ramMatches.length) {
     add("ram", Math.max(...ramMatches), "medium", "reasonMemoryWording");
+  } else if (ramLabeled) {
+    add("ram", Number(ramLabeled[1]), "high", "reasonRamLabel");
   }
   if (ramMatches.length > 1 && new Set(ramMatches).size > 1) warnings.push("warningMultipleRam");
 
