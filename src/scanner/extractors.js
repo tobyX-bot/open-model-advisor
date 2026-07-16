@@ -7,6 +7,8 @@ import {
 
 const CAPACITY_TOKEN = /\b\d{1,5}(?:\.\d+)?[ \t]*(?:[KMGT]i?B|[GT])\b/iu;
 const HARDWARE_FIELD_LABEL = /\b(?:RAM|VRAM|memory|storage|SSD|HDD|disk|drive|task|workload|with)\b|内存|記憶體|显存|顯存|存储|存儲|硬盘|硬碟|固态硬盘|固態硬碟|任务|任務|用途/iu;
+const TRAILING_PLAIN_NUMBER = /(?:^|[ \t])\d{1,5}$/u;
+const ADJACENT_CAPACITY_CONTEXT = /^[ \t]*(?:(?:[KMGT]i?B|[GT])\b|(?:RAM|VRAM|memory|storage|SSD|HDD|disk|drive)\b|内存|記憶體|显存|顯存|存储|存儲|硬盘|硬碟|固态硬盘|固態硬碟)/iu;
 
 function globalRegex(regex) {
   const flags = `${regex.flags.replace(/[gy]/g, "")}g`;
@@ -17,17 +19,22 @@ function overlaps(left, right) {
   return left.start < right.end && right.start < left.end;
 }
 
-function isValidEvidence(pattern, evidence) {
+function isValidEvidence(pattern, evidence, followingText) {
   if (!pattern.generic) return true;
   if (CAPACITY_TOKEN.test(evidence) || HARDWARE_FIELD_LABEL.test(evidence)) return false;
+  if (TRAILING_PLAIN_NUMBER.test(evidence) && ADJACENT_CAPACITY_CONTEXT.test(followingText)) return false;
   return !TASK_PATTERNS.some((taskPattern) => taskPattern.regex.test(evidence));
 }
 
 function candidateFromMatch(document, segment, pattern, match) {
   const evidence = pattern.evidenceGroup ? match.groups?.[pattern.evidenceGroup] : match[0];
-  if (!evidence || !isValidEvidence(pattern, evidence)) return null;
+  if (!evidence) return null;
 
   const evidenceOffset = pattern.evidenceGroup ? match[0].indexOf(evidence) : 0;
+  const localEnd = match.index + evidenceOffset + evidence.length;
+  const followingText = segment.text.slice(localEnd, localEnd + 48);
+  if (!isValidEvidence(pattern, evidence, followingText)) return null;
+
   const start = segment.start + match.index + evidenceOffset;
   const end = start + evidence.length;
   const raw = document.normalized.slice(start, end);

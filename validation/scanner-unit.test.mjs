@@ -517,6 +517,36 @@ test("rejects generic vendor GPU models contaminated by memory evidence", () => 
   }
 });
 
+test("rejects generic models whose trailing number is followed by a spaced capacity context", () => {
+  const cases = [
+    ["CPU NovaCore 64 GB RAM", extractCpuCandidates],
+    ["NVIDIA MysteryGPU 8 GB VRAM", extractGpuCandidates],
+    ["graphics card Photon 24 GiB memory", extractGpuCandidates],
+    ["CPU NovaCore 32 gb RAM", extractCpuCandidates],
+    ["CPU NovaCore 64 RAM", extractCpuCandidates],
+    ["NVIDIA MysteryGPU 8 VRAM", extractGpuCandidates],
+    ["处理器 NovaCore 64 GB 内存", extractCpuCandidates],
+    ["显卡 Photon 12 GB 显存", extractGpuCandidates]
+  ];
+
+  for (const [input, extractor] of cases) {
+    const candidates = extractor(normalizeSetupText(input));
+
+    assert.deepEqual(candidateValues(candidates, "cpuModel"), [], input);
+    assert.deepEqual(candidateValues(candidates, "gpuModel"), [], input);
+    assert.deepEqual(candidateValues(candidates, "gpuVendor"), [], input);
+  }
+
+  assert.deepEqual(
+    candidateValues(extractCpuCandidates(normalizeSetupText("CPU NovaCore 64")), "cpuModel"),
+    ["NovaCore 64"]
+  );
+  assert.deepEqual(
+    candidateValues(extractGpuCandidates(normalizeSetupText("graphics card Photon 24")), "gpuModel"),
+    ["Photon 24"]
+  );
+});
+
 test("abstains when a generic GPU model span contains task evidence", () => {
   const inputs = [
     "GPU programming Photon Z-20",
