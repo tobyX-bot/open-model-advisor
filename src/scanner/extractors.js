@@ -5,10 +5,27 @@ import {
   TASK_PATTERNS
 } from "./patterns.js";
 
-const CAPACITY_TOKEN = /\b\d{1,5}(?:\.\d+)?[ \t]*(?:[KMGT]i?B|[GT])\b/iu;
-const HARDWARE_FIELD_LABEL = /\b(?:RAM|VRAM|memory|storage|SSD|HDD|disk|drive|task|workload|with)\b|内存|記憶體|显存|顯存|存储|存儲|硬盘|硬碟|固态硬盘|固態硬碟|任务|任務|用途/iu;
-const TRAILING_PLAIN_NUMBER = /(?:^|[ \t])\d{1,5}$/u;
-const ADJACENT_CAPACITY_CONTEXT = /^[ \t]*(?:(?:[KMGT]i?B|[GT])\b|(?:RAM|VRAM|memory|storage|SSD|HDD|disk|drive)\b|内存|記憶體|显存|顯存|存储|存儲|硬盘|硬碟|固态硬盘|固態硬碟)/iu;
+const CAPACITY_NUMBER_SOURCE = String.raw`\d{1,5}(?:\.\d+)?`;
+const CAPACITY_SEPARATOR_SOURCE = String.raw`[ \t,，:\-–—]{0,8}`;
+const CAPACITY_UNIT_SOURCE = String.raw`(?:G(?:i)?B|T(?:i)?B|G|T|gigabytes?|gigs?)`;
+const CAPACITY_FIELD_SOURCE = String.raw`(?:\b(?:RAM|VRAM|memory|storage|SSD|HDD|disk|drive)\b|内存|記憶體|显存|顯存|存储|存儲|硬盘|硬碟|固态硬盘|固態硬碟)`;
+
+const CAPACITY_TOKEN = new RegExp(
+  String.raw`\b${CAPACITY_NUMBER_SOURCE}${CAPACITY_SEPARATOR_SOURCE}${CAPACITY_UNIT_SOURCE}\b`,
+  "iu"
+);
+const FORBIDDEN_GENERIC_LABEL = new RegExp(
+  String.raw`(?:${CAPACITY_FIELD_SOURCE}|\b(?:task|workload|with)\b|任务|任務|用途)`,
+  "iu"
+);
+const TRAILING_PLAIN_NUMBER = new RegExp(
+  String.raw`(?:^|[ \t])${CAPACITY_NUMBER_SOURCE}$`,
+  "u"
+);
+const ADJACENT_CAPACITY_CONTEXT = new RegExp(
+  String.raw`^${CAPACITY_SEPARATOR_SOURCE}(?:${CAPACITY_UNIT_SOURCE}\b|${CAPACITY_FIELD_SOURCE})`,
+  "iu"
+);
 
 function globalRegex(regex) {
   const flags = `${regex.flags.replace(/[gy]/g, "")}g`;
@@ -21,7 +38,7 @@ function overlaps(left, right) {
 
 function isValidEvidence(pattern, evidence, followingText) {
   if (!pattern.generic) return true;
-  if (CAPACITY_TOKEN.test(evidence) || HARDWARE_FIELD_LABEL.test(evidence)) return false;
+  if (CAPACITY_TOKEN.test(evidence) || FORBIDDEN_GENERIC_LABEL.test(evidence)) return false;
   if (TRAILING_PLAIN_NUMBER.test(evidence) && ADJACENT_CAPACITY_CONTEXT.test(followingText)) return false;
   return !TASK_PATTERNS.some((taskPattern) => taskPattern.regex.test(evidence));
 }
