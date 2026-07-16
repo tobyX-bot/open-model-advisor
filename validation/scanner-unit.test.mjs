@@ -564,6 +564,24 @@ test("rejects generic models whose trailing number is followed by a spaced capac
   );
 });
 
+test("rejects generic model evidence truncated before a decimal continuation", () => {
+  const cases = [
+    ["CPU NovaCore 64.0GB RAM", extractCpuCandidates],
+    ["NVIDIA MysteryGPU 8.0 GiB VRAM", extractGpuCandidates],
+    ["graphics card Photon 1.5-TB storage", extractGpuCandidates],
+    ["CPU NovaCore 8.0 gigs memory", extractCpuCandidates],
+    ["CPU NovaCore 64.0", extractCpuCandidates]
+  ];
+
+  for (const [input, extractor] of cases) {
+    const candidates = extractor(normalizeSetupText(input));
+
+    assert.deepEqual(candidateValues(candidates, "cpuModel"), [], input);
+    assert.deepEqual(candidateValues(candidates, "gpuModel"), [], input);
+    assert.deepEqual(candidateValues(candidates, "gpuVendor"), [], input);
+  }
+});
+
 test("abstains when a generic GPU model span contains task evidence", () => {
   const inputs = [
     "GPU programming Photon Z-20",

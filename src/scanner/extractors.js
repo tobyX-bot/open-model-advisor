@@ -5,7 +5,9 @@ import {
   TASK_PATTERNS
 } from "./patterns.js";
 
-const CAPACITY_NUMBER_SOURCE = String.raw`\d{1,5}(?:\.\d+)?`;
+const CAPACITY_INTEGER_SOURCE = String.raw`\d{1,5}`;
+const DECIMAL_CONTINUATION_SOURCE = String.raw`\.\d{1,5}`;
+const CAPACITY_NUMBER_SOURCE = String.raw`${CAPACITY_INTEGER_SOURCE}(?:${DECIMAL_CONTINUATION_SOURCE})?`;
 const CAPACITY_SEPARATOR_SOURCE = String.raw`[ \t,，:\-–—]{0,8}`;
 const CAPACITY_UNIT_SOURCE = String.raw`(?:G(?:i)?B|T(?:i)?B|G|T|gigabytes?|gigs?)`;
 const CAPACITY_FIELD_SOURCE = String.raw`(?:\b(?:RAM|VRAM|memory|storage|SSD|HDD|disk|drive)\b|内存|記憶體|显存|顯存|存储|存儲|硬盘|硬碟|固态硬盘|固態硬碟)`;
@@ -19,9 +21,10 @@ const FORBIDDEN_GENERIC_LABEL = new RegExp(
   "iu"
 );
 const TRAILING_PLAIN_NUMBER = new RegExp(
-  String.raw`(?:^|[ \t])${CAPACITY_NUMBER_SOURCE}$`,
+  String.raw`(?:^|[ \t])${CAPACITY_INTEGER_SOURCE}$`,
   "u"
 );
+const DECIMAL_CONTINUATION = new RegExp(String.raw`^${DECIMAL_CONTINUATION_SOURCE}`, "u");
 const ADJACENT_CAPACITY_CONTEXT = new RegExp(
   String.raw`^${CAPACITY_SEPARATOR_SOURCE}(?:${CAPACITY_UNIT_SOURCE}\b|${CAPACITY_FIELD_SOURCE})`,
   "iu"
@@ -39,7 +42,10 @@ function overlaps(left, right) {
 function isValidEvidence(pattern, evidence, followingText) {
   if (!pattern.generic) return true;
   if (CAPACITY_TOKEN.test(evidence) || FORBIDDEN_GENERIC_LABEL.test(evidence)) return false;
-  if (TRAILING_PLAIN_NUMBER.test(evidence) && ADJACENT_CAPACITY_CONTEXT.test(followingText)) return false;
+  if (
+    TRAILING_PLAIN_NUMBER.test(evidence)
+    && (DECIMAL_CONTINUATION.test(followingText) || ADJACENT_CAPACITY_CONTEXT.test(followingText))
+  ) return false;
   return !TASK_PATTERNS.some((taskPattern) => taskPattern.regex.test(evidence));
 }
 
