@@ -4,7 +4,9 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const V1_PATH = path.join(ROOT, "fixtures", "computer_setups_200.json");
-const V1_1_PATH = path.join(ROOT, "fixtures", "computer_setups_200_v1_1.json");
+const V1_1_PATH = process.argv[2]
+  ? path.resolve(process.argv[2])
+  : path.join(ROOT, "fixtures", "computer_setups_200_v1_1.json");
 const V1_SHA256 = "e9e96bf82cde212d1f8d3ea71ac5b6184c138e355eb3a1cee07d921d1064b17b";
 
 const ABSENT_GPU_EVIDENCE_IDS = ["user-040", "user-069", "user-110", "user-200"];
@@ -12,14 +14,6 @@ const EXPLICIT_NVIDIA_IDS = ["user-017", "user-050", "user-090", "user-143", "us
 const CORRECTED_IDS = new Set([...ABSENT_GPU_EVIDENCE_IDS, ...EXPLICIT_NVIDIA_IDS]);
 const APPLE_INFERENCE_ID = "user-152";
 
-const VALID_STATUS_CODE_PAIRS = new Map([
-  ["ram", new Map([["conflict", "conflict.ram"], ["missing", "missing.ram"]])],
-  ["vram", new Map([["conflict", "conflict.vram"], ["missing", "missing.vram"]])],
-  ["storage", new Map([["missing", "missing.storage"]])],
-  ["cpuModel", new Map([["unknown", "unknown.cpu"]])],
-  ["gpuVendor", new Map([["missing", "missing.gpuVendor"]])],
-  ["gpuModel", new Map([["unknown", "unknown.gpuModel"], ["missing", "missing.gpuModel"]])]
-]);
 const ALLOWED_ISSUE_CODES = new Set([
   "conflict.ram",
   "conflict.vram",
@@ -75,6 +69,25 @@ function expectedCorrectedLabels(record) {
     labels.ambiguousFields = labels.ambiguousFields.filter((field) => field !== "gpuVendor");
   }
   return labels;
+}
+
+function expectedStatusCode(record, field) {
+  if (["contradiction-a", "contradiction-b"].includes(record.adversarialKind) && ["ram", "vram"].includes(field)) {
+    return { status: "conflict", code: `conflict.${field}` };
+  }
+  if (record.adversarialKind === "unknown-cpu" && field === "cpuModel") {
+    return { status: "unknown", code: "unknown.cpu" };
+  }
+  if (record.adversarialKind === "unknown-gpu" && field === "gpuModel") {
+    return { status: "unknown", code: "unknown.gpuModel" };
+  }
+  if (record.adversarialKind === "omitted-memory") {
+    if (["ram", "vram", "storage"].includes(field)) return { status: "missing", code: `missing.${field}` };
+    if (ABSENT_GPU_EVIDENCE_IDS.includes(record.id) && ["gpuVendor", "gpuModel"].includes(field)) {
+      return { status: "missing", code: `missing.${field}` };
+    }
+  }
+  return null;
 }
 
 function compareNonOracleData(v1, v1_1) {
@@ -153,8 +166,12 @@ function checkParserSemantics(record) {
     const code = expected.expectedIssueCodes?.[field];
     expect(typeof status === "string" && ["conflict", "unknown", "missing"].includes(status), `${record.id}: ${field} has invalid field status ${JSON.stringify(status)}`);
     expect(typeof code === "string" && ALLOWED_ISSUE_CODES.has(code), `${record.id}: ${field} has invalid issue code ${JSON.stringify(code)}`);
-    const expectedCode = VALID_STATUS_CODE_PAIRS.get(field)?.get(status);
-    expect(expectedCode === code, `${record.id}: ${field} status ${JSON.stringify(status)} does not match issue code ${JSON.stringify(code)}`);
+    const required = expectedStatusCode(record, field);
+    expect(required !== null, `${record.id}: ${field} is not validly ambiguous for adversarial kind ${JSON.stringify(record.adversarialKind)}`);
+    if (required) {
+      expect(status === required.status, `${record.id}: ${field} must use status ${required.status}, found ${JSON.stringify(status)}`);
+      expect(code === required.code, `${record.id}: ${field} must use issue code ${required.code}, found ${JSON.stringify(code)}`);
+    }
   });
 }
 
