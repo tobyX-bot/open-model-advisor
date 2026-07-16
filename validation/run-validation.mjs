@@ -10,9 +10,11 @@ import { compatible, fitLabel, performanceLabel, scoreModel } from "../src/scori
 import { scanSetupText } from "../src/scanner.js";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
-const fixturePath = path.join(ROOT, "fixtures", "computer_setups_200.json");
+const fixturePath = path.join(ROOT, "fixtures", "computer_setups_200_v1_1.json");
 const catalogPath = path.join(ROOT, "..", "models.json");
-const outputDirectory = path.join(ROOT, "results");
+const outputDirectory = process.env.VALIDATION_OUTPUT_DIR
+  ? path.resolve(process.env.VALIDATION_OUTPUT_DIR)
+  : path.join(ROOT, "results", "current");
 const outputPath = path.join(outputDirectory, "module-results.json");
 const dataset = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
 const catalog = validateCatalog(JSON.parse(fs.readFileSync(catalogPath, "utf8")));
@@ -397,7 +399,7 @@ const result = {
     generatedAt: new Date().toISOString(),
     codeCommit: "5dd494c",
     fixtureCommit,
-    fixtureSha256: "e9e96bf82cde212d1f8d3ea71ac5b6184c138e355eb3a1cee07d921d1064b17b",
+    fixtureSha256: "54fe97fdd3e8b742000bd9df4ec79c586e0e16eeaa07f3c61ac99aebefce02b7",
     records: dataset.records.length,
     folds: 5,
     note: "Deterministic five-fold scenario validation; no model training occurred."

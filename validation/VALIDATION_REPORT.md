@@ -19,7 +19,7 @@ The V2 branch should not be merged into the public GitHub Pages release until th
 
 ### Post-validation oracle erratum
 
-A later independent audit found two oracle defects. Four non-Apple `omitted-memory` records (`user-040`, `user-069`, `user-110`, and `user-200`) required GPU vendor/model values that do not appear in their setup text. Five `unknown-gpu` records explicitly say NVIDIA but mark both vendor and model ambiguous; V1.1 must require the known NVIDIA vendor while leaving only the model unknown. The planned V1.1 oracle will preserve all inputs, profiles, folds, quotas, and policy labels while correcting those expectations and adding explicit source-evidence checks.
+A later independent audit found two oracle defects. Four non-Apple `omitted-memory` records (`user-040`, `user-069`, `user-110`, and `user-200`) required GPU vendor/model values that do not appear in their setup text. Five `unknown-gpu` records explicitly say NVIDIA but mark both vendor and model ambiguous. The frozen V1.1 oracle requires the known NVIDIA vendor while leaving only the model unknown, and preserves all inputs, profiles, folds, quotas, and policy labels while correcting those expectations and adding explicit source-evidence checks.
 
 This erratum does not change the release verdict or the reported gate rates. All five omitted-memory cases also failed the valid requirement to emit an omission warning. All five unknown-GPU cases failed to warn about the unknown model, and the current scanner also missed the explicit NVIDIA vendor. The baseline raw results remain preserved as evidence of the original run.
 
@@ -168,8 +168,8 @@ Evidence:
 
 - Test standard: [`TEST_STANDARD.md`](TEST_STANDARD.md)
 - Frozen users: [`fixtures/computer_setups_200.json`](fixtures/computer_setups_200.json)
-- Every module failure and observed value: [`results/module-results.json`](results/module-results.json)
-- Every browser journey result: [`results/browser-results.json`](results/browser-results.json)
+- Every module failure and observed value: [`results/baseline-2026-07-16/module-results.json`](results/baseline-2026-07-16/module-results.json)
+- Every browser journey result: [`results/baseline-2026-07-16/browser-results.json`](results/baseline-2026-07-16/browser-results.json)
 
 ## Required Repair Order
 

@@ -7,10 +7,13 @@ import { translate } from "../src/i18n.js";
 const require = createRequire(import.meta.url);
 const { chromium } = require("playwright");
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
-const dataset = JSON.parse(fs.readFileSync(path.join(ROOT, "fixtures", "computer_setups_200.json"), "utf8"));
-const moduleResults = JSON.parse(fs.readFileSync(path.join(ROOT, "results", "module-results.json"), "utf8"));
+const outputDirectory = process.env.VALIDATION_OUTPUT_DIR
+  ? path.resolve(process.env.VALIDATION_OUTPUT_DIR)
+  : path.join(ROOT, "results", "current");
+const dataset = JSON.parse(fs.readFileSync(path.join(ROOT, "fixtures", "computer_setups_200_v1_1.json"), "utf8"));
+const moduleResults = JSON.parse(fs.readFileSync(path.join(outputDirectory, "module-results.json"), "utf8"));
 const moduleById = new Map(moduleResults.recordResults.map((result) => [result.id, result]));
-const outputPath = path.join(ROOT, "results", "browser-results.json");
+const outputPath = path.join(outputDirectory, "browser-results.json");
 const baseUrl = process.env.MODEL_DIGGER_URL || "http://127.0.0.1:8000/";
 const executablePath = process.env.CHROME_PATH || "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 
@@ -254,6 +257,7 @@ const result = {
   recordResults
 };
 
+fs.mkdirSync(outputDirectory, { recursive: true });
 fs.writeFileSync(outputPath, `${JSON.stringify(result, null, 2)}\n`);
 await browser.close();
 
