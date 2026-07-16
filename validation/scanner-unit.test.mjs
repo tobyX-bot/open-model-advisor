@@ -32,12 +32,29 @@ test("caps normalized text at 20,000 UTF-16 code units", () => {
   assert.equal(atLimit.truncated, false);
 });
 
-test("caps NFKC expansion without exceeding the normalized limit", () => {
-  const result = normalizeSetupText(`${"x".repeat(19_999)}\uFDFA`);
+test("preserves NFKC composition across the raw snapshot boundary", () => {
+  const input = `${"x".repeat(19_999)}A\u030A`;
+  const fullNfkc = input.normalize("NFKC");
+  const result = normalizeSetupText(input);
 
+  assert.equal(input.length, 20_001);
+  assert.equal(fullNfkc.length, 20_000);
+  assert.ok(fullNfkc.endsWith("Å"));
+  assert.equal(result.raw.length, 20_000);
+  assert.equal(result.normalized, fullNfkc);
+  assert.ok(result.normalized.endsWith("Å"));
+  assert.equal(result.truncated, false);
+});
+
+test("caps NFKC expansion without exceeding the normalized limit", () => {
+  const input = `${"x".repeat(19_999)}\uFDFA`;
+  const fullNfkc = input.normalize("NFKC");
+  const result = normalizeSetupText(input);
+
+  assert.ok(fullNfkc.length > 20_000);
   assert.equal(result.raw.length, 20_000);
   assert.ok(result.raw.endsWith("\uFDFA"));
-  assert.equal(result.normalized.length, 20_000);
+  assert.equal(result.normalized, fullNfkc.slice(0, 20_000));
   assert.equal(result.truncated, true);
 });
 

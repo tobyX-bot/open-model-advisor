@@ -19,9 +19,10 @@ function appendSegment(segments, normalized, start, end) {
 
 export function normalizeSetupText(input) {
   const coerced = input === null || input === undefined ? "" : String(input);
-  const rawWasCut = coerced.length > MAX_TEXT_LENGTH;
-  const raw = rawWasCut ? coerced.slice(0, MAX_TEXT_LENGTH) : coerced;
-  const nfkc = raw.normalize("NFKC");
+  const raw = coerced.length > MAX_TEXT_LENGTH
+    ? coerced.slice(0, MAX_TEXT_LENGTH)
+    : coerced;
+  const nfkc = coerced.normalize("NFKC");
   const normalizedWasCut = nfkc.length > MAX_TEXT_LENGTH;
   const normalized = normalizedWasCut ? nfkc.slice(0, MAX_TEXT_LENGTH) : nfkc;
   const segments = [];
@@ -38,7 +39,7 @@ export function normalizeSetupText(input) {
     raw,
     normalized,
     lower: normalized.toLowerCase(),
-    truncated: rawWasCut || normalizedWasCut,
+    truncated: normalizedWasCut,
     segments
   };
 }
