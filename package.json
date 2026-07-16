@@ -1,0 +1,10 @@
+{
+  "name": "model-digger",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:scanner": "node --test validation/scanner-unit.test.mjs",
+    "test:fixture": "node validation/check-dataset.mjs && node validation/check-fixture-semantics.mjs",
+    "test:module": "node validation/run-validation.mjs"
+  }
+}
