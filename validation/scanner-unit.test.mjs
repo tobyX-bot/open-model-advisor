@@ -487,6 +487,51 @@ test("generic unknown capture requires a label and cannot cross boundaries or co
   }
 });
 
+test("rejects generic CPU models contaminated by memory or storage evidence", () => {
+  const inputs = [
+    "CPU NovaCore 64GB RAM",
+    "CPU NovaCore 2TB storage",
+    "processor NovaCore 512GB SSD",
+    "处理器 NovaCore 64GB 内存"
+  ];
+
+  for (const input of inputs) {
+    const candidates = extractCpuCandidates(normalizeSetupText(input));
+
+    assert.deepEqual(candidateValues(candidates, "cpuModel"), [], input);
+  }
+});
+
+test("rejects generic vendor GPU models contaminated by memory evidence", () => {
+  const inputs = [
+    "NVIDIA MysteryGPU 8GB VRAM",
+    "NVIDIA MysteryGPU 2TB storage",
+    "NVIDIA MysteryGPU 8GB 显存"
+  ];
+
+  for (const input of inputs) {
+    const candidates = extractGpuCandidates(normalizeSetupText(input));
+
+    assert.deepEqual(candidateValues(candidates, "gpuModel"), [], input);
+    assert.equal(candidates.some((candidate) => /8GB|2TB|VRAM|storage|显存/i.test(candidate.raw)), false, input);
+  }
+});
+
+test("abstains when a generic GPU model span contains task evidence", () => {
+  const inputs = [
+    "GPU programming Photon Z-20",
+    "GPU coding Photon Z-20",
+    "GPU image generation Photon Z-20",
+    "显卡 编程 Photon Z-20"
+  ];
+
+  for (const input of inputs) {
+    const candidates = extractGpuCandidates(normalizeSetupText(input));
+
+    assert.deepEqual(candidateValues(candidates, "gpuModel"), [], input);
+  }
+});
+
 test("emits every OS and device evidence item without resolving conflicts", () => {
   const document = normalizeSetupText([
     "MacBook with macOS",
