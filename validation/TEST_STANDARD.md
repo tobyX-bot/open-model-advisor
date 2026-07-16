@@ -28,6 +28,7 @@ Each fold must contain:
 | Task | 12 chat, 10 coding, 6 image, 6 speech, 6 embeddings |
 | OS | 18 Windows, 12 macOS, 10 Linux |
 | Device | 18 laptop, 14 desktop, 5 workstation, 3 server |
+| Hardware tier | 10 entry, 16 mainstream, 10 performance, 4 extreme |
 | Language style | 22 English, 9 Simplified Chinese, 5 Traditional Chinese, 4 mixed |
 | Text quality | 24 clean, 10 messy but unambiguous, 6 adversarial |
 | Entry journey | 32 paste, 5 manual, 3 preset then edit |
