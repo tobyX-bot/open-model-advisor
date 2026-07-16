@@ -1,0 +1,6552 @@
+{
+  "metadata": {
+    "generatedAt": "2026-07-16T03:03:23.173Z",
+    "baseUrl": "http://127.0.0.1:8000/",
+    "records": 200,
+    "browser": "Google Chrome via Playwright",
+    "reducedMotion": true,
+    "taskPreservationChecks": 5
+  },
+  "gates": {
+    "G1": {
+      "byFold": {
+        "1": {
+          "passed": 40,
+          "total": 40,
+          "rate": 1
+        },
+        "2": {
+          "passed": 40,
+          "total": 40,
+          "rate": 1
+        },
+        "3": {
+          "passed": 40,
+          "total": 40,
+          "rate": 1
+        },
+        "4": {
+          "passed": 40,
+          "total": 40,
+          "rate": 1
+        },
+        "5": {
+          "passed": 40,
+          "total": 40,
+          "rate": 1
+        }
+      },
+      "mean": 1,
+      "minimum": 1,
+      "maximum": 1,
+      "standardDeviation": 0,
+      "passed": true
+    },
+    "G4": {
+      "byFold": {
+        "1": {
+          "passed": 40,
+          "total": 40,
+          "rate": 1
+        },
+        "2": {
+          "passed": 40,
+          "total": 40,
+          "rate": 1
+        },
+        "3": {
+          "passed": 40,
+          "total": 40,
+          "rate": 1
+        },
+        "4": {
+          "passed": 40,
+          "total": 40,
+          "rate": 1
+        },
+        "5": {
+          "passed": 40,
+          "total": 40,
+          "rate": 1
+        }
+      },
+      "mean": 1,
+      "minimum": 1,
+      "maximum": 1,
+      "standardDeviation": 0,
+      "passed": true
+    },
+    "G7": {
+      "byFold": {
+        "1": {
+          "passed": 40,
+          "total": 40,
+          "rate": 1
+        },
+        "2": {
+          "passed": 40,
+          "total": 40,
+          "rate": 1
+        },
+        "3": {
+          "passed": 40,
+          "total": 40,
+          "rate": 1
+        },
+        "4": {
+          "passed": 40,
+          "total": 40,
+          "rate": 1
+        },
+        "5": {
+          "passed": 40,
+          "total": 40,
+          "rate": 1
+        }
+      },
+      "mean": 1,
+      "minimum": 1,
+      "maximum": 1,
+      "standardDeviation": 0,
+      "passed": true
+    },
+    "G8": {
+      "byFold": {
+        "1": {
+          "passed": 40,
+          "total": 40,
+          "rate": 1
+        },
+        "2": {
+          "passed": 40,
+          "total": 40,
+          "rate": 1
+        },
+        "3": {
+          "passed": 40,
+          "total": 40,
+          "rate": 1
+        },
+        "4": {
+          "passed": 40,
+          "total": 40,
+          "rate": 1
+        },
+        "5": {
+          "passed": 40,
+          "total": 40,
+          "rate": 1
+        }
+      },
+      "mean": 1,
+      "minimum": 1,
+      "maximum": 1,
+      "standardDeviation": 0,
+      "passed": true
+    }
+  },
+  "failureCount": 0,
+  "failures": [],
+  "recordResults": [
+    {
+      "id": "user-001",
+      "fold": 1,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "entry",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "intel"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-002",
+      "fold": 1,
+      "segment": {
+        "languageStyle": "zh-CN",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "entry",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "intel"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-003",
+      "fold": 1,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "coding-llm",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-004",
+      "fold": 1,
+      "segment": {
+        "languageStyle": "zh-TW",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "coding-llm",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-005",
+      "fold": 1,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "image-generation",
+        "hardwareTier": "performance",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-006",
+      "fold": 1,
+      "segment": {
+        "languageStyle": "mixed",
+        "scenarioClass": "messy",
+        "adversarialKind": null,
+        "task": "image-generation",
+        "hardwareTier": "performance",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-007",
+      "fold": 1,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "messy",
+        "adversarialKind": null,
+        "task": "embeddings",
+        "hardwareTier": "extreme",
+        "entryMode": "paste",
+        "os": "linux",
+        "gpuVendor": "amd"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-008",
+      "fold": 1,
+      "segment": {
+        "languageStyle": "zh-CN",
+        "scenarioClass": "messy",
+        "adversarialKind": null,
+        "task": "embeddings",
+        "hardwareTier": "extreme",
+        "entryMode": "paste",
+        "os": "linux",
+        "gpuVendor": "amd"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-009",
+      "fold": 1,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "image-generation",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-010",
+      "fold": 1,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "mainstream",
+        "entryMode": "manual",
+        "os": "linux",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-011",
+      "fold": 1,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "speech-to-text",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "intel"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-012",
+      "fold": 1,
+      "segment": {
+        "languageStyle": "zh-CN",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "embeddings",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-013",
+      "fold": 1,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "messy",
+        "adversarialKind": null,
+        "task": "image-generation",
+        "hardwareTier": "entry",
+        "entryMode": "preset-edit",
+        "os": "windows",
+        "gpuVendor": "none"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-014",
+      "fold": 1,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "messy",
+        "adversarialKind": null,
+        "task": "image-generation",
+        "hardwareTier": "entry",
+        "entryMode": "paste",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-015",
+      "fold": 1,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "coding-llm",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-016",
+      "fold": 1,
+      "segment": {
+        "languageStyle": "zh-CN",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "embeddings",
+        "hardwareTier": "entry",
+        "entryMode": "paste",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-017",
+      "fold": 1,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "adversarial",
+        "adversarialKind": "unknown-gpu",
+        "task": "chat-llm",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "linux",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-018",
+      "fold": 1,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "entry",
+        "entryMode": "paste",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-019",
+      "fold": 1,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-020",
+      "fold": 1,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "speech-to-text",
+        "hardwareTier": "performance",
+        "entryMode": "manual",
+        "os": "linux",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-021",
+      "fold": 1,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "messy",
+        "adversarialKind": null,
+        "task": "speech-to-text",
+        "hardwareTier": "performance",
+        "entryMode": "manual",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-022",
+      "fold": 1,
+      "segment": {
+        "languageStyle": "mixed",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "image-generation",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "linux",
+        "gpuVendor": "amd"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-023",
+      "fold": 1,
+      "segment": {
+        "languageStyle": "zh-CN",
+        "scenarioClass": "messy",
+        "adversarialKind": null,
+        "task": "coding-llm",
+        "hardwareTier": "performance",
+        "entryMode": "manual",
+        "os": "linux",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-024",
+      "fold": 1,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "adversarial",
+        "adversarialKind": "unknown-cpu",
+        "task": "coding-llm",
+        "hardwareTier": "extreme",
+        "entryMode": "paste",
+        "os": "linux",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-025",
+      "fold": 1,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "messy",
+        "adversarialKind": null,
+        "task": "coding-llm",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "amd"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-026",
+      "fold": 1,
+      "segment": {
+        "languageStyle": "zh-TW",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "embeddings",
+        "hardwareTier": "performance",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-027",
+      "fold": 1,
+      "segment": {
+        "languageStyle": "mixed",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-028",
+      "fold": 1,
+      "segment": {
+        "languageStyle": "zh-TW",
+        "scenarioClass": "messy",
+        "adversarialKind": null,
+        "task": "speech-to-text",
+        "hardwareTier": "performance",
+        "entryMode": "preset-edit",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-029",
+      "fold": 1,
+      "segment": {
+        "languageStyle": "mixed",
+        "scenarioClass": "adversarial",
+        "adversarialKind": "contradiction-b",
+        "task": "chat-llm",
+        "hardwareTier": "performance",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-030",
+      "fold": 1,
+      "segment": {
+        "languageStyle": "zh-CN",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "performance",
+        "entryMode": "preset-edit",
+        "os": "linux",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-031",
+      "fold": 1,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "coding-llm",
+        "hardwareTier": "entry",
+        "entryMode": "paste",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-032",
+      "fold": 1,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "adversarial",
+        "adversarialKind": "core-ultra",
+        "task": "speech-to-text",
+        "hardwareTier": "extreme",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-033",
+      "fold": 1,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "coding-llm",
+        "hardwareTier": "performance",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-034",
+      "fold": 1,
+      "segment": {
+        "languageStyle": "zh-CN",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "embeddings",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-035",
+      "fold": 1,
+      "segment": {
+        "languageStyle": "zh-CN",
+        "scenarioClass": "adversarial",
+        "adversarialKind": "contradiction-a",
+        "task": "chat-llm",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "intel"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-036",
+      "fold": 1,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "messy",
+        "adversarialKind": null,
+        "task": "speech-to-text",
+        "hardwareTier": "entry",
+        "entryMode": "paste",
+        "os": "linux",
+        "gpuVendor": "none"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-037",
+      "fold": 1,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "entry",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "intel"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-038",
+      "fold": 1,
+      "segment": {
+        "languageStyle": "zh-TW",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-039",
+      "fold": 1,
+      "segment": {
+        "languageStyle": "zh-TW",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "coding-llm",
+        "hardwareTier": "mainstream",
+        "entryMode": "manual",
+        "os": "windows",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-040",
+      "fold": 1,
+      "segment": {
+        "languageStyle": "zh-CN",
+        "scenarioClass": "adversarial",
+        "adversarialKind": "omitted-memory",
+        "task": "coding-llm",
+        "hardwareTier": "entry",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "intel"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-041",
+      "fold": 2,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "entry",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "none"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-042",
+      "fold": 2,
+      "segment": {
+        "languageStyle": "zh-CN",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "entry",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "none"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-043",
+      "fold": 2,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "coding-llm",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-044",
+      "fold": 2,
+      "segment": {
+        "languageStyle": "zh-TW",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "coding-llm",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-045",
+      "fold": 2,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "image-generation",
+        "hardwareTier": "performance",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "amd"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-046",
+      "fold": 2,
+      "segment": {
+        "languageStyle": "mixed",
+        "scenarioClass": "messy",
+        "adversarialKind": null,
+        "task": "image-generation",
+        "hardwareTier": "performance",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "amd"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-047",
+      "fold": 2,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "messy",
+        "adversarialKind": null,
+        "task": "embeddings",
+        "hardwareTier": "extreme",
+        "entryMode": "paste",
+        "os": "linux",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-048",
+      "fold": 2,
+      "segment": {
+        "languageStyle": "zh-CN",
+        "scenarioClass": "messy",
+        "adversarialKind": null,
+        "task": "embeddings",
+        "hardwareTier": "extreme",
+        "entryMode": "paste",
+        "os": "linux",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-049",
+      "fold": 2,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "speech-to-text",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-050",
+      "fold": 2,
+      "segment": {
+        "languageStyle": "zh-CN",
+        "scenarioClass": "adversarial",
+        "adversarialKind": "unknown-gpu",
+        "task": "chat-llm",
+        "hardwareTier": "performance",
+        "entryMode": "paste",
+        "os": "linux",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-051",
+      "fold": 2,
+      "segment": {
+        "languageStyle": "zh-TW",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "speech-to-text",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-052",
+      "fold": 2,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "image-generation",
+        "hardwareTier": "entry",
+        "entryMode": "preset-edit",
+        "os": "linux",
+        "gpuVendor": "none"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-053",
+      "fold": 2,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "speech-to-text",
+        "hardwareTier": "entry",
+        "entryMode": "paste",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-054",
+      "fold": 2,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "embeddings",
+        "hardwareTier": "performance",
+        "entryMode": "paste",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-055",
+      "fold": 2,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-056",
+      "fold": 2,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "messy",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "entry",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "intel"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-057",
+      "fold": 2,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "messy",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "entry",
+        "entryMode": "paste",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-058",
+      "fold": 2,
+      "segment": {
+        "languageStyle": "zh-CN",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "linux",
+        "gpuVendor": "amd"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-059",
+      "fold": 2,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "messy",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "entry",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "none"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-060",
+      "fold": 2,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "messy",
+        "adversarialKind": null,
+        "task": "coding-llm",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-061",
+      "fold": 2,
+      "segment": {
+        "languageStyle": "zh-CN",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "speech-to-text",
+        "hardwareTier": "performance",
+        "entryMode": "manual",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-062",
+      "fold": 2,
+      "segment": {
+        "languageStyle": "mixed",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "embeddings",
+        "hardwareTier": "entry",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "intel"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-063",
+      "fold": 2,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "speech-to-text",
+        "hardwareTier": "performance",
+        "entryMode": "paste",
+        "os": "linux",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-064",
+      "fold": 2,
+      "segment": {
+        "languageStyle": "mixed",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "coding-llm",
+        "hardwareTier": "performance",
+        "entryMode": "manual",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-065",
+      "fold": 2,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "entry",
+        "entryMode": "manual",
+        "os": "windows",
+        "gpuVendor": "intel"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-066",
+      "fold": 2,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "coding-llm",
+        "hardwareTier": "performance",
+        "entryMode": "paste",
+        "os": "linux",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-067",
+      "fold": 2,
+      "segment": {
+        "languageStyle": "mixed",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "embeddings",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-068",
+      "fold": 2,
+      "segment": {
+        "languageStyle": "zh-CN",
+        "scenarioClass": "adversarial",
+        "adversarialKind": "unknown-cpu",
+        "task": "image-generation",
+        "hardwareTier": "entry",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "intel"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-069",
+      "fold": 2,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "adversarial",
+        "adversarialKind": "omitted-memory",
+        "task": "coding-llm",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "linux",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-070",
+      "fold": 2,
+      "segment": {
+        "languageStyle": "zh-CN",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "coding-llm",
+        "hardwareTier": "performance",
+        "entryMode": "paste",
+        "os": "linux",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-071",
+      "fold": 2,
+      "segment": {
+        "languageStyle": "zh-TW",
+        "scenarioClass": "messy",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "intel"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-072",
+      "fold": 2,
+      "segment": {
+        "languageStyle": "zh-TW",
+        "scenarioClass": "adversarial",
+        "adversarialKind": "core-ultra",
+        "task": "image-generation",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-073",
+      "fold": 2,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "coding-llm",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-074",
+      "fold": 2,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "messy",
+        "adversarialKind": null,
+        "task": "embeddings",
+        "hardwareTier": "performance",
+        "entryMode": "preset-edit",
+        "os": "windows",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-075",
+      "fold": 2,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "messy",
+        "adversarialKind": null,
+        "task": "speech-to-text",
+        "hardwareTier": "mainstream",
+        "entryMode": "manual",
+        "os": "windows",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-076",
+      "fold": 2,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "mainstream",
+        "entryMode": "manual",
+        "os": "windows",
+        "gpuVendor": "amd"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-077",
+      "fold": 2,
+      "segment": {
+        "languageStyle": "zh-CN",
+        "scenarioClass": "adversarial",
+        "adversarialKind": "contradiction-b",
+        "task": "coding-llm",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "intel"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-078",
+      "fold": 2,
+      "segment": {
+        "languageStyle": "zh-TW",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "image-generation",
+        "hardwareTier": "mainstream",
+        "entryMode": "preset-edit",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-079",
+      "fold": 2,
+      "segment": {
+        "languageStyle": "zh-CN",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "extreme",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "amd"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-080",
+      "fold": 2,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "adversarial",
+        "adversarialKind": "contradiction-a",
+        "task": "coding-llm",
+        "hardwareTier": "extreme",
+        "entryMode": "paste",
+        "os": "linux",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-081",
+      "fold": 3,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "entry",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "none"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-082",
+      "fold": 3,
+      "segment": {
+        "languageStyle": "zh-CN",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "entry",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "none"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-083",
+      "fold": 3,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "coding-llm",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-084",
+      "fold": 3,
+      "segment": {
+        "languageStyle": "zh-TW",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "coding-llm",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-085",
+      "fold": 3,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "image-generation",
+        "hardwareTier": "performance",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-086",
+      "fold": 3,
+      "segment": {
+        "languageStyle": "mixed",
+        "scenarioClass": "messy",
+        "adversarialKind": null,
+        "task": "image-generation",
+        "hardwareTier": "performance",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-087",
+      "fold": 3,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "messy",
+        "adversarialKind": null,
+        "task": "embeddings",
+        "hardwareTier": "extreme",
+        "entryMode": "paste",
+        "os": "linux",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-088",
+      "fold": 3,
+      "segment": {
+        "languageStyle": "zh-CN",
+        "scenarioClass": "messy",
+        "adversarialKind": null,
+        "task": "embeddings",
+        "hardwareTier": "extreme",
+        "entryMode": "paste",
+        "os": "linux",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-089",
+      "fold": 3,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "adversarial",
+        "adversarialKind": "contradiction-a",
+        "task": "speech-to-text",
+        "hardwareTier": "performance",
+        "entryMode": "manual",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-090",
+      "fold": 3,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "adversarial",
+        "adversarialKind": "unknown-gpu",
+        "task": "coding-llm",
+        "hardwareTier": "performance",
+        "entryMode": "paste",
+        "os": "linux",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-091",
+      "fold": 3,
+      "segment": {
+        "languageStyle": "zh-CN",
+        "scenarioClass": "adversarial",
+        "adversarialKind": "unknown-cpu",
+        "task": "coding-llm",
+        "hardwareTier": "entry",
+        "entryMode": "manual",
+        "os": "windows",
+        "gpuVendor": "intel"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-092",
+      "fold": 3,
+      "segment": {
+        "languageStyle": "zh-CN",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "performance",
+        "entryMode": "preset-edit",
+        "os": "linux",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-093",
+      "fold": 3,
+      "segment": {
+        "languageStyle": "mixed",
+        "scenarioClass": "messy",
+        "adversarialKind": null,
+        "task": "coding-llm",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-094",
+      "fold": 3,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "image-generation",
+        "hardwareTier": "entry",
+        "entryMode": "paste",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-095",
+      "fold": 3,
+      "segment": {
+        "languageStyle": "zh-TW",
+        "scenarioClass": "messy",
+        "adversarialKind": null,
+        "task": "coding-llm",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "linux",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-096",
+      "fold": 3,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "entry",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "none"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-097",
+      "fold": 3,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "messy",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "extreme",
+        "entryMode": "paste",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-098",
+      "fold": 3,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "image-generation",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-099",
+      "fold": 3,
+      "segment": {
+        "languageStyle": "mixed",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "speech-to-text",
+        "hardwareTier": "performance",
+        "entryMode": "paste",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-100",
+      "fold": 3,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-101",
+      "fold": 3,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "adversarial",
+        "adversarialKind": "contradiction-b",
+        "task": "speech-to-text",
+        "hardwareTier": "entry",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "intel"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-102",
+      "fold": 3,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "adversarial",
+        "adversarialKind": "core-ultra",
+        "task": "embeddings",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-103",
+      "fold": 3,
+      "segment": {
+        "languageStyle": "mixed",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "entry",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "none"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-104",
+      "fold": 3,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "messy",
+        "adversarialKind": null,
+        "task": "speech-to-text",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "linux",
+        "gpuVendor": "intel"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-105",
+      "fold": 3,
+      "segment": {
+        "languageStyle": "zh-CN",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "entry",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "none"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-106",
+      "fold": 3,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "embeddings",
+        "hardwareTier": "entry",
+        "entryMode": "preset-edit",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-107",
+      "fold": 3,
+      "segment": {
+        "languageStyle": "zh-TW",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "image-generation",
+        "hardwareTier": "performance",
+        "entryMode": "manual",
+        "os": "windows",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-108",
+      "fold": 3,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "embeddings",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "linux",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-109",
+      "fold": 3,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "speech-to-text",
+        "hardwareTier": "extreme",
+        "entryMode": "paste",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-110",
+      "fold": 3,
+      "segment": {
+        "languageStyle": "zh-CN",
+        "scenarioClass": "adversarial",
+        "adversarialKind": "omitted-memory",
+        "task": "image-generation",
+        "hardwareTier": "entry",
+        "entryMode": "paste",
+        "os": "linux",
+        "gpuVendor": "none"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-111",
+      "fold": 3,
+      "segment": {
+        "languageStyle": "zh-TW",
+        "scenarioClass": "messy",
+        "adversarialKind": null,
+        "task": "speech-to-text",
+        "hardwareTier": "mainstream",
+        "entryMode": "preset-edit",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-112",
+      "fold": 3,
+      "segment": {
+        "languageStyle": "zh-CN",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "coding-llm",
+        "hardwareTier": "performance",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "amd"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-113",
+      "fold": 3,
+      "segment": {
+        "languageStyle": "zh-CN",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "performance",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-114",
+      "fold": 3,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "coding-llm",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-115",
+      "fold": 3,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "coding-llm",
+        "hardwareTier": "mainstream",
+        "entryMode": "manual",
+        "os": "linux",
+        "gpuVendor": "amd"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-116",
+      "fold": 3,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "messy",
+        "adversarialKind": null,
+        "task": "embeddings",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "intel"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-117",
+      "fold": 3,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-118",
+      "fold": 3,
+      "segment": {
+        "languageStyle": "zh-CN",
+        "scenarioClass": "messy",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "performance",
+        "entryMode": "manual",
+        "os": "windows",
+        "gpuVendor": "amd"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-119",
+      "fold": 3,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "linux",
+        "gpuVendor": "intel"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-120",
+      "fold": 3,
+      "segment": {
+        "languageStyle": "zh-TW",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "coding-llm",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-121",
+      "fold": 4,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "entry",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "none"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-122",
+      "fold": 4,
+      "segment": {
+        "languageStyle": "zh-CN",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "entry",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "none"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-123",
+      "fold": 4,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "coding-llm",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-124",
+      "fold": 4,
+      "segment": {
+        "languageStyle": "zh-TW",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "coding-llm",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-125",
+      "fold": 4,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "image-generation",
+        "hardwareTier": "performance",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-126",
+      "fold": 4,
+      "segment": {
+        "languageStyle": "mixed",
+        "scenarioClass": "messy",
+        "adversarialKind": null,
+        "task": "image-generation",
+        "hardwareTier": "performance",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-127",
+      "fold": 4,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "messy",
+        "adversarialKind": null,
+        "task": "embeddings",
+        "hardwareTier": "extreme",
+        "entryMode": "paste",
+        "os": "linux",
+        "gpuVendor": "amd"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-128",
+      "fold": 4,
+      "segment": {
+        "languageStyle": "zh-CN",
+        "scenarioClass": "messy",
+        "adversarialKind": null,
+        "task": "embeddings",
+        "hardwareTier": "extreme",
+        "entryMode": "paste",
+        "os": "linux",
+        "gpuVendor": "amd"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-129",
+      "fold": 4,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "messy",
+        "adversarialKind": null,
+        "task": "coding-llm",
+        "hardwareTier": "entry",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "none"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-130",
+      "fold": 4,
+      "segment": {
+        "languageStyle": "zh-CN",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "speech-to-text",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "amd"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-131",
+      "fold": 4,
+      "segment": {
+        "languageStyle": "zh-TW",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "speech-to-text",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-132",
+      "fold": 4,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "messy",
+        "adversarialKind": null,
+        "task": "coding-llm",
+        "hardwareTier": "performance",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-133",
+      "fold": 4,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "messy",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-134",
+      "fold": 4,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "coding-llm",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-135",
+      "fold": 4,
+      "segment": {
+        "languageStyle": "zh-CN",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "performance",
+        "entryMode": "preset-edit",
+        "os": "linux",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-136",
+      "fold": 4,
+      "segment": {
+        "languageStyle": "zh-CN",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "image-generation",
+        "hardwareTier": "extreme",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-137",
+      "fold": 4,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "entry",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "intel"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-138",
+      "fold": 4,
+      "segment": {
+        "languageStyle": "mixed",
+        "scenarioClass": "messy",
+        "adversarialKind": null,
+        "task": "coding-llm",
+        "hardwareTier": "entry",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "none"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-139",
+      "fold": 4,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "embeddings",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "amd"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-140",
+      "fold": 4,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "messy",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "entry",
+        "entryMode": "paste",
+        "os": "linux",
+        "gpuVendor": "none"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-141",
+      "fold": 4,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "embeddings",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-142",
+      "fold": 4,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "image-generation",
+        "hardwareTier": "entry",
+        "entryMode": "manual",
+        "os": "windows",
+        "gpuVendor": "none"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-143",
+      "fold": 4,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "adversarial",
+        "adversarialKind": "unknown-gpu",
+        "task": "embeddings",
+        "hardwareTier": "entry",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-144",
+      "fold": 4,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "coding-llm",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-145",
+      "fold": 4,
+      "segment": {
+        "languageStyle": "mixed",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "linux",
+        "gpuVendor": "amd"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-146",
+      "fold": 4,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "adversarial",
+        "adversarialKind": "unknown-cpu",
+        "task": "chat-llm",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "linux",
+        "gpuVendor": "intel"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-147",
+      "fold": 4,
+      "segment": {
+        "languageStyle": "zh-CN",
+        "scenarioClass": "messy",
+        "adversarialKind": null,
+        "task": "speech-to-text",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-148",
+      "fold": 4,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "speech-to-text",
+        "hardwareTier": "entry",
+        "entryMode": "manual",
+        "os": "windows",
+        "gpuVendor": "intel"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-149",
+      "fold": 4,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "coding-llm",
+        "hardwareTier": "mainstream",
+        "entryMode": "manual",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-150",
+      "fold": 4,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "image-generation",
+        "hardwareTier": "mainstream",
+        "entryMode": "manual",
+        "os": "windows",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-151",
+      "fold": 4,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "messy",
+        "adversarialKind": null,
+        "task": "coding-llm",
+        "hardwareTier": "extreme",
+        "entryMode": "paste",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-152",
+      "fold": 4,
+      "segment": {
+        "languageStyle": "zh-CN",
+        "scenarioClass": "adversarial",
+        "adversarialKind": "omitted-memory",
+        "task": "coding-llm",
+        "hardwareTier": "performance",
+        "entryMode": "paste",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-153",
+      "fold": 4,
+      "segment": {
+        "languageStyle": "zh-CN",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "performance",
+        "entryMode": "paste",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-154",
+      "fold": 4,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "mainstream",
+        "entryMode": "manual",
+        "os": "windows",
+        "gpuVendor": "amd"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-155",
+      "fold": 4,
+      "segment": {
+        "languageStyle": "zh-TW",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "speech-to-text",
+        "hardwareTier": "entry",
+        "entryMode": "paste",
+        "os": "linux",
+        "gpuVendor": "intel"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-156",
+      "fold": 4,
+      "segment": {
+        "languageStyle": "zh-TW",
+        "scenarioClass": "adversarial",
+        "adversarialKind": "contradiction-b",
+        "task": "embeddings",
+        "hardwareTier": "performance",
+        "entryMode": "paste",
+        "os": "linux",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-157",
+      "fold": 4,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "performance",
+        "entryMode": "paste",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-158",
+      "fold": 4,
+      "segment": {
+        "languageStyle": "zh-TW",
+        "scenarioClass": "adversarial",
+        "adversarialKind": "core-ultra",
+        "task": "image-generation",
+        "hardwareTier": "mainstream",
+        "entryMode": "preset-edit",
+        "os": "windows",
+        "gpuVendor": "intel"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-159",
+      "fold": 4,
+      "segment": {
+        "languageStyle": "zh-CN",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "performance",
+        "entryMode": "paste",
+        "os": "linux",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-160",
+      "fold": 4,
+      "segment": {
+        "languageStyle": "mixed",
+        "scenarioClass": "adversarial",
+        "adversarialKind": "contradiction-a",
+        "task": "speech-to-text",
+        "hardwareTier": "performance",
+        "entryMode": "preset-edit",
+        "os": "linux",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-161",
+      "fold": 5,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "entry",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "intel"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-162",
+      "fold": 5,
+      "segment": {
+        "languageStyle": "zh-CN",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "entry",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "intel"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-163",
+      "fold": 5,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "coding-llm",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-164",
+      "fold": 5,
+      "segment": {
+        "languageStyle": "zh-TW",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "coding-llm",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-165",
+      "fold": 5,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "image-generation",
+        "hardwareTier": "performance",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "amd"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-166",
+      "fold": 5,
+      "segment": {
+        "languageStyle": "mixed",
+        "scenarioClass": "messy",
+        "adversarialKind": null,
+        "task": "image-generation",
+        "hardwareTier": "performance",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "amd"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-167",
+      "fold": 5,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "messy",
+        "adversarialKind": null,
+        "task": "embeddings",
+        "hardwareTier": "extreme",
+        "entryMode": "paste",
+        "os": "linux",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-168",
+      "fold": 5,
+      "segment": {
+        "languageStyle": "zh-CN",
+        "scenarioClass": "messy",
+        "adversarialKind": null,
+        "task": "embeddings",
+        "hardwareTier": "extreme",
+        "entryMode": "paste",
+        "os": "linux",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-169",
+      "fold": 5,
+      "segment": {
+        "languageStyle": "zh-CN",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "performance",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "amd"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-170",
+      "fold": 5,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "speech-to-text",
+        "hardwareTier": "performance",
+        "entryMode": "paste",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-171",
+      "fold": 5,
+      "segment": {
+        "languageStyle": "zh-TW",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "entry",
+        "entryMode": "paste",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-172",
+      "fold": 5,
+      "segment": {
+        "languageStyle": "zh-TW",
+        "scenarioClass": "messy",
+        "adversarialKind": null,
+        "task": "coding-llm",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-173",
+      "fold": 5,
+      "segment": {
+        "languageStyle": "zh-CN",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "coding-llm",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-174",
+      "fold": 5,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "adversarial",
+        "adversarialKind": "contradiction-b",
+        "task": "speech-to-text",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-175",
+      "fold": 5,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "messy",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "extreme",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-176",
+      "fold": 5,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "mainstream",
+        "entryMode": "preset-edit",
+        "os": "windows",
+        "gpuVendor": "intel"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-177",
+      "fold": 5,
+      "segment": {
+        "languageStyle": "mixed",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-178",
+      "fold": 5,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "performance",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "amd"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-179",
+      "fold": 5,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "image-generation",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "intel"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-180",
+      "fold": 5,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "messy",
+        "adversarialKind": null,
+        "task": "speech-to-text",
+        "hardwareTier": "extreme",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-181",
+      "fold": 5,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "messy",
+        "adversarialKind": null,
+        "task": "coding-llm",
+        "hardwareTier": "entry",
+        "entryMode": "paste",
+        "os": "linux",
+        "gpuVendor": "none"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-182",
+      "fold": 5,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "speech-to-text",
+        "hardwareTier": "performance",
+        "entryMode": "paste",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-183",
+      "fold": 5,
+      "segment": {
+        "languageStyle": "zh-TW",
+        "scenarioClass": "adversarial",
+        "adversarialKind": "unknown-gpu",
+        "task": "image-generation",
+        "hardwareTier": "entry",
+        "entryMode": "paste",
+        "os": "linux",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-184",
+      "fold": 5,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "messy",
+        "adversarialKind": null,
+        "task": "coding-llm",
+        "hardwareTier": "performance",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "amd"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-185",
+      "fold": 5,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "linux",
+        "gpuVendor": "intel"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-186",
+      "fold": 5,
+      "segment": {
+        "languageStyle": "zh-CN",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "image-generation",
+        "hardwareTier": "mainstream",
+        "entryMode": "manual",
+        "os": "windows",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-187",
+      "fold": 5,
+      "segment": {
+        "languageStyle": "zh-CN",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "embeddings",
+        "hardwareTier": "mainstream",
+        "entryMode": "manual",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-188",
+      "fold": 5,
+      "segment": {
+        "languageStyle": "zh-CN",
+        "scenarioClass": "adversarial",
+        "adversarialKind": "contradiction-a",
+        "task": "coding-llm",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "linux",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-189",
+      "fold": 5,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "coding-llm",
+        "hardwareTier": "performance",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-190",
+      "fold": 5,
+      "segment": {
+        "languageStyle": "zh-CN",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "embeddings",
+        "hardwareTier": "performance",
+        "entryMode": "paste",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-191",
+      "fold": 5,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "messy",
+        "adversarialKind": null,
+        "task": "coding-llm",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-192",
+      "fold": 5,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "messy",
+        "adversarialKind": null,
+        "task": "embeddings",
+        "hardwareTier": "performance",
+        "entryMode": "preset-edit",
+        "os": "windows",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-193",
+      "fold": 5,
+      "segment": {
+        "languageStyle": "zh-CN",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "entry",
+        "entryMode": "manual",
+        "os": "linux",
+        "gpuVendor": "none"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-194",
+      "fold": 5,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "image-generation",
+        "hardwareTier": "entry",
+        "entryMode": "preset-edit",
+        "os": "linux",
+        "gpuVendor": "intel"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-195",
+      "fold": 5,
+      "segment": {
+        "languageStyle": "zh-TW",
+        "scenarioClass": "adversarial",
+        "adversarialKind": "unknown-cpu",
+        "task": "speech-to-text",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "linux",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-196",
+      "fold": 5,
+      "segment": {
+        "languageStyle": "mixed",
+        "scenarioClass": "adversarial",
+        "adversarialKind": "core-ultra",
+        "task": "chat-llm",
+        "hardwareTier": "entry",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "intel"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-197",
+      "fold": 5,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "chat-llm",
+        "hardwareTier": "mainstream",
+        "entryMode": "paste",
+        "os": "macos",
+        "gpuVendor": "apple"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-198",
+      "fold": 5,
+      "segment": {
+        "languageStyle": "mixed",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "coding-llm",
+        "hardwareTier": "entry",
+        "entryMode": "paste",
+        "os": "windows",
+        "gpuVendor": "intel"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-199",
+      "fold": 5,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "clean",
+        "adversarialKind": null,
+        "task": "speech-to-text",
+        "hardwareTier": "entry",
+        "entryMode": "manual",
+        "os": "windows",
+        "gpuVendor": "intel"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    },
+    {
+      "id": "user-200",
+      "fold": 5,
+      "segment": {
+        "languageStyle": "en",
+        "scenarioClass": "adversarial",
+        "adversarialKind": "omitted-memory",
+        "task": "embeddings",
+        "hardwareTier": "mainstream",
+        "entryMode": "manual",
+        "os": "linux",
+        "gpuVendor": "nvidia"
+      },
+      "gates": {
+        "G1": {
+          "applicable": true,
+          "passed": true
+        },
+        "G4": {
+          "applicable": true,
+          "passed": true
+        },
+        "G7": {
+          "applicable": true,
+          "passed": true
+        },
+        "G8": {
+          "applicable": true,
+          "passed": true
+        }
+      }
+    }
+  ]
+}

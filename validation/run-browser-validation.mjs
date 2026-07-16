@@ -23,6 +23,7 @@ const page = await context.newPage();
 const failures = [];
 const recordResults = [];
 const invalidFieldChecked = new Set();
+const taskPreservationChecked = new Set();
 let currentRecord = null;
 let runtimeErrors = [];
 
@@ -142,11 +143,6 @@ for (const record of dataset.records) {
     await page.locator('button[type="submit"]').click();
     await page.waitForTimeout(10);
 
-    if (journeyIssues.length) {
-      gates.G4.passed = false;
-      addFailure(record, "G4", "User journey integrity failed", { journeyIssues });
-    }
-
     const uiLanguage = language === "zh" ? "zh" : "en";
     const hostedTitle = translate(uiLanguage, "hostedFallbackTitle");
     const noticeTitles = await page.locator("#messageArea .notice strong").allTextContents();
@@ -181,6 +177,33 @@ for (const record of dataset.records) {
         expected: { resultCards: expectedCards, noFitNotice: expectedCards === 0 },
         observed: { resultCards, noFitNotice, contentChecks }
       });
+    }
+
+    if (!taskPreservationChecked.has(record.fold)
+      && record.journey.entryMode === "paste"
+      && record.parserExpected.fields.task) {
+      taskPreservationChecked.add(record.fold);
+      const selectedTask = record.parserExpected.fields.task === "coding-llm" ? "chat-llm" : "coding-llm";
+      await page.locator("#task").selectOption(selectedTask);
+      await page.locator("#setupPaste").fill(record.setupText);
+      await page.locator("#scanSetup").click();
+      await page.waitForTimeout(20);
+      if (await page.locator("#task").inputValue() !== selectedTask) {
+        journeyIssues.push("Scanning text overwrote a previously selected task before apply");
+      }
+      if (await page.locator("#applyDetected").isEnabled()) {
+        await page.locator("#applyDetected").click();
+        if (await page.locator("#task").inputValue() !== selectedTask) {
+          journeyIssues.push("Applying a scan overwrote a previously selected task");
+        }
+      } else {
+        journeyIssues.push("Task-preservation scan could not be applied");
+      }
+    }
+
+    if (journeyIssues.length) {
+      gates.G4.passed = false;
+      addFailure(record, "G4", "User journey integrity failed", { journeyIssues });
     }
 
     if (runtimeErrors.length) {
@@ -222,7 +245,8 @@ const result = {
     baseUrl,
     records: dataset.records.length,
     browser: "Google Chrome via Playwright",
-    reducedMotion: true
+    reducedMotion: true,
+    taskPreservationChecks: taskPreservationChecked.size
   },
   gates,
   failureCount: failures.length,
