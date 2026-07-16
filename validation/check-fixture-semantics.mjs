@@ -25,6 +25,27 @@ const ALLOWED_ISSUE_CODES = new Set([
   "missing.gpuVendor",
   "missing.gpuModel"
 ]);
+const ENUM_EVIDENCE = {
+  os: {
+    windows: ["Windows"],
+    macos: ["macOS"],
+    linux: ["Linux"]
+  },
+  deviceType: {
+    laptop: ["laptop", "笔记本", "筆電", "laptop 笔记本"],
+    desktop: ["desktop PC", "desktop 台式机", "台式机", "台式電腦"],
+    workstation: ["workstation", "工作站", "workstation 工作站"],
+    server: ["server", "服务器", "伺服器", "server 服务器"]
+  },
+  task: {
+    "chat-llm": ["chat and writing assistant", "聊天写作助手", "聊天寫作助手", "chat / 写作助手"],
+    "coding-llm": ["coding assistant", "编程助手", "編程助手", "coding / 編程助手"],
+    "image-generation": ["image generation with Stable Diffusion", "Stable Diffusion 图像生成", "Stable Diffusion 圖像生成", "Stable Diffusion / 图像生成"],
+    "speech-to-text": ["speech-to-text transcription", "语音转文字", "語音轉文字", "transcription / 語音轉文字"],
+    embeddings: ["RAG and semantic search", "RAG 向量搜索", "RAG / 向量 search"]
+  }
+};
+const NO_GPU_EVIDENCE = ["no dedicated GPU", "无独立显卡", "無獨立顯卡"];
 
 const errors = [];
 
@@ -46,6 +67,66 @@ function exactKeys(actual, expected, message) {
     : [];
   const expectedKeys = [...expected].sort();
   expect(canonical(actualKeys) === canonical(expectedKeys), `${message}: expected [${expectedKeys.join(", ")}], found [${actualKeys.join(", ")}]`);
+}
+
+function normalizedEvidence(value) {
+  return value.normalize("NFKC").toLowerCase().replace(/\s+/g, " ").trim();
+}
+
+function matchesControlledPhrase(value, phrases) {
+  const normalized = normalizedEvidence(value);
+  return phrases.some((phrase) => normalized === normalizedEvidence(phrase));
+}
+
+function isNoGpuEvidence(value) {
+  return matchesControlledPhrase(value, NO_GPU_EVIDENCE);
+}
+
+function containsExpectedNumber(value, expected) {
+  const escaped = String(expected).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`(?:^|[^\\d.])${escaped}(?:\\.0+)?(?=$|[^\\d.])`).test(normalizedEvidence(value));
+}
+
+function hasFieldContext(value, field) {
+  const normalized = normalizedEvidence(value);
+  if (field === "ram") return /\bram\b|\b(?:unified\s+)?memory\b|内存|统一内存|記憶體|統一記憶體/.test(normalized)
+    && !/\bvram\b|显存|顯存|\bssd\b|\bdisk\b|硬盘|硬碟/.test(normalized);
+  if (field === "vram") return /\bvram\b|显存|顯存/.test(normalized)
+    && !/\bram\b|内存|统一内存|記憶體|統一記憶體|\bssd\b|\bdisk\b|硬盘|硬碟/.test(normalized);
+  if (field === "storage") return /\bssd\b|\bdisk\b|硬盘|硬碟|固态硬盘|固態硬碟/.test(normalized)
+    && !/\bram\b|\bvram\b|内存|記憶體|显存|顯存/.test(normalized);
+  return false;
+}
+
+function matchesGpuVendor(value, expected) {
+  const normalized = normalizedEvidence(value);
+  if (expected === "nvidia") return /\bnvidia\b/.test(normalized);
+  if (expected === "amd") return /\bamd\s+radeon\b|\bradeon\b/.test(normalized);
+  if (expected === "intel") return /\bintel\s+(?:arc|iris)\b/.test(normalized);
+  if (expected === "apple") return /\bapple\b/.test(normalized);
+  if (expected === "none") return isNoGpuEvidence(value);
+  return false;
+}
+
+function isFieldSemanticEvidence(record, field, value) {
+  const expected = record.parserExpected.fields[field];
+  if (["os", "deviceType", "task"].includes(field)) {
+    return matchesControlledPhrase(value, ENUM_EVIDENCE[field]?.[expected] || []);
+  }
+  if (field === "cpuModel") {
+    return normalizedEvidence(value).includes(normalizedEvidence(String(expected)));
+  }
+  if (field === "gpuModel") {
+    if (expected === "No dedicated GPU") return isNoGpuEvidence(value);
+    return normalizedEvidence(value).includes(normalizedEvidence(String(expected)));
+  }
+  if (field === "gpuVendor") return matchesGpuVendor(value, expected);
+  if (["ram", "vram", "storage"].includes(field)) {
+    // An explicit no-dedicated-GPU statement is canonical evidence of zero dedicated VRAM.
+    if (field === "vram" && expected === 0 && record.profile.gpuVendor === "none" && isNoGpuEvidence(value)) return true;
+    return containsExpectedNumber(value, expected) && hasFieldContext(value, field);
+  }
+  return false;
 }
 
 function parserLabels(parserExpected) {
@@ -152,6 +233,7 @@ function checkParserSemantics(record) {
       expect(typeof value === "string" && value.length > 0, `${record.id}: ${field} source evidence must be a non-empty string`);
       if (typeof value === "string") {
         expect(normalizedText.includes(value), `${record.id}: ${field} source evidence is absent from NFKC-normalized setupText: ${JSON.stringify(value)}`);
+        expect(isFieldSemanticEvidence(record, field, value), `${record.id}: ${field} source evidence is not valid for expected value ${JSON.stringify(fields[field])}: ${JSON.stringify(value)}`);
       }
     });
   });

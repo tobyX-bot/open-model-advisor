@@ -7,6 +7,7 @@ const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const SOURCE = path.join(ROOT, "fixtures", "computer_setups_200.json");
 const OUTPUT = path.join(ROOT, "fixtures", "computer_setups_200_v1_1.json");
 const SOURCE_SHA256 = "e9e96bf82cde212d1f8d3ea71ac5b6184c138e355eb3a1cee07d921d1064b17b";
+const FROZEN_V1_1_SHA256 = "54fe97fdd3e8b742000bd9df4ec79c586e0e16eeaa07f3c61ac99aebefce02b7";
 
 const ABSENT_GPU_EVIDENCE_IDS = ["user-040", "user-069", "user-110", "user-200"];
 const EXPLICIT_NVIDIA_IDS = ["user-017", "user-050", "user-090", "user-143", "user-183"];
@@ -226,6 +227,10 @@ sourceDataset.records.forEach((sourceRecord, index) => {
   });
 });
 
+const candidateBytes = Buffer.from(`${JSON.stringify(derivative, null, 2)}\n`);
+const candidateHash = crypto.createHash("sha256").update(candidateBytes).digest("hex");
+assert(candidateHash === FROZEN_V1_1_SHA256, `Generated V1.1 SHA-256 drifted to ${candidateHash}; refusing to overwrite frozen fixture`);
+
 fs.mkdirSync(path.dirname(OUTPUT), { recursive: true });
-fs.writeFileSync(OUTPUT, `${JSON.stringify(derivative, null, 2)}\n`);
+fs.writeFileSync(OUTPUT, candidateBytes);
 console.log(`Wrote deterministic oracle V1.1 derivative with ${derivative.records.length} records to ${OUTPUT}`);

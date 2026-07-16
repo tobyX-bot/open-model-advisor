@@ -5,13 +5,17 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const V1_PATH = path.join(ROOT, "fixtures", "computer_setups_200.json");
-const V1_1_PATH = path.join(ROOT, "fixtures", "computer_setups_200_v1_1.json");
+const V1_1_PATH = process.argv[2]
+  ? path.resolve(process.argv[2])
+  : path.join(ROOT, "fixtures", "computer_setups_200_v1_1.json");
 const GENERATOR_PATH = path.join(ROOT, "generate-dataset.mjs");
 const V1_SHA256 = "e9e96bf82cde212d1f8d3ea71ac5b6184c138e355eb3a1cee07d921d1064b17b";
+const V1_1_SHA256 = "54fe97fdd3e8b742000bd9df4ec79c586e0e16eeaa07f3c61ac99aebefce02b7";
 
 const v1Bytes = fs.readFileSync(V1_PATH);
+const v1_1Bytes = fs.readFileSync(V1_1_PATH);
 const v1 = JSON.parse(v1Bytes.toString("utf8"));
-const v1_1 = JSON.parse(fs.readFileSync(V1_1_PATH, "utf8"));
+const v1_1 = JSON.parse(v1_1Bytes.toString("utf8"));
 const generator = fs.readFileSync(GENERATOR_PATH, "utf8");
 const errors = [];
 
@@ -180,7 +184,9 @@ function validateDataset(dataset, label) {
 }
 
 const v1Hash = crypto.createHash("sha256").update(v1Bytes).digest("hex");
+const v1_1Hash = crypto.createHash("sha256").update(v1_1Bytes).digest("hex");
 expect(v1Hash === V1_SHA256, `V1 fixture SHA-256 changed: ${v1Hash}`);
+expect(v1_1Hash === V1_1_SHA256, `V1.1 fixture SHA-256 changed: ${v1_1Hash}`);
 expect(v1.metadata?.oracleVersion === undefined, "V1 must remain unversioned and byte-immutable");
 expect(!generator.includes("../src/") && !generator.includes("models.json"), "Generator must not import application output or catalog data");
 expect(generator.includes("computer_setups_200_v1_1.json"), "Generator must target the V1.1 derivative");
@@ -204,5 +210,6 @@ if (errors.length) {
 console.log(JSON.stringify({
   status: "PASS",
   v1Sha256: v1Hash,
+  v1_1Sha256: v1_1Hash,
   fixtures: summaries
 }, null, 2));

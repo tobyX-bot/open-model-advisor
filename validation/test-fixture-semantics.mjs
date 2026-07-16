@@ -92,11 +92,72 @@ const mutationCases = [
       expected.fieldStatuses.ram = "conflict";
       expected.expectedIssueCodes.ram = "conflict.ram";
     }
+  },
+  {
+    name: "RAM evidence cannot point to OS text",
+    mutate(dataset) {
+      recordFor(dataset, null, "user-001").parserExpected.sourceEvidence.ram = ["Windows"];
+    }
+  },
+  {
+    name: "VRAM evidence cannot point to RAM text",
+    mutate(dataset) {
+      const expected = recordFor(dataset, "unknown-gpu", "user-143").parserExpected;
+      expected.sourceEvidence.vram = [...expected.sourceEvidence.ram];
+    }
+  },
+  {
+    name: "VRAM evidence cannot point to storage text",
+    mutate(dataset) {
+      recordFor(dataset, null, "user-001").parserExpected.sourceEvidence.vram = ["128GB SSD"];
+    }
+  },
+  {
+    name: "storage evidence cannot point to unrelated capacity",
+    mutate(dataset) {
+      recordFor(dataset, null, "user-001").parserExpected.sourceEvidence.storage = ["8GB RAM"];
+    }
+  },
+  {
+    name: "CPU model evidence must contain expected identity",
+    mutate(dataset) {
+      recordFor(dataset, null, "user-001").parserExpected.sourceEvidence.cpuModel = ["Windows"];
+    }
+  },
+  {
+    name: "GPU model evidence must contain expected identity",
+    mutate(dataset) {
+      recordFor(dataset, null, "user-001").parserExpected.sourceEvidence.gpuModel = ["Intel"];
+    }
+  },
+  {
+    name: "GPU vendor evidence must use matching vendor vocabulary",
+    mutate(dataset) {
+      recordFor(dataset, null, "user-001").parserExpected.sourceEvidence.gpuVendor = ["Windows"];
+    }
+  },
+  {
+    name: "OS evidence must use expected enum vocabulary",
+    mutate(dataset) {
+      recordFor(dataset, null, "user-001").parserExpected.sourceEvidence.os = ["laptop"];
+    }
+  },
+  {
+    name: "device evidence must use expected enum vocabulary",
+    mutate(dataset) {
+      recordFor(dataset, null, "user-001").parserExpected.sourceEvidence.deviceType = ["Windows"];
+    }
+  },
+  {
+    name: "task evidence must use expected enum vocabulary",
+    mutate(dataset) {
+      recordFor(dataset, null, "user-001").parserExpected.sourceEvidence.task = ["Windows"];
+    }
   }
 ];
 
 const presentKinds = new Set(source.records.map((record) => record.adversarialKind).filter(Boolean));
-const coveredKinds = new Set(mutationCases.map((testCase) => testCase.kind));
+const coveredKinds = new Set(mutationCases.map((testCase) => testCase.kind).filter(Boolean));
 for (const kind of EXPECTED_ADVERSARIAL_KINDS) {
   if (!presentKinds.has(kind)) throw new Error(`Expected adversarial kind is absent from V1.1: ${kind}`);
   if (!coveredKinds.has(kind)) throw new Error(`Mutation suite does not cover adversarial kind: ${kind}`);
