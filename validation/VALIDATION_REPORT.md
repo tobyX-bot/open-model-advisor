@@ -15,7 +15,13 @@ Across G2 and G3, 99 of the 200 synthetic records produced at least one scanner 
 
 The raw result contains 109 gate-failure events: 77 G2 failures, 27 G3 failures, and 5 G9 pair failures. These events are not 109 distinct users.
 
-The V2 branch should not be merged into the public GitHub Pages release until the scanner is repaired and the unchanged five-fold suite passes all hard gates.
+The V2 branch should not be merged into the public GitHub Pages release until the scanner is repaired and the independently audited five-fold suite passes all hard gates.
+
+### Post-validation oracle erratum
+
+A later independent audit found two oracle defects. Four non-Apple `omitted-memory` records (`user-040`, `user-069`, `user-110`, and `user-200`) required GPU vendor/model values that do not appear in their setup text. Five `unknown-gpu` records explicitly say NVIDIA but mark both vendor and model ambiguous; V1.1 must require the known NVIDIA vendor while leaving only the model unknown. The planned V1.1 oracle will preserve all inputs, profiles, folds, quotas, and policy labels while correcting those expectations and adding explicit source-evidence checks.
+
+This erratum does not change the release verdict or the reported gate rates. All five omitted-memory cases also failed the valid requirement to emit an omission warning. All five unknown-GPU cases failed to warn about the unknown model, and the current scanner also missed the explicit NVIDIA vendor. The baseline raw results remain preserved as evidence of the original run.
 
 ## Problems Found
 
@@ -175,7 +181,7 @@ Evidence:
 6. Emit visible warnings for unknown CPU/GPU, omitted required capacity, and unresolved conflicts.
 7. Add direct regression fixtures for every failure signature in the raw report.
 8. Make the G9 top-starter comparison score each detected normalized profile rather than the shared ground-truth profile.
-9. Rerun the unchanged 200-user, five-fold suite after production changes. Do not alter expected labels to accommodate parser behavior.
+9. Freeze the independently reviewed V1.1 oracle before production changes, then rerun all 200 users and five folds without altering V1.1 labels to accommodate parser behavior.
 10. Require 100% in every fold before merging V2, then run human usability sessions to test whether users notice and understand scanner uncertainty.
 
 ## Final Conclusion
