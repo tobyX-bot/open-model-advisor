@@ -397,7 +397,7 @@ const result = {
     generatedAt: new Date().toISOString(),
     codeCommit: "5dd494c",
     fixtureCommit,
-    fixtureSha256: "70d2fe7beb69291b249c64d60b562ff44b03c323561a4f68149706b6e5942ba0",
+    fixtureSha256: "25830784aef309a75217d4d3a5936a806a2d5b8f2da33379b9f3263e28d34539",
     records: dataset.records.length,
     folds: 5,
     note: "Deterministic five-fold scenario validation; no model training occurred."

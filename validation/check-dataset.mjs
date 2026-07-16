@@ -99,6 +99,7 @@ dataset.records.forEach((record) => {
   });
 
   if (profile.os === "macos") expect(profile.gpuVendor === "apple", `${record.id}: macOS profile must use Apple GPU in this fixture`);
+  if (profile.os === "macos") expect(/^Apple M[1-4]/.test(profile.cpuModel), `${record.id}: macOS profile must use Apple Silicon in this fixture`);
   if (profile.deviceType === "server") expect(profile.os === "linux", `${record.id}: server profile must use Linux in this fixture`);
   if (profile.deviceType === "server" && record.adversarialKind !== "unknown-cpu") expect(/xeon|epyc|threadripper/i.test(profile.cpuModel), `${record.id}: server must use a server-class CPU`);
   if (profile.deviceType === "laptop" && profile.os !== "macos") {
@@ -106,6 +107,8 @@ dataset.records.forEach((record) => {
     if (profile.gpuVendor === "nvidia" && record.adversarialKind !== "unknown-gpu") expect(/laptop gpu/i.test(profile.gpuModel), `${record.id}: laptop NVIDIA GPU must be a laptop model`);
   }
   if (profile.deviceType !== "laptop") expect(!/laptop gpu/i.test(profile.gpuModel), `${record.id}: non-laptop cannot use a laptop GPU`);
+  if (profile.deviceType !== "laptop") expect(!/iris xe/i.test(profile.gpuModel), `${record.id}: non-laptop cannot use Iris Xe in this fixture`);
+  if (record.adversarialKind === "core-ultra") expect(profile.os === "windows" && profile.deviceType === "laptop", `${record.id}: Core Ultra adversarial case must be a Windows laptop`);
   if (profile.gpuVendor === "none") expect(profile.vram === 0, `${record.id}: CPU-only profile must have zero VRAM`);
   if (profile.deployment === "cloud-ok") expect(profile.internet === "available", `${record.id}: cloud-ok profile requires internet`);
 

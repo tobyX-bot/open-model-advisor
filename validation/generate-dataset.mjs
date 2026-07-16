@@ -212,7 +212,7 @@ function buildHardware({ os, deviceType, task, deployment, hardwareTier }, salt)
       [["nvidia", "NVIDIA RTX 4070", 12], ["nvidia", "NVIDIA RTX 4080", 16]],
       [["nvidia", "NVIDIA RTX 4090", 24], ["nvidia", "NVIDIA RTX 3090", 24]]
     ] : [
-      [["none", "No dedicated GPU", 0], ["intel", "Intel Iris Xe", 2], ["intel", "Intel Arc A380", 6]],
+      [["none", "No dedicated GPU", 0], ["intel", "Intel Arc A380", 6], ["intel", "Intel Arc A580", 8]],
       [["nvidia", "NVIDIA RTX 3060", 8], ["amd", "AMD Radeon RX 6600", 8], ["intel", "Intel Arc A750", 8]],
       [["nvidia", "NVIDIA RTX 4070", 12], ["amd", "AMD Radeon RX 7800 XT", 16], ["nvidia", "NVIDIA RTX 3080", 10]],
       [["nvidia", "NVIDIA RTX 4090", 24], ["amd", "AMD Radeon RX 7900 XT", 20], ["nvidia", "NVIDIA RTX 3090", 24]]
@@ -453,10 +453,31 @@ for (let fold = 1; fold <= 5; fold += 1) {
     });
   }
 
-  const adversarialKinds = shuffle(["contradiction-a", "contradiction-b", "unknown-cpu", "unknown-gpu", "omitted-memory", "core-ultra"]);
-  let adversarialIndex = 0;
+  const reserved = new Set();
+  const ensureAdversarialPosition = (predicate) => {
+    let position = foldSlots.findIndex((slot, index) => index >= 8 && !reserved.has(index) && slot.scenarioClass === "adversarial" && predicate(slot));
+    if (position >= 0) {
+      reserved.add(position);
+      return position;
+    }
+    position = foldSlots.findIndex((slot, index) => index >= 8 && !reserved.has(index) && slot.scenarioClass !== "adversarial" && predicate(slot));
+    const donor = foldSlots.findIndex((slot, index) => index >= 8 && !reserved.has(index) && slot.scenarioClass === "adversarial");
+    if (position < 0 || donor < 0) throw new Error(`Fold ${fold} cannot place adversarial scenario`);
+    [foldSlots[position].scenarioClass, foldSlots[donor].scenarioClass] = [foldSlots[donor].scenarioClass, foldSlots[position].scenarioClass];
+    reserved.add(position);
+    return position;
+  };
+
+  const kindByPosition = new Map();
+  kindByPosition.set(ensureAdversarialPosition((slot) => slot.os === "windows" && slot.deviceType === "laptop"), "core-ultra");
+  kindByPosition.set(ensureAdversarialPosition((slot) => slot.os !== "macos"), "unknown-gpu");
+  kindByPosition.set(ensureAdversarialPosition((slot) => slot.os !== "macos" && slot.deviceType !== "server"), "unknown-cpu");
+  const remainingKinds = shuffle(["contradiction-a", "contradiction-b", "omitted-memory"]);
   foldSlots.forEach((slot, position) => {
-    const kind = slot.scenarioClass === "adversarial" ? adversarialKinds[adversarialIndex++] : null;
+    if (slot.scenarioClass === "adversarial" && !kindByPosition.has(position)) kindByPosition.set(position, remainingKinds.shift());
+  });
+  foldSlots.forEach((slot, position) => {
+    const kind = kindByPosition.get(position) || null;
     records.push(createRecord(slot, fold, position, kind));
   });
 }
