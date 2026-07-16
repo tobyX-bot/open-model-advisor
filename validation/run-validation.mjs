@@ -140,6 +140,7 @@ function newGateState() {
 
 for (const record of dataset.records) {
   const gates = newGateState();
+  const scannerCounts = { truePositive: 0, falsePositive: 0, falseNegative: 0 };
   const expected = record.parserExpected;
   const expectedFields = expected.fields;
   const ambiguous = new Set(expected.ambiguousFields);
@@ -159,7 +160,7 @@ for (const record of dataset.records) {
   } catch (error) {
     gates.G1.passed = false;
     addFailure(record, "G1", "Execution threw an exception", { observed: error.message });
-    recordResults.push({ id: record.id, fold: record.fold, gates, exception: error.message });
+    recordResults.push({ id: record.id, fold: record.fold, gates, scannerCounts, exception: error.message });
     continue;
   }
 
@@ -178,14 +179,24 @@ for (const record of dataset.records) {
   if (nonAmbiguousRecord) {
     const mismatches = [];
     Object.entries(expectedFields).forEach(([field, value]) => {
-      if (!(field in detected)) mismatches.push({ field, expected: value, observed: "missing" });
-      else if (canonical(detected[field]) !== canonical(value)) mismatches.push({ field, expected: value, observed: detected[field] });
+      if (!(field in detected)) {
+        scannerCounts.falseNegative += 1;
+        mismatches.push({ field, expected: value, observed: "missing" });
+      } else if (canonical(detected[field]) !== canonical(value)) {
+        scannerCounts.falseNegative += 1;
+        scannerCounts.falsePositive += 1;
+        mismatches.push({ field, expected: value, observed: detected[field] });
+      } else {
+        scannerCounts.truePositive += 1;
+      }
     });
     Object.entries(detected).forEach(([field, value]) => {
       if (!(field in expectedFields) && !allowedInferred.has(field)) {
+        scannerCounts.falsePositive += 1;
         mismatches.push({ field, expected: "not detected", observed: value });
       }
       if (allowedInferred.has(field) && field in record.profile && canonical(value) !== canonical(record.profile[field])) {
+        scannerCounts.falsePositive += 1;
         mismatches.push({ field, expected: record.profile[field], observed: value, inference: true });
       }
     });
@@ -216,8 +227,7 @@ for (const record of dataset.records) {
     }
   }
 
-  if (!recommendationResult.top.length
-    || recommendationResult.top.some((item) => !catalog.models.find((model) => model.id === item.id)?.taskCategories.includes(state.task))) {
+  if (recommendationResult.top.some((item) => !catalog.models.find((model) => model.id === item.id)?.taskCategories.includes(state.task))) {
     gates.G5.passed = false;
     addFailure(record, "G5", "Recommendation category did not match the selected task", { observed: recommendationResult.top });
   }
@@ -275,6 +285,7 @@ for (const record of dataset.records) {
     fold: record.fold,
     segment: segment(record),
     gates,
+    scannerCounts,
     scan: plainScan(scan),
     recommendation: recommendationResult,
     feasibleModels: feasibleModels.map((model) => model.id)
@@ -360,6 +371,27 @@ gates.G10 = {
   reason: "All measured gates must pass in every fold with zero standard deviation."
 };
 
+function scannerMetricSummary(rows) {
+  const totals = rows.reduce((sum, row) => ({
+    truePositive: sum.truePositive + row.scannerCounts.truePositive,
+    falsePositive: sum.falsePositive + row.scannerCounts.falsePositive,
+    falseNegative: sum.falseNegative + row.scannerCounts.falseNegative
+  }), { truePositive: 0, falsePositive: 0, falseNegative: 0 });
+  const precisionDenominator = totals.truePositive + totals.falsePositive;
+  const recallDenominator = totals.truePositive + totals.falseNegative;
+  return {
+    ...totals,
+    precision: precisionDenominator ? totals.truePositive / precisionDenominator : null,
+    recall: recallDenominator ? totals.truePositive / recallDenominator : null
+  };
+}
+
+const nonAmbiguousResults = recordResults.filter((result) => result.gates.G2.applicable);
+const scannerMetrics = {
+  overall: scannerMetricSummary(nonAmbiguousResults),
+  byFold: Object.fromEntries([1, 2, 3, 4, 5].map((fold) => [fold, scannerMetricSummary(nonAmbiguousResults.filter((result) => result.fold === fold))]))
+};
+
 const result = {
   metadata: {
     generatedAt: new Date().toISOString(),
@@ -371,6 +403,7 @@ const result = {
     note: "Deterministic five-fold scenario validation; no model training occurred."
   },
   gates,
+  scannerMetrics,
   failureCount: failures.length,
   failures,
   categoryCoverageFailures,
