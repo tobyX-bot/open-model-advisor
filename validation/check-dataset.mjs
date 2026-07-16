@@ -105,7 +105,9 @@ dataset.records.forEach((record) => {
   if (profile.deviceType === "laptop" && profile.os !== "macos") {
     if (record.adversarialKind !== "unknown-cpu") expect(/(?:u|p|h|hs|hx|g\d)$/i.test(profile.cpuModel), `${record.id}: laptop must use a mobile-class CPU`);
     if (profile.gpuVendor === "nvidia" && record.adversarialKind !== "unknown-gpu") expect(/laptop gpu/i.test(profile.gpuModel), `${record.id}: laptop NVIDIA GPU must be a laptop model`);
+    expect(!(/amd ryzen/i.test(profile.cpuModel) && /intel iris/i.test(profile.gpuModel)), `${record.id}: AMD laptop CPU cannot use Intel Iris integrated graphics`);
   }
+  if (profile.deviceType === "laptop" && profile.os === "macos") expect(!/ultra/i.test(profile.cpuModel), `${record.id}: Apple Ultra chip cannot be assigned to a laptop`);
   if (profile.deviceType !== "laptop") expect(!/laptop gpu/i.test(profile.gpuModel), `${record.id}: non-laptop cannot use a laptop GPU`);
   if (profile.deviceType !== "laptop") expect(!/iris xe/i.test(profile.gpuModel), `${record.id}: non-laptop cannot use Iris Xe in this fixture`);
   if (record.adversarialKind === "core-ultra") expect(profile.os === "windows" && profile.deviceType === "laptop", `${record.id}: Core Ultra adversarial case must be a Windows laptop`);

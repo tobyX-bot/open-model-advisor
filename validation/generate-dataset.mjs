@@ -178,7 +178,10 @@ function buildHardware({ os, deviceType, task, deployment, hardwareTier }, salt)
       ["Apple M1 Max", "Apple M2 Max", "Apple M3 Pro", "Apple M3 Max", "Apple M4 Pro"],
       ["Apple M1 Ultra", "Apple M2 Ultra", "Apple M3 Max", "Apple M4 Max", "Apple M2 Max"]
     ];
-    cpuModel = chips[tierIndex][salt % chips[tierIndex].length];
+    const eligibleChips = deviceType === "laptop"
+      ? chips[tierIndex].filter((chip) => !/ultra/i.test(chip))
+      : chips[tierIndex];
+    cpuModel = eligibleChips[salt % eligibleChips.length];
     gpuVendor = "apple";
     gpuModel = `${cpuModel} GPU`;
     vram = Math.max(4, Math.floor(ram * 0.75));
@@ -218,6 +221,11 @@ function buildHardware({ os, deviceType, task, deployment, hardwareTier }, salt)
       [["nvidia", "NVIDIA RTX 4090", 24], ["amd", "AMD Radeon RX 7900 XT", 20], ["nvidia", "NVIDIA RTX 3090", 24]]
     ];
     [gpuVendor, gpuModel, vram] = gpuOptions[tierIndex][salt % gpuOptions[tierIndex].length];
+    if (deviceType === "laptop" && /amd ryzen/i.test(cpuModel) && /intel iris/i.test(gpuModel)) {
+      gpuVendor = "none";
+      gpuModel = "No dedicated GPU";
+      vram = 0;
+    }
   }
 
   return {
