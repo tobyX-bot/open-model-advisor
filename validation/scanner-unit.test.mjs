@@ -2,7 +2,15 @@ import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import test from "node:test";
 
+import {
+  extractCandidates,
+  extractCpuCandidates,
+  extractGpuCandidates,
+  extractSystemCandidates,
+  extractTaskCandidates
+} from "../src/scanner/extractors.js";
 import { normalizeSetupText } from "../src/scanner/normalize.js";
+import { CPU_MODEL_PATTERNS, GPU_MODEL_PATTERNS } from "../src/scanner/patterns.js";
 
 function segmentTexts(result) {
   return result.segments.map((segment) => segment.text);
@@ -286,4 +294,279 @@ test("coerces other inputs, caps the raw snapshot, and exposes lowercase fields"
   assert.equal(capped.truncated, true);
   assert.equal(lowercase.lower, lowercase.normalized.toLowerCase());
   assert.deepEqual(lowercase.segments.map((segment) => segment.lower), ["ram: 64gb", "gpu: rtx 4090"]);
+});
+
+function candidateValues(candidates, field) {
+  return candidates.filter((candidate) => candidate.field === field).map((candidate) => candidate.value);
+}
+
+function assertCandidateContract(document, candidate) {
+  assert.equal(Object.getPrototypeOf(candidate), Object.prototype);
+  assert.equal(typeof candidate.field, "string");
+  assert.ok(typeof candidate.value === "string" || typeof candidate.value === "number");
+  assert.equal(typeof candidate.raw, "string");
+  assert.equal(typeof candidate.segmentIndex, "number");
+  assert.equal(typeof candidate.start, "number");
+  assert.equal(typeof candidate.end, "number");
+  assert.equal(typeof candidate.source, "string");
+  assert.equal(typeof candidate.specificity, "number");
+  assert.ok(["high", "medium", "low"].includes(candidate.confidence));
+  assert.equal(candidate.inferred, false);
+  assert.equal(document.normalized.slice(candidate.start, candidate.end), candidate.raw);
+  assert.equal(document.segments[candidate.segmentIndex].text.includes(candidate.raw), true);
+}
+
+test("exports all pure Task 2 extractor entry points", () => {
+  for (const extractor of [
+    extractSystemCandidates,
+    extractCpuCandidates,
+    extractGpuCandidates,
+    extractTaskCandidates,
+    extractCandidates
+  ]) {
+    assert.equal(typeof extractor, "function");
+  }
+});
+
+test("defines ordered declarative CPU and GPU model pattern data", () => {
+  const requiredKeys = ["id", "field", "vendor", "regex", "confidence", "specificity", "normalize"];
+
+  for (const patterns of [CPU_MODEL_PATTERNS, GPU_MODEL_PATTERNS]) {
+    let sawGenericPattern = false;
+    for (const pattern of patterns) {
+      requiredKeys.forEach((key) => assert.equal(key in pattern, true, `${pattern.id}.${key}`));
+      assert.equal(pattern.regex instanceof RegExp, true);
+      assert.equal(pattern.regex.global, false);
+      assert.equal(typeof pattern.normalize, "function");
+      if (pattern.specificity < 100) sawGenericPattern = true;
+      else assert.equal(sawGenericPattern, false, `${pattern.id} follows a generic pattern`);
+    }
+  }
+});
+
+test("canonicalizes exact CPU models in English, Chinese, and mixed ordering", () => {
+  const document = normalizeSetupText([
+    "GPU: NVIDIA RTX 4060 Laptop GPU",
+    "处理器: amd ryzen 7 7800x3d",
+    "CPU intel core ultra 7 155h",
+    "處理器 Intel Core i5 13500h",
+    "服务器处理器: xeon gold 5318y",
+    "CPU: epyc 7232p",
+    "芯片 Apple m3 pro"
+  ].join(";"));
+  const candidates = extractCpuCandidates(document);
+
+  assert.deepEqual(candidateValues(candidates, "cpuModel"), [
+    "AMD Ryzen 7 7800X3D",
+    "Intel Core Ultra 7 155H",
+    "Intel Core i5-13500H",
+    "Xeon Gold 5318Y",
+    "AMD EPYC 7232P",
+    "Apple M3 Pro"
+  ]);
+  candidates.forEach((candidate) => assertCandidateContract(document, candidate));
+  assert.deepEqual(candidates[1], {
+    field: "cpuModel",
+    value: "Intel Core Ultra 7 155H",
+    raw: "intel core ultra 7 155h",
+    segmentIndex: 2,
+    start: document.normalized.indexOf("intel core ultra 7 155h"),
+    end: document.normalized.indexOf("intel core ultra 7 155h") + "intel core ultra 7 155h".length,
+    source: "cpu.intel-core-ultra",
+    specificity: 100,
+    confidence: "high",
+    inferred: false
+  });
+});
+
+test("canonicalizes exact GPU models and preserves supported suffixes", () => {
+  const document = normalizeSetupText([
+    "显卡 nvidia rtx 4060 laptop gpu",
+    "GPU: NVIDIA RTX 4070 ti super",
+    "顯卡 amd radeon rx 7900 xt",
+    "GPU intel arc a750",
+    "显卡 Intel iris xe"
+  ].join("|"));
+  const candidates = extractGpuCandidates(document);
+
+  assert.deepEqual(candidateValues(candidates, "gpuModel"), [
+    "NVIDIA RTX 4060 Laptop GPU",
+    "NVIDIA RTX 4070 Ti SUPER",
+    "AMD Radeon RX 7900 XT",
+    "Intel Arc A750",
+    "Intel Iris Xe"
+  ]);
+  assert.deepEqual(candidateValues(candidates, "gpuVendor"), ["nvidia", "nvidia", "amd", "intel", "intel"]);
+  candidates.forEach((candidate) => assertCandidateContract(document, candidate));
+  for (let index = 0; index < candidates.length; index += 2) {
+    assert.equal(candidates[index].field, "gpuModel");
+    assert.equal(candidates[index + 1].field, "gpuVendor");
+    assert.deepEqual(
+      [candidates[index + 1].raw, candidates[index + 1].start, candidates[index + 1].end],
+      [candidates[index].raw, candidates[index].start, candidates[index].end]
+    );
+  }
+
+  const model = candidates.find((candidate) => candidate.value === "NVIDIA RTX 4070 Ti SUPER");
+  assert.deepEqual(model, {
+    field: "gpuModel",
+    value: "NVIDIA RTX 4070 Ti SUPER",
+    raw: "NVIDIA RTX 4070 ti super",
+    segmentIndex: 1,
+    start: document.normalized.indexOf("NVIDIA RTX 4070 ti super"),
+    end: document.normalized.indexOf("NVIDIA RTX 4070 ti super") + "NVIDIA RTX 4070 ti super".length,
+    source: "gpu.nvidia-rtx",
+    specificity: 100,
+    confidence: "high",
+    inferred: false
+  });
+});
+
+test("GPU model evidence does not absorb VRAM, Chinese, or RAM tails", () => {
+  const cases = [
+    ["GPU: NVIDIA RTX 4060 Laptop GPU with 8GB VRAM", "NVIDIA RTX 4060 Laptop GPU"],
+    ["NVIDIA RTX 4070 Ti SUPER 显卡，8GB 显存", "NVIDIA RTX 4070 Ti SUPER"],
+    ["GPU AMD Radeon RX 7900 XT RAM 64GB", "AMD Radeon RX 7900 XT"]
+  ];
+
+  for (const [input, expectedRaw] of cases) {
+    const document = normalizeSetupText(input);
+    const models = extractGpuCandidates(document).filter((candidate) => candidate.field === "gpuModel");
+
+    assert.equal(models.length, 1);
+    assert.equal(models[0].raw, expectedRaw);
+    assert.equal(models[0].raw.includes("8GB"), false);
+    assert.equal(models[0].raw.includes("RAM"), false);
+  }
+});
+
+test("retains constrained labeled unknown CPU and GPU models without exact-pattern duplicates", () => {
+  const document = normalizeSetupText([
+    "CPU NovaCore NX-17H RAM 64GB coding assistant",
+    "NVIDIA MysteryGPU Z-10 image generation",
+    "GPU: Intel Arc A750 with 8GB VRAM"
+  ].join(";"));
+  const cpuCandidates = extractCpuCandidates(document);
+  const gpuCandidates = extractGpuCandidates(document);
+
+  assert.deepEqual(cpuCandidates, [{
+    field: "cpuModel",
+    value: "NovaCore NX-17H",
+    raw: "NovaCore NX-17H",
+    segmentIndex: 0,
+    start: document.normalized.indexOf("NovaCore NX-17H"),
+    end: document.normalized.indexOf("NovaCore NX-17H") + "NovaCore NX-17H".length,
+    source: "cpu.labeled-unknown",
+    specificity: 10,
+    confidence: "low",
+    inferred: false
+  }]);
+  assert.deepEqual(candidateValues(gpuCandidates, "gpuModel"), ["NVIDIA MysteryGPU Z-10", "Intel Arc A750"]);
+  assert.deepEqual(candidateValues(gpuCandidates, "gpuVendor"), ["nvidia", "intel"]);
+  assert.equal(gpuCandidates.filter((candidate) => candidate.value === "Intel Arc A750").length, 1);
+  assert.equal(gpuCandidates.some((candidate) => candidate.source === "gpu.labeled-unknown"), false);
+
+  const unknownModel = gpuCandidates.find((candidate) => candidate.field === "gpuModel" && candidate.confidence === "low");
+  assert.equal(unknownModel?.raw, "NVIDIA MysteryGPU Z-10");
+  assert.equal(unknownModel?.source, "gpu.nvidia-labeled-unknown");
+  gpuCandidates.forEach((candidate) => assertCandidateContract(document, candidate));
+});
+
+test("generic unknown capture requires a label and cannot cross boundaries or consume trailing fields", () => {
+  const unlabeled = normalizeSetupText("NovaCore NX-17H;MysteryGPU Z-10");
+  const bounded = normalizeSetupText(
+    "CPU NovaCore NX-17H RAM 64GB coding;GPU: Photon Z-20 storage 2TB chat"
+  );
+
+  assert.deepEqual(extractCpuCandidates(unlabeled), []);
+  assert.deepEqual(extractGpuCandidates(unlabeled), []);
+  assert.deepEqual(candidateValues(extractCpuCandidates(bounded), "cpuModel"), ["NovaCore NX-17H"]);
+  assert.deepEqual(candidateValues(extractGpuCandidates(bounded), "gpuModel"), ["Photon Z-20"]);
+  for (const candidate of [...extractCpuCandidates(bounded), ...extractGpuCandidates(bounded)]) {
+    assert.equal(/RAM|storage|chat/i.test(candidate.raw), false);
+  }
+});
+
+test("emits every OS and device evidence item without resolving conflicts", () => {
+  const document = normalizeSetupText([
+    "MacBook with macOS",
+    "Windows 11 微软系统",
+    "Linux Ubuntu 統信",
+    "笔记本 laptop",
+    "工作站 workstation",
+    "服务器 機架",
+    "台式电脑 desktop PC"
+  ].join(";"));
+  const candidates = extractSystemCandidates(document);
+
+  assert.deepEqual(candidateValues(candidates, "os"), [
+    "macos", "macos", "windows", "windows", "linux", "linux", "linux"
+  ]);
+  assert.deepEqual(candidateValues(candidates, "deviceType"), [
+    "laptop", "laptop", "laptop", "workstation", "workstation",
+    "server", "server", "desktop", "desktop", "desktop"
+  ]);
+  candidates.forEach((candidate) => assertCandidateContract(document, candidate));
+});
+
+test("emits no-dedicated-GPU evidence without VRAM and does not infer Apple GPU", () => {
+  const document = normalizeSetupText("Apple M3 Pro;no dedicated GPU;无独立显卡;無獨立顯卡;只有 CPU");
+  const candidates = extractGpuCandidates(document);
+
+  assert.deepEqual(candidateValues(candidates, "gpuVendor"), ["none", "none", "none", "none"]);
+  assert.deepEqual(candidateValues(candidates, "gpuModel"), [
+    "No dedicated GPU", "No dedicated GPU", "No dedicated GPU", "No dedicated GPU"
+  ]);
+  assert.equal(candidates.some((candidate) => candidate.field === "vram"), false);
+  assert.equal(candidates.some((candidate) => candidate.value === "apple"), false);
+});
+
+test("emits all five task categories across English and Chinese evidence", () => {
+  const document = normalizeSetupText([
+    "coding assistant and image generation",
+    "Whisper 語音轉文字",
+    "RAG 知识库",
+    "聊天 writing"
+  ].join(";"));
+  const candidates = extractTaskCandidates(document);
+
+  assert.deepEqual(candidateValues(candidates, "task"), [
+    "coding-llm",
+    "image-generation",
+    "speech-to-text",
+    "speech-to-text",
+    "embeddings",
+    "embeddings",
+    "chat-llm",
+    "chat-llm"
+  ]);
+  assert.equal(candidates.some((candidate) => candidate.raw.toLowerCase() === "assistant"), false);
+  candidates.forEach((candidate) => assertCandidateContract(document, candidate));
+});
+
+test("extractor offsets use normalized source when Unicode lowercase changes length", () => {
+  const document = normalizeSetupText("İ;GPU: NVIDIA RTX 4060 Laptop GPU");
+  const candidates = extractGpuCandidates(document);
+  const model = candidates.find((candidate) => candidate.field === "gpuModel");
+
+  assert.equal(document.lower.length, document.normalized.length + 1);
+  assert.equal(model?.segmentIndex, 1);
+  assert.equal(model?.start, document.normalized.indexOf("NVIDIA RTX 4060 Laptop GPU"));
+  assert.equal(document.normalized.slice(model.start, model.end), model.raw);
+  assert.notEqual(document.lower.indexOf("nvidia rtx 4060 laptop gpu"), model.start);
+});
+
+test("extractors are deterministic across repeated calls and do not mutate the document", () => {
+  const document = normalizeSetupText("Windows laptop;CPU Intel Core i5-13500H;GPU RTX 4070 Ti SUPER;coding and chat");
+  const snapshot = structuredClone(document);
+  const first = extractCandidates(document);
+  const second = extractCandidates(document);
+
+  assert.deepEqual(first, second);
+  assert.deepEqual(JSON.parse(JSON.stringify(first)), first);
+  assert.deepEqual(document, snapshot);
+  first.forEach((candidate) => assertCandidateContract(document, candidate));
+  assert.deepEqual(first.map((candidate) => candidate.field), [
+    "os", "deviceType", "cpuModel", "gpuModel", "gpuVendor", "task", "task"
+  ]);
 });
