@@ -64,6 +64,7 @@ expect(!generator.includes("../src/") && !generator.includes("models.json"), "Ge
 
 const ids = new Set();
 const groups = new Map();
+const setupTexts = new Set();
 
 dataset.records.forEach((record) => {
   const profile = record.profile || {};
@@ -75,6 +76,7 @@ dataset.records.forEach((record) => {
   expect(allowed.scenarioClass.has(record.scenarioClass), `${record.id}: invalid scenarioClass`);
   expect(allowed.hardwareTier.has(record.hardwareTier), `${record.id}: invalid hardwareTier`);
   expect(typeof record.setupText === "string" && record.setupText.length >= 20, `${record.id}: setupText is too short`);
+  setupTexts.add(record.setupText);
   expect(allowed.entryMode.has(record.journey?.entryMode), `${record.id}: invalid entryMode`);
   expect(["detected", "manual"].includes(record.journey?.taskSelection), `${record.id}: invalid taskSelection`);
 
@@ -93,10 +95,17 @@ dataset.records.forEach((record) => {
   (record.parserExpected?.ambiguousFields || []).forEach((field) => {
     expect(allowed.parserField.has(field), `${record.id}: unsupported ambiguous field ${field}`);
     expect(!(field in record.parserExpected.fields), `${record.id}: ambiguous field ${field} also has an expected value`);
+    expect(!record.parserExpected.allowedInferredFields.includes(field), `${record.id}: ambiguous field ${field} is also an allowed inference`);
   });
 
   if (profile.os === "macos") expect(profile.gpuVendor === "apple", `${record.id}: macOS profile must use Apple GPU in this fixture`);
   if (profile.deviceType === "server") expect(profile.os === "linux", `${record.id}: server profile must use Linux in this fixture`);
+  if (profile.deviceType === "server" && record.adversarialKind !== "unknown-cpu") expect(/xeon|epyc|threadripper/i.test(profile.cpuModel), `${record.id}: server must use a server-class CPU`);
+  if (profile.deviceType === "laptop" && profile.os !== "macos") {
+    if (record.adversarialKind !== "unknown-cpu") expect(/(?:u|p|h|hs|hx|g\d)$/i.test(profile.cpuModel), `${record.id}: laptop must use a mobile-class CPU`);
+    if (profile.gpuVendor === "nvidia" && record.adversarialKind !== "unknown-gpu") expect(/laptop gpu/i.test(profile.gpuModel), `${record.id}: laptop NVIDIA GPU must be a laptop model`);
+  }
+  if (profile.deviceType !== "laptop") expect(!/laptop gpu/i.test(profile.gpuModel), `${record.id}: non-laptop cannot use a laptop GPU`);
   if (profile.gpuVendor === "none") expect(profile.vram === 0, `${record.id}: CPU-only profile must have zero VRAM`);
   if (profile.deployment === "cloud-ok") expect(profile.internet === "available", `${record.id}: cloud-ok profile requires internet`);
 
@@ -126,11 +135,16 @@ for (let fold = 1; fold <= 5; fold += 1) {
 }
 
 expect(groups.size === 20, `Expected 20 equivalence groups, found ${groups.size}`);
+expect(setupTexts.size >= 195, `Expected at least 195 unique setup texts, found ${setupTexts.size}`);
+const pairDefinitions = new Set();
 groups.forEach((members, group) => {
   expect(members.length === 2, `${group}: expected two members`);
   if (members.length === 2) {
     expect(canonical(members[0].profile) === canonical(members[1].profile), `${group}: profile mismatch`);
     expect(members[0].setupText !== members[1].setupText, `${group}: setup text must differ`);
+    const definition = canonical({ profile: members[0].profile, texts: members.map((member) => member.setupText).sort() });
+    expect(!pairDefinitions.has(definition), `${group}: duplicates another equivalence definition`);
+    pairDefinitions.add(definition);
   }
 });
 

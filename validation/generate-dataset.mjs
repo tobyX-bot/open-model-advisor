@@ -172,47 +172,52 @@ function buildHardware({ os, deviceType, task, deployment, hardwareTier }, salt)
   let vram;
 
   if (os === "macos") {
-    const chips = ["Apple M1", "Apple M2 Pro", "Apple M3 Pro", "Apple M3 Max"];
-    cpuModel = chips[tierIndex];
+    const chips = [
+      ["Apple M1", "Apple M2", "Apple M3", "Apple M4", "Apple M1 Pro"],
+      ["Apple M1 Pro", "Apple M2 Pro", "Apple M3", "Apple M3 Pro", "Apple M4 Pro"],
+      ["Apple M1 Max", "Apple M2 Max", "Apple M3 Pro", "Apple M3 Max", "Apple M4 Pro"],
+      ["Apple M1 Ultra", "Apple M2 Ultra", "Apple M3 Max", "Apple M4 Max", "Apple M2 Max"]
+    ];
+    cpuModel = chips[tierIndex][salt % chips[tierIndex].length];
     gpuVendor = "apple";
     gpuModel = `${cpuModel} GPU`;
     vram = Math.max(4, Math.floor(ram * 0.75));
   } else {
-    const intelCpu = ["Intel Core i3-12100", "Intel Core i5-12400", "Intel Core i7-13700H", "Intel Core i9-13900K"];
-    const amdCpu = ["AMD Ryzen 3 5300U", "AMD Ryzen 5 7600", "AMD Ryzen 7 7800X3D", "AMD Ryzen 9 7950X"];
-    cpuModel = (salt + tierIndex) % 2 ? intelCpu[tierIndex] : amdCpu[tierIndex];
+    const cpuOptions = deviceType === "laptop" ? [
+      ["Intel Core i3-1215U", "AMD Ryzen 3 7320U", "Intel Core i3-1115G4", "AMD Ryzen 3 5300U", "Intel Core i3-1315U"],
+      ["Intel Core i5-1240P", "AMD Ryzen 5 7640HS", "Intel Core i5-1340P", "AMD Ryzen 5 6600U", "Intel Core i5-13500H"],
+      ["Intel Core i7-13700H", "AMD Ryzen 7 7840HS", "Intel Core i7-1360P", "AMD Ryzen 7 6800H", "Intel Core i7-13800H"],
+      ["Intel Core i9-13980HX", "AMD Ryzen 9 7945HX", "Intel Core i9-14900HX", "AMD Ryzen 9 7845HX", "Intel Core i9-12900HX"]
+    ] : deviceType === "server" ? [
+      ["Xeon E-2336", "AMD EPYC 7232P", "Xeon E-2324G", "AMD EPYC 7252", "Xeon E-2374G"],
+      ["Xeon W-2245", "AMD EPYC 7313P", "Xeon Silver 4310", "AMD EPYC 7282", "Xeon W-2265"],
+      ["Xeon Gold 6330", "AMD EPYC 7443P", "Xeon Gold 5318Y", "AMD EPYC 7413", "Xeon W-3375"],
+      ["Xeon Platinum 8480", "AMD EPYC 9654", "Threadripper 7995WX", "AMD EPYC 9754", "Xeon Platinum 8490H"]
+    ] : [
+      ["Intel Core i3-12100", "AMD Ryzen 3 5300G", "Intel Core i3-13100", "AMD Ryzen 3 4100", "Intel Core i3-10100"],
+      ["Intel Core i5-12400", "AMD Ryzen 5 7600", "Intel Core i5-13400", "AMD Ryzen 5 5600X", "Intel Core i5-12600K"],
+      ["Intel Core i7-13700K", "AMD Ryzen 7 7800X3D", "Intel Core i7-12700K", "AMD Ryzen 7 7700X", "Intel Core i7-14700K"],
+      ["Intel Core i9-13900K", "AMD Ryzen 9 7950X", "Intel Core i9-14900K", "AMD Ryzen 9 7900X", "Threadripper 7970X"]
+    ];
+    cpuModel = cpuOptions[tierIndex][salt % cpuOptions[tierIndex].length];
 
-    if (hardwareTier === "entry") {
-      if (salt % 2 === 0) {
-        gpuVendor = "none";
-        gpuModel = "No dedicated GPU";
-        vram = 0;
-      } else {
-        gpuVendor = "intel";
-        gpuModel = "Intel Iris Xe";
-        vram = 2;
-      }
-    } else if (hardwareTier === "mainstream") {
-      const options = [
-        ["nvidia", "NVIDIA RTX 3060", 8],
-        ["amd", "AMD Radeon RX 6600", 8],
-        ["intel", "Intel Arc A750", 8]
-      ];
-      [gpuVendor, gpuModel, vram] = options[salt % options.length];
-    } else if (hardwareTier === "performance") {
-      const options = [
-        ["nvidia", "NVIDIA RTX 4070", 12],
-        ["amd", "AMD Radeon RX 7800 XT", 16]
-      ];
-      [gpuVendor, gpuModel, vram] = options[salt % options.length];
-    } else {
-      const options = [
-        ["nvidia", "NVIDIA RTX 4090", 24],
-        ["amd", "AMD Radeon RX 7900 XT", 20]
-      ];
-      [gpuVendor, gpuModel, vram] = options[salt % options.length];
-      if (deviceType === "server" && gpuVendor === "nvidia") gpuModel = "NVIDIA RTX 4090";
-    }
+    const gpuOptions = deviceType === "laptop" ? [
+      [["none", "No dedicated GPU", 0], ["intel", "Intel Iris Xe", 2]],
+      [["nvidia", "NVIDIA RTX 4050 Laptop GPU", 6], ["nvidia", "NVIDIA RTX 4060 Laptop GPU", 8], ["intel", "Intel Arc A550M", 8]],
+      [["nvidia", "NVIDIA RTX 4070 Laptop GPU", 8], ["nvidia", "NVIDIA RTX 4080 Laptop GPU", 12]],
+      [["nvidia", "NVIDIA RTX 4090 Laptop GPU", 16], ["nvidia", "NVIDIA RTX 4080 Laptop GPU", 12]]
+    ] : deviceType === "server" ? [
+      [["none", "No dedicated GPU", 0]],
+      [["nvidia", "NVIDIA RTX 3060", 12]],
+      [["nvidia", "NVIDIA RTX 4070", 12], ["nvidia", "NVIDIA RTX 4080", 16]],
+      [["nvidia", "NVIDIA RTX 4090", 24], ["nvidia", "NVIDIA RTX 3090", 24]]
+    ] : [
+      [["none", "No dedicated GPU", 0], ["intel", "Intel Iris Xe", 2], ["intel", "Intel Arc A380", 6]],
+      [["nvidia", "NVIDIA RTX 3060", 8], ["amd", "AMD Radeon RX 6600", 8], ["intel", "Intel Arc A750", 8]],
+      [["nvidia", "NVIDIA RTX 4070", 12], ["amd", "AMD Radeon RX 7800 XT", 16], ["nvidia", "NVIDIA RTX 3080", 10]],
+      [["nvidia", "NVIDIA RTX 4090", 24], ["amd", "AMD Radeon RX 7900 XT", 20], ["nvidia", "NVIDIA RTX 3090", 24]]
+    ];
+    [gpuVendor, gpuModel, vram] = gpuOptions[tierIndex][salt % gpuOptions[tierIndex].length];
   }
 
   return {
@@ -290,10 +295,10 @@ function baseText(profile, languageStyle, scenarioClass) {
 
 function adversarialText(profile, languageStyle, kind) {
   if (kind === "unknown-cpu") {
-    return baseText({ ...profile, cpuModel: "NovaCore NX-17" }, languageStyle, "messy");
+    return baseText(profile, languageStyle, "messy");
   }
   if (kind === "unknown-gpu") {
-    return baseText({ ...profile, gpuModel: "NVIDIA MysteryGPU Z-10", gpuVendor: "nvidia" }, languageStyle, "messy");
+    return baseText(profile, languageStyle, "messy");
   }
   if (kind === "omitted-memory") {
     const os = osLabels[profile.os];
@@ -340,10 +345,11 @@ function parserExpectation(profile, adversarialKind = null) {
   if (adversarialKind === "omitted-memory") ambiguousFields.push("ram", "vram", "storage");
 
   ambiguousFields.forEach((field) => delete fields[field]);
+  const filteredAllowedInferences = allowedInferredFields.filter((field) => !ambiguousFields.includes(field));
   return {
     fields,
     ambiguousFields,
-    allowedInferredFields,
+    allowedInferredFields: filteredAllowedInferences,
     shouldWarn: ["contradiction-a", "contradiction-b", "unknown-cpu", "unknown-gpu", "omitted-memory"].includes(adversarialKind)
   };
 }
@@ -376,10 +382,14 @@ function journey(entryMode) {
 
 function createRecord(slot, fold, position, adversarialKind = null) {
   let profile = slot.profile ? clone(slot.profile) : buildHardware(slot, fold * 100 + position);
-  if (adversarialKind === "unknown-cpu") profile.cpuModel = "NovaCore NX-17";
+  if (adversarialKind === "unknown-cpu") {
+    profile.cpuModel = profile.deviceType === "laptop" ? "NovaCore NX-17H"
+      : profile.deviceType === "server" ? "NovaCore Server NX-17"
+        : "NovaCore NX-17";
+  }
   if (adversarialKind === "unknown-gpu") {
     profile.gpuVendor = "nvidia";
-    profile.gpuModel = "NVIDIA MysteryGPU Z-10";
+    profile.gpuModel = profile.deviceType === "laptop" ? "NVIDIA MysteryGPU Z-10 Laptop GPU" : "NVIDIA MysteryGPU Z-10";
   }
   if (adversarialKind === "core-ultra") profile.cpuModel = "Intel Core Ultra 7 155H";
 
@@ -410,7 +420,7 @@ for (let fold = 1; fold <= 5; fold += 1) {
   const foldSlots = [];
 
   pairTemplates.forEach((template, pairIndex) => {
-    const profile = buildHardware(template, fold * 10 + pairIndex);
+    const profile = buildHardware(template, fold * 7 + pairIndex);
     pairPresentation[pairIndex].forEach((presentation) => {
       foldSlots.push({
         ...template,
