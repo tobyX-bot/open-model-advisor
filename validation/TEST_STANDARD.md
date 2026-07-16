@@ -10,6 +10,15 @@ Test Model Digger as 200 synthetic users completing realistic hardware-entry and
 
 Model Digger is deterministic and has no learned parameters. The folds are independent scenario batches, not training/test splits. Results measure robustness, safety, and consistency; they do not estimate real-world predictive accuracy.
 
+## Golden Standard
+
+Accuracy and reliability are the release criteria. Coverage, visual quality, and a high overall average cannot compensate for a wrong scan, unsafe recommendation, inconsistent result, exception, or weak fold.
+
+- **Accuracy** means exact reconstruction of every non-ambiguous expected field plus correct task category, hardware-feasibility classification, and fallback policy.
+- **Reliability** means identical results for repeated identical inputs, equivalent results for semantically equivalent supported inputs, no uncaught failures, and no fold below the release standard.
+- Any hard-gate failure produces a `Needs revision` verdict.
+- “Best model” accuracy is not claimed without an independent expert-labeled ranking or real outcome data. This test validates the deterministic policy and catalog constraints that the product actually implements.
+
 ## Synthetic Audience Assumptions
 
 Each fold must contain:
@@ -40,6 +49,7 @@ These proportions are product assumptions, not observed traffic. They must be re
 ### G1. Execution reliability: 100%
 
 - All 200 journeys complete without an uncaught exception, blank application state, or catalog-load failure.
+- Repeating the same parser and recommendation input must produce an identical normalized profile, ranking, score, labels, and fallback decision.
 - Every fold must score 40/40.
 
 ### G2. Scanner exactness on non-ambiguous text: 100%
