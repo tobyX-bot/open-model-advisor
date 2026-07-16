@@ -70,9 +70,11 @@ function appendSegment(segments, normalized, start, end) {
  */
 export function normalizeSetupText(input) {
   const coerced = input === null || input === undefined ? "" : String(input);
-  const rawResult = capCodePointSafe(coerced, MAX_TEXT_LENGTH);
   const sourceResult = capCodePointSafe(coerced, PRE_NORMALIZATION_SAFETY_LENGTH);
-  const normalizedResult = capCodePointSafe(sourceResult.text.normalize("NFKC"), MAX_TEXT_LENGTH);
+  // Joining code points forces independent backing storage for the bounded source.
+  const detachedSource = Array.from(sourceResult.text).join("");
+  const rawResult = capCodePointSafe(detachedSource, MAX_TEXT_LENGTH);
+  const normalizedResult = capCodePointSafe(detachedSource.normalize("NFKC"), MAX_TEXT_LENGTH);
   const normalized = normalizedResult.text;
   const segments = [];
   let segmentStart = 0;

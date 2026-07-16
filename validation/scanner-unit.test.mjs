@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import test from "node:test";
 
 import { normalizeSetupText } from "../src/scanner/normalize.js";
@@ -124,6 +125,67 @@ test("applies a deterministic pre-normalization safety ceiling to large direct i
   assertResultIsWellFormed(first);
   assert.deepEqual(first, second);
   assert.equal(first.normalized.slice(first.segments[0].start, first.segments[0].end), first.segments[0].text);
+});
+
+test("does not retain an oversized caller string through returned slices", () => {
+  const inputLength = 32_000_000;
+  const retainedHeapThresholdBytes = 12 * 1024 * 1024;
+  const moduleUrl = new URL("../src/scanner/normalize.js", import.meta.url).href;
+  const probeSource = `
+    import { normalizeSetupText } from ${JSON.stringify(moduleUrl)};
+
+    const inputLength = ${inputLength};
+    const forceGc = () => {
+      for (let index = 0; index < 8; index += 1) globalThis.gc();
+    };
+
+    forceGc();
+    const baselineHeapBytes = process.memoryUsage().heapUsed;
+    let input = "x".repeat(inputLength);
+    input.charCodeAt(inputLength - 1);
+    const document = normalizeSetupText(input);
+    input = null;
+    forceGc();
+
+    const values = [
+      document.raw,
+      document.normalized,
+      document.lower,
+      ...document.segments.flatMap((segment) => [segment.text, segment.lower])
+    ];
+    const retainedHeapBytes = Math.max(0, process.memoryUsage().heapUsed - baselineHeapBytes);
+    const expectedText = "x".repeat(20_000);
+
+    console.log(JSON.stringify({
+      retainedHeapBytes,
+      rawLength: document.raw.length,
+      normalizedLength: document.normalized.length,
+      truncated: document.truncated,
+      wellFormed: values.every((value) => value.isWellFormed()),
+      contentMatches: document.raw === expectedText && document.normalized === expectedText,
+      segmentMatches: document.segments.length === 1
+        && document.segments[0].start === 0
+        && document.segments[0].end === 20_000
+        && document.segments[0].text === expectedText
+    }));
+  `;
+  const probe = spawnSync(process.execPath, ["--expose-gc", "--input-type=module", "--eval", probeSource], {
+    encoding: "utf8",
+    timeout: 30_000
+  });
+
+  assert.equal(probe.status, 0, probe.stderr || probe.error?.message);
+  const metrics = JSON.parse(probe.stdout.trim());
+  assert.equal(metrics.rawLength, 20_000);
+  assert.equal(metrics.normalizedLength, 20_000);
+  assert.equal(metrics.truncated, true);
+  assert.equal(metrics.wellFormed, true);
+  assert.equal(metrics.contentMatches, true);
+  assert.equal(metrics.segmentMatches, true);
+  assert.ok(
+    metrics.retainedHeapBytes < retainedHeapThresholdBytes,
+    `retained ${metrics.retainedHeapBytes} bytes; threshold ${retainedHeapThresholdBytes} bytes`
+  );
 });
 
 test("recognizes CRLF, CR, and LF as single boundaries", () => {
