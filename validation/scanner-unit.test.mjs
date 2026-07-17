@@ -3,16 +3,22 @@ import { spawnSync } from "node:child_process";
 import test from "node:test";
 
 import {
+  extractCapacityCandidates,
   extractCandidates,
   extractCpuCandidates,
   extractGpuCandidates,
+  extractMemoryCandidates,
+  extractStorageCandidates,
   extractSystemCandidates,
   extractTaskCandidates
 } from "../src/scanner/extractors.js";
 import { normalizeSetupText } from "../src/scanner/normalize.js";
 import {
+  CAPACITY_AMOUNT_PATTERNS,
+  CAPACITY_LABEL_PATTERNS,
   CPU_MODEL_PATTERNS,
   GPU_MODEL_PATTERNS,
+  STORAGE_KIND_PATTERNS,
   SYSTEM_PATTERNS,
   TASK_PATTERNS
 } from "../src/scanner/patterns.js";
@@ -321,11 +327,37 @@ function assertCandidateContract(document, candidate) {
   assert.equal(document.segments[candidate.segmentIndex].text.includes(candidate.raw), true);
 }
 
-test("exports all pure Task 2 extractor entry points", () => {
+function assertCapacityCandidateContract(document, candidate) {
+  assert.equal(Object.getPrototypeOf(candidate), Object.prototype);
+  assert.ok(["ram", "vram", "storage"].includes(candidate.field));
+  assert.equal(typeof candidate.value, "number");
+  assert.equal(typeof candidate.raw, "string");
+  assert.equal(typeof candidate.segmentIndex, "number");
+  assert.equal(typeof candidate.start, "number");
+  assert.equal(typeof candidate.end, "number");
+  assert.equal(typeof candidate.source, "string");
+  assert.equal(typeof candidate.specificity, "number");
+  assert.ok(["high", "medium", "low"].includes(candidate.confidence));
+  assert.equal(typeof candidate.inferred, "boolean");
+  assert.ok(["before-label", "after-label"].includes(candidate.amountPosition));
+  assert.ok(["GB", "GiB", "TB", "TiB", "G", "gig", "gigabyte"].includes(candidate.sourceUnit));
+  if (candidate.field === "storage") {
+    assert.ok(["free", "total", "unknown"].includes(candidate.storageKind));
+  } else {
+    assert.equal("storageKind" in candidate, false);
+  }
+  assert.equal(document.normalized.slice(candidate.start, candidate.end), candidate.raw);
+  assert.equal(document.segments[candidate.segmentIndex].text.includes(candidate.raw), true);
+}
+
+test("exports all pure scanner candidate extractor entry points", () => {
   for (const extractor of [
     extractSystemCandidates,
     extractCpuCandidates,
     extractGpuCandidates,
+    extractMemoryCandidates,
+    extractStorageCandidates,
+    extractCapacityCandidates,
     extractTaskCandidates,
     extractCandidates
   ]) {
@@ -354,6 +386,9 @@ test("deep freezes every exported pattern collection", () => {
     SYSTEM_PATTERNS,
     CPU_MODEL_PATTERNS,
     GPU_MODEL_PATTERNS,
+    CAPACITY_LABEL_PATTERNS,
+    CAPACITY_AMOUNT_PATTERNS,
+    STORAGE_KIND_PATTERNS,
     TASK_PATTERNS
   ]) {
     assert.equal(Object.isFrozen(patterns), true);
@@ -723,4 +758,319 @@ test("extractors are deterministic across repeated calls and do not mutate the d
   assert.deepEqual(first.map((candidate) => candidate.field), [
     "os", "deviceType", "cpuModel", "gpuModel", "gpuVendor", "task", "task"
   ]);
+});
+
+test("defines ordered non-global declarative capacity patterns", () => {
+  for (const pattern of CAPACITY_LABEL_PATTERNS) {
+    for (const key of ["id", "field", "regex", "confidence", "specificity"]) {
+      assert.equal(key in pattern, true, `${pattern.id}.${key}`);
+    }
+    assert.ok(["ram", "vram", "storage"].includes(pattern.field));
+    assert.equal(pattern.regex instanceof RegExp, true);
+    assert.equal(pattern.regex.global, false);
+  }
+
+  for (const pattern of CAPACITY_AMOUNT_PATTERNS) {
+    for (const key of ["id", "sourceUnit", "regex", "multiplier"]) {
+      assert.equal(key in pattern, true, `${pattern.id}.${key}`);
+    }
+    assert.equal(pattern.regex instanceof RegExp, true);
+    assert.equal(pattern.regex.global, false);
+  }
+
+  for (const pattern of STORAGE_KIND_PATTERNS) {
+    assert.ok(["free", "total"].includes(pattern.kind));
+    assert.equal(pattern.regex instanceof RegExp, true);
+    assert.equal(pattern.regex.global, false);
+  }
+});
+
+test("extracts RAM and free storage only from their owning segments", () => {
+  const document = normalizeSetupText("RAM: 64GB / SSD free: 1024GB");
+  const candidates = extractCapacityCandidates(document);
+
+  assert.deepEqual(candidateValues(candidates, "ram"), [64]);
+  assert.deepEqual(candidateValues(candidates, "vram"), []);
+  assert.deepEqual(candidateValues(candidates, "storage"), [1024]);
+  assert.deepEqual(candidates, [
+    {
+      field: "ram",
+      value: 64,
+      raw: "RAM: 64GB",
+      segmentIndex: 0,
+      start: document.normalized.indexOf("RAM: 64GB"),
+      end: document.normalized.indexOf("RAM: 64GB") + "RAM: 64GB".length,
+      source: "capacity.ram.after-label",
+      specificity: 100,
+      confidence: "high",
+      inferred: false,
+      amountPosition: "after-label",
+      sourceUnit: "GB"
+    },
+    {
+      field: "storage",
+      value: 1024,
+      raw: "SSD free: 1024GB",
+      segmentIndex: 1,
+      start: document.normalized.indexOf("SSD free: 1024GB"),
+      end: document.normalized.indexOf("SSD free: 1024GB") + "SSD free: 1024GB".length,
+      source: "capacity.storage.after-label",
+      specificity: 100,
+      confidence: "high",
+      inferred: false,
+      amountPosition: "after-label",
+      sourceUnit: "GB",
+      storageKind: "free"
+    }
+  ]);
+  candidates.forEach((candidate) => assertCapacityCandidateContract(document, candidate));
+});
+
+test("normalizes natural memory and storage units with explicit metadata", () => {
+  const document = normalizeSetupText([
+    "about 8 gigs of memory",
+    "128GB free on the SSD",
+    "1TB available storage",
+    "2TiB total disk",
+    "storage 256GiB",
+    "storage 64GB",
+    "memory 16G",
+    "32 gigabytes of RAM"
+  ].join(";"));
+  const candidates = extractCapacityCandidates(document);
+  const storage = candidates.filter((candidate) => candidate.field === "storage");
+
+  assert.deepEqual(candidateValues(candidates, "ram"), [8, 16, 32]);
+  assert.deepEqual(candidateValues(candidates, "storage"), [128, 1000, 2048, 256, 64]);
+  assert.deepEqual(
+    candidates.filter((candidate) => candidate.field === "ram").map((candidate) => [
+      candidate.amountPosition,
+      candidate.sourceUnit
+    ]),
+    [["before-label", "gig"], ["after-label", "G"], ["before-label", "gigabyte"]]
+  );
+  assert.deepEqual(
+    storage.map((candidate) => [candidate.amountPosition, candidate.sourceUnit, candidate.storageKind]),
+    [
+      ["before-label", "GB", "free"],
+      ["before-label", "TB", "free"],
+      ["before-label", "TiB", "total"],
+      ["after-label", "GiB", "unknown"],
+      ["after-label", "GB", "unknown"]
+    ]
+  );
+  candidates.forEach((candidate) => assertCapacityCandidateContract(document, candidate));
+});
+
+test("supports label-before and amount-before RAM and VRAM in English and Chinese", () => {
+  const document = normalizeSetupText([
+    "VRAM 12GB, RAM 32GB",
+    "32GB RAM, 12GB VRAM",
+    "32GB 系统内存, 12GB 显存",
+    "系統記憶體 64GiB, 顯存 16GiB",
+    "内存 24GB, 8GB 顯卡記憶體"
+  ].join(";"));
+  const candidates = extractMemoryCandidates(document);
+
+  assert.deepEqual(
+    candidates.map((candidate) => [candidate.field, candidate.value]),
+    [
+      ["vram", 12], ["ram", 32],
+      ["ram", 32], ["vram", 12],
+      ["ram", 32], ["vram", 12],
+      ["ram", 64], ["vram", 16],
+      ["ram", 24], ["vram", 8]
+    ]
+  );
+  assert.deepEqual(
+    candidates.map((candidate) => candidate.amountPosition),
+    [
+      "after-label", "after-label",
+      "before-label", "before-label",
+      "before-label", "before-label",
+      "after-label", "after-label",
+      "after-label", "before-label"
+    ]
+  );
+  candidates.forEach((candidate) => assertCapacityCandidateContract(document, candidate));
+});
+
+test("keeps same-segment RAM, VRAM, and storage values field-local", () => {
+  const document = normalizeSetupText("RAM 64GB, SSD free 1024GB, VRAM 12GB, 128GB total HDD");
+  const candidates = extractCapacityCandidates(document);
+
+  assert.deepEqual(
+    candidates.map((candidate) => [candidate.field, candidate.value, candidate.raw]),
+    [
+      ["ram", 64, "RAM 64GB"],
+      ["storage", 1024, "SSD free 1024GB"],
+      ["vram", 12, "VRAM 12GB"],
+      ["storage", 128, "128GB total HDD"]
+    ]
+  );
+  assert.equal(candidates.some((candidate) => /RAM.*SSD|SSD.*VRAM|VRAM.*HDD/i.test(candidate.raw)), false);
+});
+
+test("does not cross segment boundaries to attach capacity labels and amounts", () => {
+  const separated = normalizeSetupText("RAM\n64GB\nSSD\n1024GB");
+  const local = normalizeSetupText("RAM 64GB\nSSD 1024GB");
+
+  assert.deepEqual(extractCapacityCandidates(separated), []);
+  assert.deepEqual(
+    extractCapacityCandidates(local).map((candidate) => [candidate.field, candidate.value, candidate.segmentIndex]),
+    [["ram", 64, 0], ["storage", 1024, 1]]
+  );
+});
+
+test("emits duplicate and conflicting explicit capacities separately in source order", () => {
+  const document = normalizeSetupText(
+    "RAM 16GB, RAM 16GB, RAM 32GB;SSD 1TB, 500GB available storage, SSD 1TB"
+  );
+  const candidates = extractCapacityCandidates(document);
+
+  assert.deepEqual(candidateValues(candidates, "ram"), [16, 16, 32]);
+  assert.deepEqual(candidateValues(candidates, "storage"), [1000, 500, 1000]);
+  assert.deepEqual(
+    candidates.map((candidate) => candidate.start),
+    [...candidates.map((candidate) => candidate.start)].sort((left, right) => left - right)
+  );
+});
+
+test("derives marked Apple usable-memory VRAM only from safe M-series unified memory", () => {
+  const document = normalizeSetupText("Apple M3 Pro;36GB unified memory;Apple M4;unified memory 4GiB");
+  const candidates = extractMemoryCandidates(document);
+
+  assert.deepEqual(
+    candidates.map((candidate) => [
+      candidate.field,
+      candidate.value,
+      candidate.inferred,
+      candidate.confidence,
+      candidate.raw
+    ]),
+    [
+      ["ram", 36, false, "high", "36GB unified memory"],
+      ["vram", 27, true, "medium", "36GB unified memory"],
+      ["ram", 4, false, "high", "unified memory 4GiB"],
+      ["vram", 4, true, "medium", "unified memory 4GiB"]
+    ]
+  );
+  assert.equal(candidates[1].source, "capacity.vram.apple-unified-inference");
+  assert.equal(candidates[1].amountPosition, "before-label");
+  assert.equal(candidates[1].sourceUnit, "GB");
+  candidates.forEach((candidate) => assertCapacityCandidateContract(document, candidate));
+});
+
+test("preserves unified RAM but suppresses Apple inference without safe Apple GPU evidence", () => {
+  const cases = [
+    "36GB unified memory",
+    "Apple M3 Pro;NVIDIA RTX 4070;36GB unified memory",
+    "Apple M3 Pro;no dedicated GPU;36GB unified memory",
+    "Apple M3 Pro;无独立显卡;36GB unified memory"
+  ];
+
+  for (const input of cases) {
+    const candidates = extractMemoryCandidates(normalizeSetupText(input));
+
+    assert.deepEqual(candidateValues(candidates, "ram"), [36], input);
+    assert.deepEqual(candidateValues(candidates, "vram"), [], input);
+    assert.equal(candidates[0].inferred, false, input);
+  }
+});
+
+test("allows complete unlabeled GB or GiB VRAM only near a same-segment dedicated GPU", () => {
+  const document = normalizeSetupText("NVIDIA RTX 4070 12GB;AMD Radeon RX 7900 XT 24GiB");
+  const candidates = extractMemoryCandidates(document);
+
+  assert.deepEqual(candidateValues(candidates, "vram"), [12, 24]);
+  assert.deepEqual(
+    candidates.map((candidate) => [
+      candidate.raw,
+      candidate.amountPosition,
+      candidate.sourceUnit,
+      candidate.source,
+      candidate.confidence,
+      candidate.inferred
+    ]),
+    [
+      ["NVIDIA RTX 4070 12GB", "after-label", "GB", "capacity.vram.gpu-proximity", "medium", false],
+      ["AMD Radeon RX 7900 XT 24GiB", "after-label", "GiB", "capacity.vram.gpu-proximity", "medium", false]
+    ]
+  );
+  candidates.forEach((candidate) => assertCapacityCandidateContract(document, candidate));
+});
+
+test("blocks unsafe VRAM proximity and never captures a numeric suffix", () => {
+  const cases = [
+    ["no dedicated GPU, 128GB SSD", [], [128]],
+    ["128GB SSD", [], [128]],
+    ["NVIDIA RTX 4070, RAM 32GB", [], []],
+    ["NVIDIA RTX 4070, 128GB SSD", [], [128]],
+    ["RAM 128GB", [], []],
+    ["NVIDIA RTX 4070, no GPU, 12GB", [], []],
+    ["NVIDIA RTX 4070 123456GB", [], []],
+    ["NVIDIA RTX 4070 12.5GB", [], []],
+    ["NVIDIA RTX 4070 128GB", [128], []],
+    ["NVIDIA RTX 4070 1128GB", [1128], []]
+  ];
+
+  for (const [input, expectedVram, expectedStorage] of cases) {
+    const candidates = extractCapacityCandidates(normalizeSetupText(input));
+
+    assert.deepEqual(candidateValues(candidates, "vram"), expectedVram, input);
+    assert.deepEqual(candidateValues(candidates, "storage"), expectedStorage, input);
+    assert.equal(candidateValues(candidates, "vram").some((value) => value === 28 || value === 8), false, input);
+  }
+});
+
+test("abstains from omitted capacities and unsupported complete numeric tokens", () => {
+  const document = normalizeSetupText([
+    "RAM unknown",
+    "VRAM not listed",
+    "storage omitted",
+    "RAM 8.5GB",
+    "SSD 1.25TB",
+    "RAM 123456GB"
+  ].join(";"));
+
+  assert.deepEqual(extractCapacityCandidates(document), []);
+});
+
+test("capacity offsets use normalized source when Unicode lowercase changes length", () => {
+  const document = normalizeSetupText("İ;RAM 64GB, 1TB available storage");
+  const candidates = extractCapacityCandidates(document);
+
+  assert.equal(document.lower.length, document.normalized.length + 1);
+  assert.deepEqual(candidates.map((candidate) => candidate.raw), ["RAM 64GB", "1TB available storage"]);
+  assert.deepEqual(candidates.map((candidate) => candidate.start), [2, 12]);
+  for (const candidate of candidates) {
+    assert.equal(document.normalized.slice(candidate.start, candidate.end), candidate.raw);
+    assert.notEqual(document.lower.indexOf(candidate.raw.toLowerCase()), candidate.start);
+  }
+});
+
+test("integrates capacities without changing established candidate group ordering", () => {
+  const document = normalizeSetupText(
+    "Windows laptop;CPU Intel Core i5-13500H;RAM 32GB;GPU RTX 4070 12GB;SSD 1TB;coding"
+  );
+  const candidates = extractCandidates(document);
+
+  assert.deepEqual(candidates.map((candidate) => candidate.field), [
+    "os", "deviceType", "cpuModel", "gpuModel", "gpuVendor",
+    "ram", "vram", "storage", "task"
+  ]);
+});
+
+test("capacity extraction is deterministic, serializable, and does not mutate documents", () => {
+  const document = normalizeSetupText(
+    "Apple M3 Pro;RAM 32GB, VRAM 12GB;SSD free 1TB;36GB unified memory"
+  );
+  const snapshot = structuredClone(document);
+  const first = extractCapacityCandidates(document);
+  const second = extractCapacityCandidates(document);
+
+  assert.deepEqual(first, second);
+  assert.deepEqual(JSON.parse(JSON.stringify(first)), first);
+  assert.deepEqual(document, snapshot);
+  first.forEach((candidate) => assertCapacityCandidateContract(document, candidate));
 });

@@ -277,6 +277,117 @@ export const GPU_MODEL_PATTERNS = freezePatterns([
   }
 ]);
 
+export const CAPACITY_LABEL_PATTERNS = freezePatterns([
+  {
+    id: "capacity.label.unified-memory",
+    field: "ram",
+    memoryKind: "unified",
+    regex: /\bunified[ \t]+memory\b|统一内存|統一內存|统一記憶體|統一記憶體/iu,
+    confidence: "high",
+    specificity: 120
+  },
+  {
+    id: "capacity.label.vram",
+    field: "vram",
+    regex: /\bVRAM\b|\b(?:GPU|video|graphics)[ \t]+memory\b|显卡内存|顯卡內存|显卡記憶體|顯卡記憶體|图形内存|圖形內存|图形記憶體|圖形記憶體|显存|顯存/iu,
+    confidence: "high",
+    specificity: 110
+  },
+  {
+    id: "capacity.label.system-memory",
+    field: "ram",
+    regex: /\b(?:system|main)[ \t]+memory\b|系统内存|系統內存|系统內存|系統記憶體|系统記憶體|主内存|主內存|主記憶體/iu,
+    confidence: "high",
+    specificity: 110
+  },
+  {
+    id: "capacity.label.ram",
+    field: "ram",
+    regex: /\bRAM\b|\bmemory\b|内存|內存|記憶體/iu,
+    confidence: "high",
+    specificity: 100
+  },
+  {
+    id: "capacity.label.storage",
+    field: "storage",
+    regex: /(?:(?:\b(?:free|available|total)[ \t]+)|(?:可用|剩余|剩餘|空闲|空閒|总计|總計|总容量|總容量)[ \t]*)?(?:\b(?:storage|SSD|HDD|disk|drive)\b|固态硬盘|固態硬盤|固态硬碟|固態硬碟|存储|存儲|硬盘|硬盤|硬碟)/iu,
+    confidence: "high",
+    specificity: 100
+  }
+]);
+
+export const CAPACITY_AMOUNT_PATTERNS = freezePatterns([
+  {
+    id: "capacity.amount.tib",
+    sourceUnit: "TiB",
+    multiplier: 1024,
+    memory: false,
+    storage: true,
+    regex: /(?<![\d.,])(?<amount>\d{1,5})[ \t-]*TiB(?![A-Z0-9.])/iu
+  },
+  {
+    id: "capacity.amount.tb",
+    sourceUnit: "TB",
+    multiplier: 1000,
+    memory: false,
+    storage: true,
+    regex: /(?<![\d.,])(?<amount>\d{1,5})[ \t-]*TB(?![A-Z0-9.])/iu
+  },
+  {
+    id: "capacity.amount.gib",
+    sourceUnit: "GiB",
+    multiplier: 1,
+    memory: true,
+    storage: true,
+    regex: /(?<![\d.,])(?<amount>\d{1,5})[ \t-]*GiB(?![A-Z0-9.])/iu
+  },
+  {
+    id: "capacity.amount.gb",
+    sourceUnit: "GB",
+    multiplier: 1,
+    memory: true,
+    storage: true,
+    regex: /(?<![\d.,])(?<amount>\d{1,5})[ \t-]*GB(?![A-Z0-9.])/iu
+  },
+  {
+    id: "capacity.amount.gigabyte",
+    sourceUnit: "gigabyte",
+    multiplier: 1,
+    memory: true,
+    storage: false,
+    regex: /(?<![\d.,])(?<amount>\d{1,5})[ \t-]*gigabytes?\b/iu
+  },
+  {
+    id: "capacity.amount.gig",
+    sourceUnit: "gig",
+    multiplier: 1,
+    memory: true,
+    storage: false,
+    regex: /(?<![\d.,])(?<amount>\d{1,5})[ \t-]*gigs?\b/iu
+  },
+  {
+    id: "capacity.amount.g",
+    sourceUnit: "G",
+    multiplier: 1,
+    memory: true,
+    storage: false,
+    regex: /(?<![\d.,])(?<amount>\d{1,5})[ \t-]*G(?![A-Z0-9.])/iu
+  }
+]);
+
+export const STORAGE_KIND_PATTERNS = freezePatterns([
+  {
+    id: "capacity.storage-kind.free",
+    kind: "free",
+    regex: /\b(?:free|available)\b|可用|剩余|剩餘|空闲|空閒/iu
+  },
+  {
+    id: "capacity.storage-kind.total",
+    kind: "total",
+    regex: /\b(?:total|capacity)\b|总计|總計|总容量|總容量/iu
+  }
+]);
+
 export const TASK_PATTERNS = freezePatterns([
   {
     id: "task.coding-llm",

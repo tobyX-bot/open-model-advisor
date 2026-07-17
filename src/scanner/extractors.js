@@ -1,6 +1,9 @@
 import {
+  CAPACITY_AMOUNT_PATTERNS,
+  CAPACITY_LABEL_PATTERNS,
   CPU_MODEL_PATTERNS,
   GPU_MODEL_PATTERNS,
+  STORAGE_KIND_PATTERNS,
   SYSTEM_PATTERNS,
   TASK_PATTERNS
 } from "./patterns.js";
@@ -29,6 +32,8 @@ const ADJACENT_CAPACITY_CONTEXT = new RegExp(
   String.raw`^${CAPACITY_SEPARATOR_SOURCE}(?:${CAPACITY_UNIT_SOURCE}\b|${CAPACITY_FIELD_SOURCE})`,
   "iu"
 );
+const MAX_CAPACITY_LABEL_GAP = 32;
+const MAX_GPU_PROXIMITY_GAP = 24;
 
 function globalRegex(regex) {
   const flags = `${regex.flags.replace(/[gy]/g, "")}g`;
@@ -124,6 +129,242 @@ function collectSimpleCandidates(document, patterns) {
   return collectPatternMatches(document, patterns).map((entry) => entry.candidate);
 }
 
+function collectCapacityLabels(segment) {
+  const matches = [];
+
+  for (const [patternIndex, pattern] of CAPACITY_LABEL_PATTERNS.entries()) {
+    for (const match of segment.text.matchAll(globalRegex(pattern.regex))) {
+      matches.push({
+        pattern,
+        patternIndex,
+        start: match.index,
+        end: match.index + match[0].length
+      });
+    }
+  }
+
+  matches.sort((left, right) => (
+    right.pattern.specificity - left.pattern.specificity
+    || (right.end - right.start) - (left.end - left.start)
+    || left.patternIndex - right.patternIndex
+    || left.start - right.start
+  ));
+
+  const accepted = [];
+  for (const match of matches) {
+    if (accepted.some((entry) => overlaps(entry, match))) continue;
+    accepted.push(match);
+  }
+
+  accepted.sort((left, right) => (
+    left.start - right.start
+    || left.end - right.end
+    || left.patternIndex - right.patternIndex
+  ));
+  return accepted;
+}
+
+function collectCapacityAmounts(segment) {
+  const amounts = [];
+
+  for (const [patternIndex, pattern] of CAPACITY_AMOUNT_PATTERNS.entries()) {
+    for (const match of segment.text.matchAll(globalRegex(pattern.regex))) {
+      amounts.push({
+        pattern,
+        patternIndex,
+        value: Number(match.groups.amount) * pattern.multiplier,
+        start: match.index,
+        end: match.index + match[0].length
+      });
+    }
+  }
+
+  amounts.sort((left, right) => (
+    left.start - right.start
+    || left.end - right.end
+    || left.patternIndex - right.patternIndex
+  ));
+  return amounts.filter((amount, index) => (
+    !amounts.slice(0, index).some((earlier) => overlaps(earlier, amount))
+  ));
+}
+
+function supportsCapacityField(amount, field) {
+  return field === "storage" ? amount.pattern.storage : amount.pattern.memory;
+}
+
+function ownershipOption(segment, amount, label) {
+  if (!supportsCapacityField(amount, label.pattern.field)) return null;
+
+  const labelBeforeAmount = label.end <= amount.start;
+  const amountBeforeLabel = amount.end <= label.start;
+  if (!labelBeforeAmount && !amountBeforeLabel) return null;
+
+  const gapStart = labelBeforeAmount ? label.end : amount.end;
+  const gapEnd = labelBeforeAmount ? amount.start : label.start;
+  const gap = segment.text.slice(gapStart, gapEnd);
+  if (gap.length > MAX_CAPACITY_LABEL_GAP || /\d/u.test(gap)) return null;
+
+  return {
+    label,
+    gapLength: gap.length,
+    crossesClauseBoundary: /[,，]/u.test(gap),
+    amountPosition: labelBeforeAmount ? "after-label" : "before-label"
+  };
+}
+
+function findOwningLabel(segment, labels, amount) {
+  let precedingLabel = null;
+  let followingLabel = null;
+
+  for (const label of labels) {
+    if (label.end <= amount.start) {
+      precedingLabel = label;
+      continue;
+    }
+    if (label.start >= amount.end) {
+      followingLabel = label;
+      break;
+    }
+  }
+
+  const options = [precedingLabel, followingLabel]
+    .filter(Boolean)
+    .map((label) => ownershipOption(segment, amount, label))
+    .filter(Boolean)
+    .sort((left, right) => (
+      Number(left.crossesClauseBoundary) - Number(right.crossesClauseBoundary)
+      || left.gapLength - right.gapLength
+      || right.label.pattern.specificity - left.label.pattern.specificity
+      || left.label.patternIndex - right.label.patternIndex
+    ));
+
+  if (
+    options.length > 1
+    && options[0].crossesClauseBoundary === options[1].crossesClauseBoundary
+    && options[0].gapLength === options[1].gapLength
+    && options[0].label.pattern.field !== options[1].label.pattern.field
+  ) {
+    return null;
+  }
+  return options[0] ?? null;
+}
+
+function storageKind(raw) {
+  const match = STORAGE_KIND_PATTERNS.find((pattern) => pattern.regex.test(raw));
+  return match?.kind ?? "unknown";
+}
+
+function explicitCapacityEntry(document, segment, amount, ownership) {
+  const { label, amountPosition } = ownership;
+  const localStart = Math.min(label.start, amount.start);
+  const localEnd = Math.max(label.end, amount.end);
+  const start = segment.start + localStart;
+  const end = segment.start + localEnd;
+  const raw = document.normalized.slice(start, end);
+  if (raw !== segment.text.slice(localStart, localEnd)) return null;
+
+  const candidate = {
+    field: label.pattern.field,
+    value: amount.value,
+    raw,
+    segmentIndex: segment.index,
+    start,
+    end,
+    source: `capacity.${label.pattern.field}.${amountPosition}`,
+    specificity: label.pattern.specificity,
+    confidence: label.pattern.confidence,
+    inferred: false,
+    amountPosition,
+    sourceUnit: amount.pattern.sourceUnit
+  };
+  if (label.pattern.field === "storage") candidate.storageKind = storageKind(raw);
+
+  return {
+    candidate,
+    unified: label.pattern.memoryKind === "unified"
+  };
+}
+
+function proximityOption(segment, amount, gpuModel) {
+  const modelStart = gpuModel.start - segment.start;
+  const modelEnd = gpuModel.end - segment.start;
+  const modelBeforeAmount = modelEnd <= amount.start;
+  const amountBeforeModel = amount.end <= modelStart;
+  if (!modelBeforeAmount && !amountBeforeModel) return null;
+
+  const gapStart = modelBeforeAmount ? modelEnd : amount.end;
+  const gapEnd = modelBeforeAmount ? amount.start : modelStart;
+  const gap = segment.text.slice(gapStart, gapEnd);
+  if (gap.length > MAX_GPU_PROXIMITY_GAP || /\d/u.test(gap)) return null;
+
+  return {
+    gpuModel,
+    gapLength: gap.length,
+    amountPosition: modelBeforeAmount ? "after-label" : "before-label"
+  };
+}
+
+function proximityVramEntry(document, segment, labels, amount, gpuModels, hasNoGpu) {
+  if (
+    hasNoGpu
+    || labels.length > 0
+    || !["GB", "GiB"].includes(amount.pattern.sourceUnit)
+  ) {
+    return null;
+  }
+
+  const option = gpuModels
+    .filter((candidate) => candidate.segmentIndex === segment.index)
+    .map((candidate) => proximityOption(segment, amount, candidate))
+    .filter(Boolean)
+    .sort((left, right) => (
+      left.gapLength - right.gapLength
+      || left.gpuModel.start - right.gpuModel.start
+    ))[0];
+  if (!option) return null;
+
+  const start = Math.min(option.gpuModel.start, segment.start + amount.start);
+  const end = Math.max(option.gpuModel.end, segment.start + amount.end);
+  const raw = document.normalized.slice(start, end);
+  if (!segment.text.includes(raw)) return null;
+
+  return {
+    candidate: {
+      field: "vram",
+      value: amount.value,
+      raw,
+      segmentIndex: segment.index,
+      start,
+      end,
+      source: "capacity.vram.gpu-proximity",
+      specificity: 60,
+      confidence: "medium",
+      inferred: false,
+      amountPosition: option.amountPosition,
+      sourceUnit: amount.pattern.sourceUnit
+    },
+    unified: false
+  };
+}
+
+function appleUnifiedInference(candidate) {
+  return {
+    field: "vram",
+    value: Math.max(4, Math.floor(candidate.value * 0.75)),
+    raw: candidate.raw,
+    segmentIndex: candidate.segmentIndex,
+    start: candidate.start,
+    end: candidate.end,
+    source: "capacity.vram.apple-unified-inference",
+    specificity: 50,
+    confidence: "medium",
+    inferred: true,
+    amountPosition: candidate.amountPosition,
+    sourceUnit: candidate.sourceUnit
+  };
+}
+
 export function extractSystemCandidates(document) {
   return collectSimpleCandidates(document, SYSTEM_PATTERNS);
 }
@@ -159,11 +400,63 @@ export function extractTaskCandidates(document) {
   return collectSimpleCandidates(document, TASK_PATTERNS);
 }
 
+export function extractCapacityCandidates(document) {
+  const gpuCandidates = extractGpuCandidates(document);
+  const gpuModels = gpuCandidates.filter((candidate) => (
+    candidate.field === "gpuModel" && candidate.value !== "No dedicated GPU"
+  ));
+  const hasNoGpu = gpuCandidates.some((candidate) => (
+    candidate.field === "gpuModel" && candidate.value === "No dedicated GPU"
+  ));
+  const entries = [];
+
+  for (const segment of document.segments) {
+    const labels = collectCapacityLabels(segment);
+    for (const amount of collectCapacityAmounts(segment)) {
+      const ownership = findOwningLabel(segment, labels, amount);
+      const entry = ownership
+        ? explicitCapacityEntry(document, segment, amount, ownership)
+        : proximityVramEntry(document, segment, labels, amount, gpuModels, hasNoGpu);
+      if (entry) entries.push(entry);
+    }
+  }
+
+  entries.sort((left, right) => (
+    left.candidate.segmentIndex - right.candidate.segmentIndex
+    || left.candidate.start - right.candidate.start
+    || left.candidate.end - right.candidate.end
+  ));
+
+  const hasAppleMSeries = extractCpuCandidates(document).some((candidate) => (
+    candidate.source === "cpu.apple-m"
+  ));
+  const hasExplicitVram = entries.some((entry) => entry.candidate.field === "vram");
+  const allowAppleInference = hasAppleMSeries && gpuCandidates.length === 0 && !hasExplicitVram;
+  const candidates = [];
+
+  for (const entry of entries) {
+    candidates.push(entry.candidate);
+    if (entry.unified && allowAppleInference) {
+      candidates.push(appleUnifiedInference(entry.candidate));
+    }
+  }
+  return candidates;
+}
+
+export function extractMemoryCandidates(document) {
+  return extractCapacityCandidates(document).filter((candidate) => candidate.field !== "storage");
+}
+
+export function extractStorageCandidates(document) {
+  return extractCapacityCandidates(document).filter((candidate) => candidate.field === "storage");
+}
+
 export function extractCandidates(document) {
   return [
     ...extractSystemCandidates(document),
     ...extractCpuCandidates(document),
     ...extractGpuCandidates(document),
+    ...extractCapacityCandidates(document),
     ...extractTaskCandidates(document)
   ];
 }
