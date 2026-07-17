@@ -434,43 +434,13 @@ function ownershipOption(segment, amount, label) {
   };
 }
 
-function orderedLabelZoneOptions(segment, labels, amounts, amountPosition) {
-  if (labels.length < 2 || labels.length !== amounts.length) return null;
-
-  const options = amounts.map((amount, index) => (
-    ownershipOption(segment, amount, labels[index])
-  ));
-  if (options.some((option) => option?.amountPosition !== amountPosition)) return null;
-
-  const alternates = options.slice(0, -1).every((_, index) => (
-    amountPosition === "after-label"
-      ? amounts[index].end <= labels[index + 1].start
-      : labels[index].end <= amounts[index + 1].start
-  ));
-  return alternates ? options : null;
-}
-
-function orderedLabelZoneOwnership(segment, labels, amounts, amount) {
-  const amountIndex = amounts.indexOf(amount);
-  if (amountIndex < 0) return null;
-
-  for (const amountPosition of ["after-label", "before-label"]) {
-    const options = orderedLabelZoneOptions(segment, labels, amounts, amountPosition);
-    if (options) return options[amountIndex];
-  }
-  return null;
-}
-
 function labelHasAmountInPosition(segment, amounts, label, amountPosition) {
   return amounts.some((candidate) => (
     ownershipOption(segment, candidate, label)?.amountPosition === amountPosition
   ));
 }
 
-function findCapacityOwnership(segment, labels, amounts, amount) {
-  const orderedOwnership = orderedLabelZoneOwnership(segment, labels, amounts, amount);
-  if (orderedOwnership) return { status: "owned", ownership: orderedOwnership };
-
+function adjacentLabelOwnershipOptions(segment, labels, amount) {
   let precedingLabel = null;
   let followingLabel = null;
 
@@ -491,6 +461,17 @@ function findCapacityOwnership(segment, labels, amounts, amount) {
   const followingOption = followingLabel
     ? ownershipOption(segment, amount, followingLabel)
     : null;
+
+  return { precedingLabel, followingLabel, precedingOption, followingOption };
+}
+
+function findCapacityOwnership(segment, labels, amounts, amount) {
+  const {
+    precedingLabel,
+    followingLabel,
+    precedingOption,
+    followingOption
+  } = adjacentLabelOwnershipOptions(segment, labels, amount);
 
   if (precedingOption && followingOption) {
     const amountBeforeList = labelHasAmountInPosition(
@@ -532,6 +513,187 @@ function findCapacityOwnership(segment, labels, amounts, amount) {
   return options[0]
     ? { status: "owned", ownership: options[0] }
     : { status: "unowned", ownership: null };
+}
+
+function directGpuOwnershipOption(segment, labels, amount, gpuModel) {
+  if (!["GB", "GiB"].includes(amount.pattern.sourceUnit)) return null;
+
+  const option = proximityOption(segment, amount, gpuModel);
+  if (!option) return null;
+
+  const modelStart = gpuModel.start - segment.start;
+  const modelEnd = gpuModel.end - segment.start;
+  const gap = modelEnd <= amount.start
+    ? { start: modelEnd, end: amount.start }
+    : { start: amount.end, end: modelStart };
+  if (labels.some((label) => overlaps(label, gap))) return null;
+  return option;
+}
+
+function pairingStateIsBetter(candidate, current) {
+  if (candidate.pairs !== current.pairs) return candidate.pairs > current.pairs;
+  if (candidate.explicit !== current.explicit) return candidate.explicit > current.explicit;
+  if (candidate.gap !== current.gap) return candidate.gap < current.gap;
+  if (candidate.specificity !== current.specificity) {
+    return candidate.specificity > current.specificity;
+  }
+  if (candidate.ownerOrder !== current.ownerOrder) {
+    return candidate.ownerOrder < current.ownerOrder;
+  }
+  if (candidate.amountOrder !== current.amountOrder) {
+    return candidate.amountOrder < current.amountOrder;
+  }
+  return false;
+}
+
+function pairCapacityClause(segment, labels, amounts, gpuModels) {
+  const empty = {
+    assignments: new Map(),
+    matchedAmounts: new Set(),
+    usedLabels: new Set()
+  };
+  if (amounts.length < 2) return empty;
+
+  const owners = [
+    ...labels.map((label) => ({
+      kind: "label",
+      label,
+      start: label.start,
+      end: label.end
+    })),
+    ...gpuModels.map((gpuModel) => ({
+      kind: "gpu",
+      gpuModel,
+      start: gpuModel.start - segment.start,
+      end: gpuModel.end - segment.start
+    }))
+  ].sort((left, right) => (
+    left.start - right.start
+    || left.end - right.end
+    || (left.kind === right.kind ? 0 : left.kind < right.kind ? -1 : 1)
+  ));
+  if (owners.length < 2) return empty;
+
+  const ownerIndices = new Map(owners.map((owner, index) => [
+    owner.kind === "label" ? owner.label : owner.gpuModel,
+    index
+  ]));
+  const edgesByOwner = owners.map(() => []);
+
+  amounts.forEach((amount, amountIndex) => {
+    const { precedingOption, followingOption } = adjacentLabelOwnershipOptions(
+      segment,
+      labels,
+      amount
+    );
+    for (const ownership of [precedingOption, followingOption].filter(Boolean)) {
+      const ownerIndex = ownerIndices.get(ownership.label);
+      edgesByOwner[ownerIndex].push({
+        amount,
+        amountIndex,
+        owner: owners[ownerIndex],
+        ownership,
+        gapLength: ownership.gapLength
+      });
+    }
+
+    for (const gpuModel of gpuModels) {
+      const ownership = directGpuOwnershipOption(
+        segment,
+        labels,
+        amount,
+        gpuModel
+      );
+      if (!ownership) continue;
+      const ownerIndex = ownerIndices.get(gpuModel);
+      edgesByOwner[ownerIndex].push({
+        amount,
+        amountIndex,
+        owner: owners[ownerIndex],
+        ownership,
+        gapLength: ownership.gapLength
+      });
+    }
+  });
+
+  const states = [{
+    pairs: 0,
+    explicit: 0,
+    gap: 0,
+    specificity: 0,
+    ownerOrder: 0,
+    amountOrder: 0,
+    previous: -1,
+    edge: null
+  }];
+  const tree = new Uint32Array(amounts.length + 1);
+
+  // Select a strictly increasing owner/amount chain without quadratic DP storage.
+  function bestBefore(amountIndex) {
+    let stateIndex = 0;
+    for (let index = amountIndex; index > 0; index -= index & -index) {
+      if (pairingStateIsBetter(states[tree[index]], states[stateIndex])) {
+        stateIndex = tree[index];
+      }
+    }
+    return stateIndex;
+  }
+
+  function updateTree(amountIndex, stateIndex) {
+    for (let index = amountIndex + 1; index < tree.length; index += index & -index) {
+      if (pairingStateIsBetter(states[stateIndex], states[tree[index]])) {
+        tree[index] = stateIndex;
+      }
+    }
+  }
+
+  edgesByOwner.forEach((edges, ownerIndex) => {
+    const pending = [];
+    edges.sort((left, right) => left.amountIndex - right.amountIndex);
+    for (const edge of edges) {
+      const previous = bestBefore(edge.amountIndex);
+      const previousState = states[previous];
+      const explicit = edge.owner.kind === "label";
+      const stateIndex = states.push({
+        pairs: previousState.pairs + 1,
+        explicit: previousState.explicit + Number(explicit),
+        gap: previousState.gap + edge.gapLength,
+        specificity: previousState.specificity + (
+          explicit ? edge.owner.label.pattern.specificity : 0
+        ),
+        ownerOrder: previousState.ownerOrder + ownerIndex,
+        amountOrder: previousState.amountOrder + edge.amountIndex,
+        previous,
+        edge
+      }) - 1;
+      pending.push([edge.amountIndex, stateIndex]);
+    }
+    pending.forEach(([amountIndex, stateIndex]) => updateTree(amountIndex, stateIndex));
+  });
+
+  let stateIndex = bestBefore(amounts.length);
+  if (states[stateIndex].pairs < 2) return empty;
+
+  const assignments = new Map();
+  const matchedAmounts = new Set();
+  const usedLabels = new Set();
+  while (stateIndex > 0) {
+    const state = states[stateIndex];
+    const { edge } = state;
+    matchedAmounts.add(edge.amount);
+    if (edge.owner.kind === "label") {
+      usedLabels.add(edge.owner.label);
+      assignments.set(edge.amount, {
+        status: "owned",
+        ownership: edge.ownership
+      });
+    } else {
+      assignments.set(edge.amount, { status: "reserved", ownership: null });
+    }
+    stateIndex = state.previous;
+  }
+
+  return { assignments, matchedAmounts, usedLabels };
 }
 
 function collectStorageQualifiers(segment) {
@@ -760,15 +922,45 @@ export function extractCapacityCandidates(document) {
       modelCandidates,
       segmentLabels
     );
+    const clauseContexts = new Map();
     for (const amount of segmentAmounts) {
       const clause = capacityClause(segment, amount, clauseBoundaries);
-      const labels = segmentLabels.filter((label) => (
-        localSpanIsInClause(label.start, label.end, clause)
-      ));
-      const amounts = segmentAmounts.filter((candidate) => (
-        localSpanIsInClause(candidate.start, candidate.end, clause)
-      ));
-      const ownership = findCapacityOwnership(segment, labels, amounts, amount);
+      const clauseKey = `${clause.start}:${clause.end}`;
+      let context = clauseContexts.get(clauseKey);
+      if (!context) {
+        const labels = segmentLabels.filter((label) => (
+          localSpanIsInClause(label.start, label.end, clause)
+        ));
+        const amounts = segmentAmounts.filter((candidate) => (
+          localSpanIsInClause(candidate.start, candidate.end, clause)
+        ));
+        const clauseGpuModels = gpuModels.filter((candidate) => (
+          candidate.segmentIndex === segment.index
+          && localSpanIsInClause(
+            candidate.start - segment.start,
+            candidate.end - segment.start,
+            clause
+          )
+        ));
+        context = {
+          labels,
+          amounts,
+          pairings: pairCapacityClause(segment, labels, amounts, clauseGpuModels)
+        };
+        clauseContexts.set(clauseKey, context);
+      }
+
+      const pairedOwnership = context.pairings.assignments.get(amount);
+      const ownership = pairedOwnership?.status === "reserved"
+        ? { status: "unowned", ownership: null }
+        : pairedOwnership ?? findCapacityOwnership(
+          segment,
+          context.labels.filter((label) => !context.pairings.usedLabels.has(label)),
+          context.amounts.filter((candidate) => (
+            !context.pairings.matchedAmounts.has(candidate)
+          )),
+          amount
+        );
       if (ownership.status === "ambiguous") continue;
       if (hasAttachedDisqualifier(
         segment,

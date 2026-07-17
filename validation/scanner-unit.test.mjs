@@ -986,6 +986,98 @@ test("assigns compact capacity lists by label zones instead of nearest labels", 
   );
 });
 
+test("pairs mixed-orientation capacity lists into non-crossing field zones", () => {
+  const cases = [
+    [
+      "16GB RAM VRAM 8GB SSD 512GB",
+      [["ram", 16, "16GB RAM"], ["vram", 8, "VRAM 8GB"], ["storage", 512, "SSD 512GB"]]
+    ],
+    [
+      "16GB RAM 8GB VRAM SSD 512GB",
+      [["ram", 16, "16GB RAM"], ["vram", 8, "8GB VRAM"], ["storage", 512, "SSD 512GB"]]
+    ],
+    [
+      "RAM 16GB VRAM 8GB SSD",
+      [["ram", 16, "RAM 16GB"], ["vram", 8, "VRAM 8GB"]]
+    ],
+    [
+      "16GB RAM RAM 32GB SSD 512GB",
+      [["ram", 16, "16GB RAM"], ["ram", 32, "RAM 32GB"], ["storage", 512, "SSD 512GB"]]
+    ],
+    [
+      "RAM 16GB 8GB VRAM SSD 512GB",
+      [["ram", 16, "RAM 16GB"], ["vram", 8, "8GB VRAM"], ["storage", 512, "SSD 512GB"]]
+    ],
+    [
+      "16GB RAM VRAM 8GB 512GB SSD RAM 32GB",
+      [["ram", 16, "16GB RAM"], ["vram", 8, "VRAM 8GB"], ["storage", 512, "512GB SSD"], ["ram", 32, "RAM 32GB"]]
+    ],
+    [
+      "RAM 16GB 8GB VRAM SSD 512GB 32GB RAM VRAM 12GB",
+      [["ram", 16, "RAM 16GB"], ["vram", 8, "8GB VRAM"], ["storage", 512, "SSD 512GB"], ["ram", 32, "32GB RAM"], ["vram", 12, "VRAM 12GB"]]
+    ]
+  ];
+
+  for (const [input, expected] of cases) {
+    const document = normalizeSetupText(input);
+    const candidates = extractCapacityCandidates(document);
+    assert.deepEqual(
+      candidates.map((candidate) => [candidate.field, candidate.value, candidate.raw]),
+      expected,
+      input
+    );
+    assert.deepEqual(
+      candidates.map((candidate) => [candidate.start, candidate.end]),
+      expected.map(([, , raw]) => {
+        const start = document.normalized.indexOf(raw);
+        return [start, start + raw.length];
+      }),
+      `${input} exact spans`
+    );
+    candidates.forEach((candidate) => assertCapacityCandidateContract(document, candidate));
+  }
+});
+
+test("reserves direct GPU-adjacent amounts before pairing explicit field zones", () => {
+  const cases = [
+    [
+      "NVIDIA RTX 4070 12GB RAM 32GB SSD 512GB",
+      [["vram", 12, "NVIDIA RTX 4070 12GB"], ["ram", 32, "RAM 32GB"], ["storage", 512, "SSD 512GB"]]
+    ],
+    [
+      "RAM 32GB NVIDIA RTX 4070 12GB SSD 512GB",
+      [["ram", 32, "RAM 32GB"], ["vram", 12, "NVIDIA RTX 4070 12GB"], ["storage", 512, "SSD 512GB"]]
+    ],
+    [
+      "RAM 32GB SSD 512GB NVIDIA RTX 4070 12GB",
+      [["ram", 32, "RAM 32GB"], ["storage", 512, "SSD 512GB"], ["vram", 12, "NVIDIA RTX 4070 12GB"]]
+    ],
+    [
+      "AMD Vega 8 2GB RAM 16GB SSD 512GB",
+      [["ram", 16, "RAM 16GB"], ["storage", 512, "SSD 512GB"]]
+    ]
+  ];
+
+  for (const [input, expected] of cases) {
+    const document = normalizeSetupText(input);
+    const candidates = extractCapacityCandidates(document);
+    assert.deepEqual(
+      candidates.map((candidate) => [candidate.field, candidate.value, candidate.raw]),
+      expected,
+      input
+    );
+    assert.deepEqual(
+      candidates.map((candidate) => [candidate.start, candidate.end]),
+      expected.map(([, , raw]) => {
+        const start = document.normalized.indexOf(raw);
+        return [start, start + raw.length];
+      }),
+      `${input} exact spans`
+    );
+    candidates.forEach((candidate) => assertCapacityCandidateContract(document, candidate));
+  }
+});
+
 test("preserves complete TB and TiB evidence for labeled memory fields", () => {
   const document = normalizeSetupText("RAM: 1TB;Memory 2 TiB;1TB available storage");
   const candidates = extractCapacityCandidates(document);
