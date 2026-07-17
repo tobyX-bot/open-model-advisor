@@ -402,12 +402,8 @@ export const CAPACITY_CLAUSE_PATTERNS = freezePatterns([
     regex: /[ \t]*(?:並且|并且|還有|还有|以及)[ \t]*/u
   },
   {
-    id: "capacity.clause.chinese-conjunction-spaced",
-    regex: /[ \t]+(?:與|与|及|和)[ \t]+/u
-  },
-  {
-    id: "capacity.clause.chinese-conjunction-compact",
-    regex: /(?<=[Bb])(?:與|与|及|和)(?=[A-Z0-9\u3400-\u9FFF])/iu
+    id: "capacity.clause.chinese-conjunction-short",
+    regex: /(?<=[Bb])[ \t]*(?:與|与|及|和)[ \t]*(?=(?:(?:RAM|VRAM|NVIDIA|AMD|Intel|Apple|GeForce|RTX|Radeon|RX|Arc|CPU|GPU|memory|storage|SSD|HDD|disk|drive)\b|\d{1,5}[ \t-]*(?:TiB|TB|GiB|GB|G)\b|统一内存|統一內存|统一記憶體|統一記憶體|系统内存|系統內存|系统內存|系統記憶體|系统記憶體|主内存|主內存|主記憶體|显卡内存|顯卡內存|显卡記憶體|顯卡記憶體|图形内存|圖形內存|图形記憶體|圖形記憶體|显存|顯存|内存|內存|記憶體|固态硬盘|固態硬盤|固态硬碟|固態硬碟|存储|存儲|硬盘|硬盤|硬碟|显卡|顯卡|图形卡|圖形卡))/iu
   }
 ]);
 

@@ -1330,6 +1330,53 @@ test("keeps conjunction and sentence-delimited ownership local to GPU and RAM cl
   }
 });
 
+test("keeps one-sided Chinese conjunction spacing local to hardware clauses", () => {
+  for (const conjunction of ["与", "與", "及", "和"]) {
+    for (const separator of [
+      ` ${conjunction}`,
+      `${conjunction} `,
+      `\t${conjunction}`,
+      `${conjunction}\t`
+    ]) {
+      for (const [input, expected] of [
+        [
+          `NVIDIA RTX 4070 12GB${separator}RAM 32GB`,
+          [["vram", 12, "NVIDIA RTX 4070 12GB"], ["ram", 32, "RAM 32GB"]]
+        ],
+        [
+          `RAM 32GB${separator}NVIDIA RTX 4070 12GB`,
+          [["ram", 32, "RAM 32GB"], ["vram", 12, "NVIDIA RTX 4070 12GB"]]
+        ]
+      ]) {
+        const document = normalizeSetupText(input);
+        const candidates = extractCapacityCandidates(document);
+
+        assert.deepEqual(
+          candidates.map((candidate) => [candidate.field, candidate.value, candidate.raw]),
+          expected,
+          input
+        );
+        candidates.forEach((candidate) => assertCapacityCandidateContract(document, candidate));
+      }
+    }
+  }
+});
+
+test("does not treat short conjunction characters inside unrelated Chinese words as clauses", () => {
+  for (const input of [
+    "12GB与会人员",
+    "12GB 與會人員",
+    "12GB\t及时响应",
+    "12GB和\t平设计"
+  ]) {
+    assert.equal(
+      CAPACITY_CLAUSE_PATTERNS.some((pattern) => pattern.regex.test(input)),
+      false,
+      input
+    );
+  }
+});
+
 test("rejects numeric suffixes after digit-comma prefixes", () => {
   for (const input of [
     "128,28GB RAM",
