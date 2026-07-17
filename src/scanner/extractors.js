@@ -530,17 +530,43 @@ function directGpuOwnershipOption(segment, labels, amount, gpuModel) {
   return option;
 }
 
-function pairingStateIsBetter(candidate, current) {
-  if (candidate.pairs !== current.pairs) return candidate.pairs > current.pairs;
-  if (candidate.explicit !== current.explicit) return candidate.explicit > current.explicit;
-  if (candidate.gap !== current.gap) return candidate.gap < current.gap;
-  if (candidate.ownerOrder !== current.ownerOrder) {
-    return candidate.ownerOrder < current.ownerOrder;
+function comparePairingScores(candidate, current) {
+  if (!current) return 1;
+  if (candidate.pairs !== current.pairs) {
+    return candidate.pairs > current.pairs ? 1 : -1;
   }
-  if (candidate.amountOrder !== current.amountOrder) {
-    return candidate.amountOrder < current.amountOrder;
+  if (candidate.explicit !== current.explicit) {
+    return candidate.explicit > current.explicit ? 1 : -1;
   }
-  return false;
+  if (candidate.gap !== current.gap) return candidate.gap < current.gap ? 1 : -1;
+  if (candidate.boundary !== current.boundary) {
+    return candidate.boundary > current.boundary ? 1 : -1;
+  }
+  if (candidate.continuity !== current.continuity) {
+    return candidate.continuity > current.continuity ? 1 : -1;
+  }
+  return 0;
+}
+
+function betterPairingScore(candidate, current) {
+  if (!candidate) return current;
+  return !current || comparePairingScores(candidate, current) > 0
+    ? candidate
+    : current;
+}
+
+function extendPairingScore(previous, edge) {
+  const orientation = edge.ownership.amountPosition;
+  return {
+    pairs: (previous?.pairs ?? 0) + 1,
+    explicit: (previous?.explicit ?? 0) + Number(edge.owner.kind === "label"),
+    gap: (previous?.gap ?? 0) + edge.gapLength,
+    boundary: (previous?.boundary ?? 0) + edge.boundary,
+    continuity: (previous?.continuity ?? 0) + Number(
+      previous && previous.orientation === orientation
+    ),
+    orientation
+  };
 }
 
 function pairCapacityClause(segment, labels, amounts, gpuModels) {
@@ -576,6 +602,7 @@ function pairCapacityClause(segment, labels, amounts, gpuModels) {
     index
   ]));
   const edgesByOwner = owners.map(() => []);
+  const firstTokenStart = Math.min(owners[0].start, amounts[0].start);
 
   amounts.forEach((amount, amountIndex) => {
     const { precedingOption, followingOption } = adjacentLabelOwnershipOptions(
@@ -590,7 +617,11 @@ function pairCapacityClause(segment, labels, amounts, gpuModels) {
         amountIndex,
         owner: owners[ownerIndex],
         ownership,
-        gapLength: ownership.gapLength
+        gapLength: ownership.gapLength,
+        boundary: Number(
+          owners[ownerIndex].start === firstTokenStart
+          || amount.start === firstTokenStart
+        )
       });
     }
 
@@ -608,82 +639,125 @@ function pairCapacityClause(segment, labels, amounts, gpuModels) {
         amountIndex,
         owner: owners[ownerIndex],
         ownership,
-        gapLength: ownership.gapLength
+        gapLength: ownership.gapLength,
+        boundary: Number(
+          owners[ownerIndex].start === firstTokenStart
+          || amount.start === firstTokenStart
+        )
       });
     }
   });
 
-  const states = [{
-    pairs: 0,
-    explicit: 0,
-    gap: 0,
-    ownerOrder: 0,
-    amountOrder: 0,
-    previous: -1,
-    edge: null
-  }];
-  const tree = new Uint32Array(amounts.length + 1);
+  const orientations = ["after-label", "before-label"];
 
-  // Select a strictly increasing owner/amount chain without quadratic DP storage.
-  function bestBefore(amountIndex) {
-    let stateIndex = 0;
+  function createTrees() {
+    return orientations.map(() => Array(amounts.length + 1).fill(null));
+  }
+
+  function queryTree(tree, amountIndex) {
+    let best = null;
     for (let index = amountIndex; index > 0; index -= index & -index) {
-      if (pairingStateIsBetter(states[tree[index]], states[stateIndex])) {
-        stateIndex = tree[index];
-      }
+      best = betterPairingScore(tree[index], best);
     }
-    return stateIndex;
+    return best;
   }
 
-  function updateTree(amountIndex, stateIndex) {
+  function updateTree(tree, amountIndex, score) {
     for (let index = amountIndex + 1; index < tree.length; index += index & -index) {
-      if (pairingStateIsBetter(states[stateIndex], states[tree[index]])) {
-        tree[index] = stateIndex;
-      }
+      tree[index] = betterPairingScore(score, tree[index]);
     }
   }
 
-  edgesByOwner.forEach((edges, ownerIndex) => {
+  // Sparse forward/backward passes identify every edge in an optimal chain.
+  const forwardTrees = createTrees();
+  for (const edges of edgesByOwner) {
     const pending = [];
     edges.sort((left, right) => left.amountIndex - right.amountIndex);
     for (const edge of edges) {
-      const previous = bestBefore(edge.amountIndex);
-      const previousState = states[previous];
-      const explicit = edge.owner.kind === "label";
-      const stateIndex = states.push({
-        pairs: previousState.pairs + 1,
-        explicit: previousState.explicit + Number(explicit),
-        gap: previousState.gap + edge.gapLength,
-        ownerOrder: previousState.ownerOrder + ownerIndex,
-        amountOrder: previousState.amountOrder + edge.amountIndex,
-        previous,
-        edge
-      }) - 1;
-      pending.push([edge.amountIndex, stateIndex]);
+      let score = extendPairingScore(null, edge);
+      orientations.forEach((_, index) => {
+        const previous = queryTree(forwardTrees[index], edge.amountIndex);
+        if (previous) score = betterPairingScore(
+          extendPairingScore(previous, edge),
+          score
+        );
+      });
+      edge.forward = score;
+      pending.push(edge);
     }
-    pending.forEach(([amountIndex, stateIndex]) => updateTree(amountIndex, stateIndex));
-  });
+    pending.forEach((edge) => {
+      const orientationIndex = orientations.indexOf(edge.ownership.amountPosition);
+      updateTree(forwardTrees[orientationIndex], edge.amountIndex, edge.forward);
+    });
+  }
 
-  let stateIndex = bestBefore(amounts.length);
-  if (states[stateIndex].pairs < 2) return empty;
+  const backwardTrees = createTrees();
+  for (let ownerIndex = edgesByOwner.length - 1; ownerIndex >= 0; ownerIndex -= 1) {
+    const pending = [];
+    const edges = edgesByOwner[ownerIndex];
+    for (const edge of edges) {
+      const reverseAmountIndex = amounts.length - 1 - edge.amountIndex;
+      let score = extendPairingScore(null, edge);
+      orientations.forEach((_, index) => {
+        const following = queryTree(backwardTrees[index], reverseAmountIndex);
+        if (following) score = betterPairingScore(
+          extendPairingScore(following, edge),
+          score
+        );
+      });
+      edge.backward = score;
+      pending.push(edge);
+    }
+    pending.forEach((edge) => {
+      const reverseAmountIndex = amounts.length - 1 - edge.amountIndex;
+      const orientationIndex = orientations.indexOf(edge.ownership.amountPosition);
+      updateTree(backwardTrees[orientationIndex], reverseAmountIndex, edge.backward);
+    });
+  }
+
+  const edges = edgesByOwner.flat();
+  const best = edges.reduce((score, edge) => (
+    betterPairingScore(edge.forward, score)
+  ), null);
+  if (!best || best.pairs < 2 || best.pairs !== amounts.length) return empty;
+
+  const optimalEdgesByAmount = new Map(amounts.map((amount) => [amount, []]));
+  for (const edge of edges) {
+    const combined = {
+      pairs: edge.forward.pairs + edge.backward.pairs - 1,
+      explicit: edge.forward.explicit + edge.backward.explicit
+        - Number(edge.owner.kind === "label"),
+      gap: edge.forward.gap + edge.backward.gap - edge.gapLength,
+      boundary: edge.forward.boundary + edge.backward.boundary - edge.boundary,
+      continuity: edge.forward.continuity + edge.backward.continuity
+    };
+    if (comparePairingScores(combined, best) === 0) {
+      optimalEdgesByAmount.get(edge.amount).push(edge);
+    }
+  }
 
   const assignments = new Map();
   const matchedAmounts = new Set();
   const usedLabels = new Set();
-  while (stateIndex > 0) {
-    const state = states[stateIndex];
-    const { edge } = state;
-    matchedAmounts.add(edge.amount);
+  for (const amount of amounts) {
+    const optimalEdges = optimalEdgesByAmount.get(amount);
+    const ownersForAmount = new Map(optimalEdges.map((edge) => [edge.owner, edge]));
+    if (ownersForAmount.size === 0) continue;
+    matchedAmounts.add(amount);
+    if (ownersForAmount.size > 1) {
+      assignments.set(amount, { status: "ambiguous", ownership: null });
+      continue;
+    }
+    const edge = ownersForAmount.values().next().value;
     if (edge.owner.kind === "label") {
       usedLabels.add(edge.owner.label);
-      assignments.set(edge.amount, {
+      assignments.set(amount, {
         status: "owned",
         ownership: edge.ownership
       });
     } else {
-      assignments.set(edge.amount, { status: "reserved", ownership: null });
+      assignments.set(amount, { status: "reserved", ownership: null });
     }
-    stateIndex = state.previous;
   }
 
   return { assignments, matchedAmounts, usedLabels };

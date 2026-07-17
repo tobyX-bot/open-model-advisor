@@ -1085,6 +1085,14 @@ test("covers all 4,272 ordered mixed-orientation capacity permutations", () => {
 test("does not use semantic field specificity to invent incomplete-label ownership", () => {
   const cases = [
     [
+      "16GB RAM VRAM 512GB SSD",
+      [["ram", 16, "16GB RAM"], ["storage", 512, "512GB SSD"]]
+    ],
+    [
+      "16GB RAM VRAM 512GB SSD 1TB HDD",
+      [["ram", 16, "16GB RAM"], ["storage", 512, "512GB SSD"], ["storage", 1000, "1TB HDD"]]
+    ],
+    [
       "RAM 16GB VRAM SSD 512GB",
       [["ram", 16, "RAM 16GB"], ["storage", 512, "SSD 512GB"]]
     ],
@@ -1125,6 +1133,160 @@ test("does not use semantic field specificity to invent incomplete-label ownersh
     );
     candidates.forEach((candidate) => assertCapacityCandidateContract(document, candidate));
   }
+});
+
+test("leaves incomplete labels unpaired across a structural 144-case matrix", () => {
+  const fieldSets = [
+    [
+      { field: "ram", value: 16, label: "RAM", amount: "16GB" },
+      { field: "vram", value: 8, label: "VRAM", amount: "8GB" },
+      { field: "storage", value: 512, label: "SSD", amount: "512GB" }
+    ],
+    [
+      { field: "ram", value: 16, label: "RAM", amount: "16GB" },
+      { field: "vram", value: 8, label: "VRAM", amount: "8GB" },
+      { field: "storage", value: 512, label: "SSD", amount: "512GB" },
+      { field: "storage", value: 1000, label: "HDD", amount: "1TB" }
+    ],
+    [
+      { field: "ram", value: 16, label: "RAM", amount: "16GB" },
+      { field: "vram", value: 8, label: "VRAM", amount: "8GB" },
+      { field: "storage", value: 512, label: "SSD", amount: "512GB" },
+      { field: "ram", value: 32, label: "RAM", amount: "32GB" },
+      { field: "storage", value: 1000, label: "HDD", amount: "1TB" }
+    ]
+  ];
+  const orientationProfiles = [
+    () => "after-label",
+    () => "before-label",
+    (index) => index % 2 ? "before-label" : "after-label",
+    (index) => index % 2 ? "after-label" : "before-label"
+  ];
+
+  function structuralConsensus(parts) {
+    let cursor = 0;
+    const owners = [];
+    const amounts = [];
+    const input = parts.map((part, index) => {
+      const start = cursor;
+      cursor += part.text.length + Number(index < parts.length - 1);
+      const token = { ...part, start, end: start + part.text.length };
+      (part.kind === "label" ? owners : amounts).push(token);
+      return part.text;
+    }).join(" ");
+    const edges = amounts.map((amount, amountIndex) => {
+      const preceding = owners.findLast((owner) => owner.end <= amount.start);
+      const following = owners.find((owner) => owner.start >= amount.end);
+      return [preceding, following].filter(Boolean).map((owner) => ({
+        amount,
+        amountIndex,
+        owner,
+        ownerIndex: owners.indexOf(owner),
+        gap: owner.end <= amount.start
+          ? amount.start - owner.end
+          : owner.start - amount.end,
+        boundary: Number(Math.min(owner.start, amount.start) === 0),
+        orientation: owner.end <= amount.start ? "after-label" : "before-label"
+      }));
+    });
+    const matchings = [];
+
+    function visit(amountIndex, lastOwnerIndex, selected) {
+      if (amountIndex === amounts.length) {
+        const gap = selected.reduce((sum, edge) => sum + edge.gap, 0);
+        const boundary = selected.reduce((sum, edge) => sum + edge.boundary, 0);
+        const continuity = selected.slice(1).reduce((sum, edge, index) => (
+          sum + Number(edge.orientation === selected[index].orientation)
+        ), 0);
+        matchings.push({
+          selected: [...selected],
+          pairs: selected.length,
+          gap,
+          boundary,
+          continuity
+        });
+        return;
+      }
+      visit(amountIndex + 1, lastOwnerIndex, selected);
+      for (const edge of edges[amountIndex]) {
+        if (edge.ownerIndex <= lastOwnerIndex) continue;
+        selected.push(edge);
+        visit(amountIndex + 1, edge.ownerIndex, selected);
+        selected.pop();
+      }
+    }
+
+    visit(0, -1, []);
+    matchings.sort((left, right) => (
+      right.pairs - left.pairs
+      || left.gap - right.gap
+      || right.boundary - left.boundary
+      || right.continuity - left.continuity
+    ));
+    const best = matchings.filter((matching) => (
+      matching.pairs === matchings[0].pairs
+      && matching.gap === matchings[0].gap
+      && matching.boundary === matchings[0].boundary
+      && matching.continuity === matchings[0].continuity
+    ));
+
+    const expected = amounts.flatMap((amount) => {
+      const assignments = best.map((matching) => (
+        matching.selected.find((edge) => edge.amount === amount)?.owner ?? null
+      ));
+      const owner = assignments[0];
+      if (!owner || assignments.some((candidate) => candidate !== owner)) return [];
+      const start = Math.min(owner.start, amount.start);
+      const end = Math.max(owner.end, amount.end);
+      return [[owner.item.field, amount.item.value, input.slice(start, end), start, end]];
+    });
+    return { input, expected };
+  }
+
+  let covered = 0;
+  let unresolved = 0;
+  for (const fields of fieldSets) {
+    const orderings = [
+      fields,
+      [...fields].reverse(),
+      [...fields.slice(1), fields[0]]
+    ];
+    for (const ordering of orderings) {
+      for (const orientationFor of orientationProfiles) {
+        for (let missingIndex = 0; missingIndex < ordering.length; missingIndex += 1) {
+          const parts = ordering.flatMap((item, index) => {
+            const label = { kind: "label", text: item.label, item };
+            if (index === missingIndex) return [label];
+            const amount = { kind: "amount", text: item.amount, item };
+            return orientationFor(index) === "after-label"
+              ? [label, amount]
+              : [amount, label];
+          });
+          const { input, expected } = structuralConsensus(parts);
+          const document = normalizeSetupText(input);
+          const candidates = extractCapacityCandidates(document);
+          unresolved += parts.filter((part) => part.kind === "amount").length
+            - expected.length;
+
+          assert.deepEqual(
+            candidates.map((candidate) => [candidate.field, candidate.value, candidate.raw]),
+            expected.map((candidate) => candidate.slice(0, 3)),
+            input
+          );
+          assert.deepEqual(
+            candidates.map((candidate) => [candidate.start, candidate.end]),
+            expected.map((candidate) => candidate.slice(3)),
+            `${input} exact spans`
+          );
+          candidates.forEach((candidate) => assertCapacityCandidateContract(document, candidate));
+          covered += 1;
+        }
+      }
+    }
+  }
+
+  assert.equal(covered, 144);
+  assert.ok(unresolved > 0, "matrix must include genuinely unresolved ownership");
 });
 
 test("reserves direct GPU-adjacent amounts before pairing explicit field zones", () => {
