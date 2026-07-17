@@ -923,6 +923,61 @@ test("keeps same-segment RAM, VRAM, and storage values field-local", () => {
   assert.equal(candidates.some((candidate) => /RAM.*SSD|SSD.*VRAM|VRAM.*HDD/i.test(candidate.raw)), false);
 });
 
+test("assigns compact capacity lists by label zones instead of nearest labels", () => {
+  for (const [input, expected] of [
+    [
+      "RAM: 16GB SSD: 512GB",
+      [["ram", 16, "RAM: 16GB"], ["storage", 512, "SSD: 512GB"]]
+    ],
+    [
+      "RAM 16GB SSD 512GB",
+      [["ram", 16, "RAM 16GB"], ["storage", 512, "SSD 512GB"]]
+    ],
+    [
+      "16GB RAM 512GB SSD",
+      [["ram", 16, "16GB RAM"], ["storage", 512, "512GB SSD"]]
+    ],
+    [
+      "RAM 16GB and SSD 512GB",
+      [["ram", 16, "RAM 16GB"], ["storage", 512, "SSD 512GB"]]
+    ]
+  ]) {
+    const document = normalizeSetupText(input);
+    const candidates = extractCapacityCandidates(document);
+    assert.deepEqual(
+      candidates.map((candidate) => [candidate.field, candidate.value, candidate.raw]),
+      expected,
+      input
+    );
+    candidates.forEach((candidate) => assertCapacityCandidateContract(document, candidate));
+  }
+
+  assert.deepEqual(
+    extractCapacityCandidates(normalizeSetupText("NVIDIA RTX 4070 RAM 12GB VRAM")),
+    []
+  );
+});
+
+test("preserves complete TB and TiB evidence for labeled memory fields", () => {
+  const document = normalizeSetupText("RAM: 1TB;Memory 2 TiB;1TB available storage");
+  const candidates = extractCapacityCandidates(document);
+
+  assert.deepEqual(
+    candidates.map((candidate) => [
+      candidate.field,
+      candidate.value,
+      candidate.sourceUnit,
+      candidate.raw
+    ]),
+    [
+      ["ram", 1000, "TB", "RAM: 1TB"],
+      ["ram", 2048, "TiB", "Memory 2 TiB"],
+      ["storage", 1000, "TB", "1TB available storage"]
+    ]
+  );
+  candidates.forEach((candidate) => assertCapacityCandidateContract(document, candidate));
+});
+
 test("does not cross segment boundaries to attach capacity labels and amounts", () => {
   const separated = normalizeSetupText("RAM\n64GB\nSSD\n1024GB");
   const local = normalizeSetupText("RAM 64GB\nSSD 1024GB");
@@ -1201,6 +1256,34 @@ test("classifies capacity disqualifiers by meaning rather than position", () => 
   }
 });
 
+test("recognizes semantic post-capacity bounds and absence grammar", () => {
+  for (const input of [
+    "RAM 32GB at least",
+    "32GB RAM was not installed",
+    "storage 1TB currently not present",
+    "RAM 32GB unavailable",
+    "RAM: 16GB module not installed"
+  ]) {
+    assert.deepEqual(extractCapacityCandidates(normalizeSetupText(input)), [], input);
+  }
+
+  for (const [input, expected] of [
+    ["32GB RAM not overclocked", [["ram", 32, "32GB RAM"]]],
+    ["RAM 32GB not shared with GPU", [["ram", 32, "RAM 32GB"]]],
+    ["RAM is not 32GB", []]
+  ]) {
+    assert.deepEqual(
+      extractCapacityCandidates(normalizeSetupText(input)).map((candidate) => [
+        candidate.field,
+        candidate.value,
+        candidate.raw
+      ]),
+      expected,
+      input
+    );
+  }
+});
+
 test("rejects natural and localized transfer-rate suffixes", () => {
   for (const input of [
     "显存带宽 12GB每秒",
@@ -1244,6 +1327,25 @@ test("keeps natural ordinal inventory wording distinct from transfer rates", () 
       .map((candidate) => [candidate.field, candidate.value, candidate.raw]),
     [["storage", 512, "SSD 512GB"], ["storage", 1000, "SSD 1TB"], ["vram", 8, "VRAM 8GB"]]
   );
+});
+
+test("uses preceding rate semantics to distinguish ordinal inventory wording", () => {
+  for (const [input, expected] of [
+    ["SSD speed 7GB a second drive 1TB", [[1000, "drive 1TB"]]],
+    ["SSD throughput 7GB a second SSD 1TB", [[1000, "SSD 1TB"]]],
+    ["SSD 512GB a second SSD 1TB", [[512, "SSD 512GB"], [1000, "SSD 1TB"]]],
+    ["SSD 512GB a second drive 1TB", [[512, "SSD 512GB"], [1000, "drive 1TB"]]]
+  ]) {
+    assert.deepEqual(
+      extractStorageCandidates(normalizeSetupText(input)).map((candidate) => [
+        candidate.value,
+        candidate.raw
+      ]),
+      expected,
+      input
+    );
+  }
+  assert.deepEqual(extractCapacityCandidates(normalizeSetupText("SSD speed 7GB a second")), []);
 });
 
 test("rejects whitespace slash rates while preserving slash field delimiters", () => {
@@ -1803,6 +1905,48 @@ test("preserves strong Apple M2-family evidence before trailing NVMe storage", (
   assert.deepEqual(
     extractMemoryCandidates(labeledCpu).map((candidate) => [candidate.field, candidate.value, candidate.inferred]),
     [["ram", 16, false], ["vram", 12, true]]
+  );
+});
+
+test("recognizes strong natural Apple CPU connectors without generic fallbacks", () => {
+  for (const [input, cpu] of [
+    ["MacBook Pro;CPU is M2 NVMe 1TB;16GB unified memory", "Apple M2"],
+    ["MacBook Pro powered by M2 NVMe 1TB;16GB unified memory", "Apple M2"],
+    ["MacBook Pro;CPU is M2 Pro NVMe 1TB;16GB unified memory", "Apple M2 Pro"],
+    ["Mac Studio powered by M2 Max NVMe 1TB;16GB unified memory", "Apple M2 Max"],
+    ["MacBook Pro;CPU: M2 Pro NVMe 1TB;16GB unified memory", "Apple M2 Pro"]
+  ]) {
+    const document = normalizeSetupText(input);
+    const cpuCandidates = extractCpuCandidates(document).filter((candidate) => candidate.field === "cpuModel");
+    assert.deepEqual(
+      cpuCandidates.map((candidate) => [candidate.value, candidate.confidence, candidate.source]),
+      [[cpu, "high", "cpu.apple-m-contextual"]],
+      input
+    );
+    assert.deepEqual(
+      extractMemoryCandidates(document).map((candidate) => [
+        candidate.field,
+        candidate.value,
+        candidate.inferred
+      ]),
+      [["ram", 16, false], ["vram", 12, true]],
+      input
+    );
+  }
+
+  for (const input of ["Windows;CPU is M2", "Linux;processor was M3"]) {
+    assert.deepEqual(candidateValues(extractCpuCandidates(normalizeSetupText(input)), "cpuModel"), [], input);
+  }
+  assert.deepEqual(
+    candidateValues(extractCpuCandidates(normalizeSetupText("Windows;CPU model ZX 9000")), "cpuModel"),
+    ["ZX 9000"]
+  );
+
+  const bareStorage = normalizeSetupText("macOS;NVMe M2 1TB;16GB unified memory");
+  assert.deepEqual(candidateValues(extractCpuCandidates(bareStorage), "cpuModel"), []);
+  assert.deepEqual(
+    extractMemoryCandidates(bareStorage).map((candidate) => [candidate.field, candidate.value, candidate.inferred]),
+    [["ram", 16, false]]
   );
 });
 

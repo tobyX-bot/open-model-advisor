@@ -370,7 +370,7 @@ export const CAPACITY_AMOUNT_PATTERNS = freezePatterns([
     id: "capacity.amount.tib",
     sourceUnit: "TiB",
     multiplier: 1024,
-    memory: false,
+    memory: true,
     storage: true,
     regex: /(?<![A-Z0-9.])(?<amount>\d{1,5})[ \t-]*TiB(?![A-Z0-9/])/iu
   },
@@ -378,7 +378,7 @@ export const CAPACITY_AMOUNT_PATTERNS = freezePatterns([
     id: "capacity.amount.tb",
     sourceUnit: "TB",
     multiplier: 1000,
-    memory: false,
+    memory: true,
     storage: true,
     regex: /(?<![A-Z0-9.])(?<amount>\d{1,5})[ \t-]*TB(?![A-Z0-9/])/iu
   },
@@ -440,12 +440,12 @@ export const CAPACITY_DISQUALIFIER_PATTERNS = freezePatterns([
   },
   {
     id: "capacity.disqualifier.english-postposed",
-    regex: /\b(?:or[ \t-]+(?:more|less|greater)|min(?:imum)?|max(?:imum)?|(?:is[ \t]+)?(?:required|needed))\b/iu,
+    regex: /\b(?:or[ \t-]+(?:more|less|greater)|at[ \t]+(?:least|most)|min(?:imum)?|max(?:imum)?|(?:is[ \t]+)?(?:required|needed))\b/iu,
     allowAfterCapacity: true
   },
   {
     id: "capacity.disqualifier.english-postposed-absence",
-    regex: /\b(?:is[ \t]+)?not[ \t]+(?:installed|available|present|included)\b/iu,
+    regex: /\b(?:(?:(?:modules?|DIMMs?|kits?|sticks?|memory)[ \t]+)?(?:(?:is|are|was|were|currently|presently)[ \t]+)*not[ \t]+(?:installed|available|present|included)|unavailable)\b/iu,
     allowAfterCapacity: true
   },
   {

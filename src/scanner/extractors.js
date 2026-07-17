@@ -26,6 +26,7 @@ const FORBIDDEN_GENERIC_LABEL = new RegExp(
   String.raw`(?:${CAPACITY_FIELD_SOURCE}|\b(?:task|workload|with)\b|任务|任務|用途)`,
   "iu"
 );
+const COPULAR_APPLE_M_SERIES = /^(?:is|was)[ \t]+M[1-4](?:[ \t]*(?:Pro|Max|Ultra))?$/iu;
 const TRAILING_PLAIN_NUMBER = new RegExp(
   String.raw`(?:^|[ \t])${CAPACITY_INTEGER_SOURCE}$`,
   "u"
@@ -43,10 +44,12 @@ const MAX_CAPACITY_LABEL_GAP = 32;
 const MAX_GPU_PROXIMITY_GAP = 24;
 const APPLE_PLATFORM_CONTEXT = /\b(?:macOS|MacBook|Mac[ \t]+mini|Mac[ \t]+Studio|iMac|Apple[ \t]+(?:silicon|GPU))\b|苹果电脑|蘋果電腦|苹果系统|蘋果系統/iu;
 const NON_APPLE_M_SERIES_PREFIX = /\b(?:Intel(?:[ \t]+Core)?|Core)[ \t]*$/iu;
-const STRONG_APPLE_M_SERIES_PREFIX = /(?:\bMacBook(?:[ \t]+(?:Air|Pro))?|\bMac[ \t]+(?:mini|Studio|Pro)|\biMac|\b(?:CPU|processor|chip|SoC)|处理器|處理器|芯片|晶片)[ \t:,-]*$/iu;
+const STRONG_APPLE_M_SERIES_PREFIX = /(?:(?:\bMacBook(?:[ \t]+(?:Air|Pro))?|\bMac[ \t]+(?:mini|Studio|Pro)|\biMac)(?:[ \t]+(?:is[ \t]+)?powered[ \t]+by)?|\b(?:CPU|processor|chip|SoC)(?:[ \t]+(?:is|was))?|(?:处理器|處理器|芯片|晶片)(?:[ \t]+(?:是|为|為))?)[ \t:,-]*$/iu;
 const STORAGE_M_SERIES_PREFIX = /\b(?:NVMe|SSD|storage|disk|drive)[ \t:-]*$/iu;
 const STORAGE_M_SERIES_SUFFIX = /^[ \t:-]*(?:NVMe|SSD|storage|disk|drive)\b/iu;
-const TRANSFER_RATE_SUFFIX = /^(?:[ \t]+(?:(?:\/[ \t]*|per[ \t]+)(?:(?:s|secs?|seconds?)\b|秒)|(?:each|a)[ \t]+seconds?\b)(?![ \t]+(?:drive|SSD|HDD|disk|storage)\b)|[ \t]*每[ \t]*秒)/iu;
+const TRANSFER_RATE_SUFFIX = /^(?:[ \t]+(?:(?:\/[ \t]*|per[ \t]+)(?:(?:s|secs?|seconds?)\b|秒)|(?:each|a)[ \t]+seconds?\b)|[ \t]*每[ \t]*秒)/iu;
+const TRANSFER_RATE_INVENTORY = /^[ \t]+(?:drive|SSD|HDD|disk|storage)\b/iu;
+const TRANSFER_RATE_PREFIX = /(?:\b(?:speed|throughput|bandwidth|rate)\b|带宽|帶寬|速度|吞吐量)[ \t:,-]*$/iu;
 
 function globalRegex(regex) {
   const flags = `${regex.flags.replace(/[gy]/g, "")}g`;
@@ -60,6 +63,7 @@ function overlaps(left, right) {
 function isValidEvidence(pattern, evidence, followingText) {
   if (!pattern.generic) return true;
   if (CAPACITY_TOKEN.test(evidence) || FORBIDDEN_GENERIC_LABEL.test(evidence)) return false;
+  if (pattern.field === "cpuModel" && COPULAR_APPLE_M_SERIES.test(evidence)) return false;
   if (
     TRAILING_PLAIN_NUMBER.test(evidence)
     && (DECIMAL_CONTINUATION.test(followingText) || ADJACENT_CAPACITY_CONTEXT.test(followingText))
@@ -246,7 +250,12 @@ function hasUnsafeSignPrefix(segment, match, labels) {
 function hasTransferRateSuffix(document, segment, match) {
   const globalEnd = segment.start + match.index + match[0].length;
   const followingText = document.normalized.slice(globalEnd, globalEnd + 32);
-  return TRANSFER_RATE_SUFFIX.test(followingText);
+  const rateMatch = TRANSFER_RATE_SUFFIX.exec(followingText);
+  if (!rateMatch) return false;
+  if (!TRANSFER_RATE_INVENTORY.test(followingText.slice(rateMatch[0].length))) return true;
+
+  const precedingText = segment.text.slice(Math.max(0, match.index - 32), match.index);
+  return TRANSFER_RATE_PREFIX.test(precedingText);
 }
 
 function hasUnsafeDigitCommaPrefix(segment, match, modelCandidates) {
@@ -425,7 +434,13 @@ function ownershipOption(segment, amount, label) {
   };
 }
 
-function findCapacityOwnership(segment, labels, amount) {
+function labelHasAmountInPosition(segment, amounts, label, amountPosition) {
+  return amounts.some((amount) => (
+    ownershipOption(segment, amount, label)?.amountPosition === amountPosition
+  ));
+}
+
+function findCapacityOwnership(segment, labels, amounts, amount) {
   let precedingLabel = null;
   let followingLabel = null;
 
@@ -440,9 +455,36 @@ function findCapacityOwnership(segment, labels, amount) {
     }
   }
 
-  const options = [precedingLabel, followingLabel]
-    .filter(Boolean)
-    .map((label) => ownershipOption(segment, amount, label))
+  const precedingOption = precedingLabel
+    ? ownershipOption(segment, amount, precedingLabel)
+    : null;
+  const followingOption = followingLabel
+    ? ownershipOption(segment, amount, followingLabel)
+    : null;
+
+  if (precedingOption && followingOption) {
+    const amountBeforeList = labelHasAmountInPosition(
+      segment,
+      amounts,
+      precedingLabel,
+      "before-label"
+    );
+    const labelBeforeList = labelHasAmountInPosition(
+      segment,
+      amounts,
+      followingLabel,
+      "after-label"
+    );
+
+    if (amountBeforeList !== labelBeforeList) {
+      return {
+        status: "owned",
+        ownership: amountBeforeList ? followingOption : precedingOption
+      };
+    }
+  }
+
+  const options = [precedingOption, followingOption]
     .filter(Boolean)
     .sort((left, right) => (
       left.gapLength - right.gapLength
@@ -682,17 +724,21 @@ export function extractCapacityCandidates(document) {
       hasExplicitVramEvidence = true;
     }
 
-    for (const amount of collectCapacityAmounts(
+    const segmentAmounts = collectCapacityAmounts(
       document,
       segment,
       modelCandidates,
       segmentLabels
-    )) {
+    );
+    for (const amount of segmentAmounts) {
       const clause = capacityClause(segment, amount, clauseBoundaries);
       const labels = segmentLabels.filter((label) => (
         localSpanIsInClause(label.start, label.end, clause)
       ));
-      const ownership = findCapacityOwnership(segment, labels, amount);
+      const amounts = segmentAmounts.filter((candidate) => (
+        localSpanIsInClause(candidate.start, candidate.end, clause)
+      ));
+      const ownership = findCapacityOwnership(segment, labels, amounts, amount);
       if (ownership.status === "ambiguous") continue;
       if (hasAttachedDisqualifier(
         segment,
