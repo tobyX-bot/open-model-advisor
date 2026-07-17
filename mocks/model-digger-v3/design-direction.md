@@ -24,7 +24,7 @@ The page is solid mineral white (`#eeeae6`); the stage underlay is solid warm st
 
 - **Elevation 1 / raw input:** the baseline plane uses `--elevation-1`, the shortest and lightest falloff, plus white top and leading-edge highlights.
 - **Elevation 2 / detected setup:** desktop position advances 52px vertically and overlaps the prior plane by 16px only inside protected edge padding. `--elevation-2` extends farther and slightly darker.
-- **Elevation 3 / recommendation:** desktop position advances 108px from the baseline and another protected 16px horizontally. `--elevation-3` has the clearest two-stage falloff.
+- **Elevation 3 / recommendation:** desktop position advances 96px from the baseline and another protected 16px horizontally. `--elevation-3` has the clearest two-stage falloff.
 - **Mobile suspension:** the three planes use distinct 6-18px side offsets, reduced negative vertical margins, and the same ordered shadow strengths.
 - No plane uses rotation, perspective, parallax, or content-covering overlap. Interactive content and its 3px focus allowance remain outside every overlap zone.
 
@@ -57,10 +57,10 @@ Hairlines are structural and are not used as the only carrier of text or state. 
 
 - Each task resolves to exactly three viable options for the reviewed hardware. Rank describes practical fit for this profile, not general quality, benchmark position, or market leadership; the displayed scores are explicitly illustrative.
 - Rank 1 remains the expanded working recommendation with runtime, target artifact, fit rationale, avoid guidance, source actions, and a clearly secondary hosted fallback.
-- Ranks 2 and 3 are compact, unframed rows rather than additional cards. Their rank, model, fit label and score, target, runtime, why-lower explanation, and sources remain visible without disclosure interaction.
+- Ranks 2 and 3 are compact, unframed ledger rows rather than additional cards. Their rank, model, fit label and score, two-column target/runtime facts, one why-lower sentence, and sources remain visible without disclosure interaction.
 - Unsuitable workload classes live in a separate `Not recommended on this hardware / 不建议在此配置上使用` area and never occupy a ranked slot.
 - Every model exposes a curated creator or official Hugging Face model page labeled `Download and model details / 下载与模型详情`, plus the existing official creator, setup, runtime, or reference link. These are static HTTPS links, not automatic downloads or live model lookups.
-- Official model weights and community or runtime-specific quantizations are described separately. When the target artifact is not directly supplied by the creator, the interface tells users to choose a compatible artifact on the model or runtime page instead of implying official provenance.
+- A single shared note below all rankings distinguishes creator weights from community-maintained quantized or optimized files. It tells users to confirm compatibility on the model or runtime page without repeating the same caveat in every row.
 - The foreground stays one suspended recommendation plane: internal hairlines and whitespace establish rank without stacking three elevated cards.
 
 ## Mandarin Language Principles

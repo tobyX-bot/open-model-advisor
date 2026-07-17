@@ -12,7 +12,7 @@
 
 ## Review Evidence
 
-The source and final desktop implementation were placed in one comparison board at the same 680px review width. This kept palette, white contrast, translucency, elevation, typography, and overall information density visible together without treating the reference composition as an implementation target. The final combined board is `/tmp/porcelain-ranked-qa-final.png`.
+The source and final desktop implementation were placed in one comparison board at the same 680px review width. This kept palette, white contrast, translucency, elevation, typography, and overall information density visible together without treating the reference composition as an implementation target. The final combined board is `/tmp/porcelain-compact-qa-final.png`.
 
 The board confirms that the added ranking content remains inside one near-white foreground plane. Rank rows use internal hairlines and whitespace rather than new glass cards, while the raw and detected planes retain their lower elevations. The source's warm porcelain environment, milky panel contrast, near-black anchors, and small warm signal informed the material; no photographic scenery or decorative source motif was copied.
 
@@ -33,9 +33,18 @@ Both findings remained resolved in the ranked-guidance render.
   - Location: Rank 2 and Rank 3 headings, fit labels, ranking rationale, and source links at 1440px and 390px.
   - Evidence: at the shared review scale, the hierarchy from expanded Rank 1 to compact alternatives was correct, but the smaller fit and source typography required unnecessary effort to scan.
   - Impact: viable alternatives were technically visible yet insufficiently prominent for comparison and source verification.
-  - Fix: increased fixed label, score, model-name, and source-link sizes; strengthened the alternatives heading; added 28px minimum source targets; and constrained mobile fit labels without changing the plane geometry.
+  - Fix: increased fixed label, score, model-name, and source-link sizes; strengthened the alternatives heading; added 32px minimum source targets; and constrained mobile fit labels without changing the plane geometry.
 
-No P0 or P1 findings were present. The final desktop and mobile captures resolve the P2 finding; no actionable P0, P1, or P2 findings remain.
+### Controller Density Correction
+
+- [P2] The 1440x2031 foreground was roughly twice the useful height of the raw and review planes and left a large dead field below them.
+  - Location: expanded Rank 1, both alternative rows, repeated provenance notes, and vertically stacked mobile deployment choices.
+  - Evidence: the prior desktop recommendation extended to 2031px while the two upstream planes ended near the page midpoint; mobile extended to 4076px.
+  - Impact: the ranked functionality worked, but the suspended composition lost regional balance and read as a long results column beside two completed short columns.
+  - Fix: removed duplicate Rank 1 fit and target/runtime presentations; converted target/runtime to compact two-column facts ledgers; limited each alternative to one why-lower sentence; consolidated provenance once below all rankings; shortened ranking and hosted copy; and restored a three-way mobile deployment segment without reducing essential text below 12px.
+  - Result: final captures are 1440x1589 and 390x3476. Rank 1 remains expanded, both alternatives and all sources remain immediately visible, and no actionable surface is obscured.
+
+No P0 or P1 findings were present. The final desktop and mobile captures resolve all recorded P2 findings; no actionable P0, P1, or P2 findings remain.
 
 ## Required Fidelity Surfaces
 
@@ -46,11 +55,11 @@ No P0 or P1 findings were present. The final desktop and mobile captures resolve
 | Warm-white tokens | Mineral page `#eeeae6`, stone underlay `#d9d1ca`, and warm hairlines preserve the selected material direction without gradients, orbs, photographic imitation, or decorative bubbles. |
 | Translucency and elevation | Major planes use 52%, 78%, and 93% white glass with 24px, 28px, and 32px blur. Shadows and white edge highlights increase by elevation; nested rows and controls remain crisp. |
 | Ranking hierarchy | Every task renders exactly three viable options. Rank is explicitly described as practical fit for the reviewed profile, not a universal or benchmark ranking, and every score is labeled illustrative in EN/ZH. |
-| Recommendation density | Rank 1 is fully expanded. Ranks 2 and 3 keep rank, model, fit, target, runtime, why-lower copy, provenance note, and source actions visible as compact rows. No additional elevated cards or disclosure dependency was introduced. |
+| Recommendation density | Rank 1 is fully expanded without duplicate fit or target/runtime blocks. Ranks 2 and 3 keep rank, model, fit, target, runtime, one why-lower sentence, and source actions visible as compact ledger rows. Provenance appears once below the ranking. |
 | Unsuitable guidance | `Not recommended on this hardware / 不建议在此配置上使用` is separated from the ranked options and contains workload guidance rather than an unsuitable candidate presented as a recommendation. |
 | Sources and provenance | All 15 catalog entries expose an official or creator Hugging Face page labeled `Download and model details / 下载与模型详情` and their existing official creator/setup/runtime/reference link. Community quantization guidance is explicitly separated from creator weights. |
 | Icons | The existing shovel and stroke icon system remains consistent. External actions use the text-safe `↗` treatment; no handcrafted SVG or copied source ornament was added. |
-| Chinese copy | Native Mainland Chinese, exact hardware/model strings, status distinctions, ranking rationale, source labels, artifact notes, and accessible names fit at 1440px and 390px. |
+| Chinese copy | Native Mainland Chinese, exact hardware/model strings, status distinctions, ranking rationale, source labels, shared artifact guidance, and accessible names fit at 1440px and 390px. |
 | Contrast | On the lowest-opacity composite, primary text is 14.37:1, body text 9.16:1, secondary text 5.86:1, review orange 5.71:1, and verified green 5.31:1. White on near-black controls is 17.17:1. |
 | Responsiveness | EN and ZH pass at 1440px and 390px with no horizontal overflow, heading/score collision, clipped control, obscured source link, or content-covering overlap. |
 
@@ -64,11 +73,11 @@ No P0 or P1 findings were present. The final desktop and mobile captures resolve
 - Deployment: local-only suppresses the hosted fallback; local-first and cloud-acceptable states keep it clearly secondary. Ranking and scanning remain browser-local; internet is used only when a source link is opened.
 - Keyboard: the source action is reached through the tab order and receives a solid 3px tangerine focus outline. Language, task, deployment, review, apply, and manual controls retain visible focus behavior.
 - Reduced motion: shovel, sweep, and evidence motion resolve to `0.01ms`; state changes remain functional.
-- Screenshot dimensions: desktop 1440x2031; mobile 390x4076.
+- Screenshot dimensions: desktop 1440x1589; mobile 390x3476.
 - Opaque fallback: all three major material levels retain explicit warm-white backgrounds when `backdrop-filter` is unavailable.
 
 ## Remaining Trade-off
 
-- [P3] Mobile is necessarily long because exact review context, Rank 1 detail, and both viable alternatives remain visible without hidden disclosures or navigation. This is a deliberate comparison-first workflow choice rather than an unresolved defect.
+- [P3] Mobile remains long because exact review context, Rank 1 detail, and both viable alternatives stay visible without hidden disclosures or navigation, but it now remains within the 3500px target.
 
 final result: passed

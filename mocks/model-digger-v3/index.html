@@ -2272,7 +2272,7 @@
     }
 
     .rank-context {
-      padding: 14px 22px;
+      padding: 8px 20px 9px;
       border-bottom: 1px solid var(--line);
       background: rgba(245, 242, 239, 0.58);
     }
@@ -2283,18 +2283,18 @@
     }
 
     .rank-context strong {
-      font-size: 12px;
+      font-size: 12.5px;
     }
 
     .rank-context span {
-      margin-top: 3px;
+      margin-top: 2px;
       color: var(--ink-3);
-      font-size: 11px;
-      line-height: 1.4;
+      font-size: 12px;
+      line-height: 1.35;
     }
 
     .primary-rank {
-      padding: 20px 22px 18px;
+      padding: 14px 20px 12px;
     }
 
     .rank-title-row,
@@ -2323,7 +2323,7 @@
       background: var(--white);
       color: var(--ink-2);
       font-family: var(--font-mono);
-      font-size: 10px;
+      font-size: 12px;
       font-weight: 800;
     }
 
@@ -2346,9 +2346,9 @@
     }
 
     .rank-fit {
-      flex: 0 0 auto;
+      flex: 0 0 130px;
       color: var(--verified);
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 760;
       line-height: 1.35;
       text-align: right;
@@ -2363,41 +2363,75 @@
       margin-top: 2px;
       color: var(--ink-3);
       font-family: var(--font-mono);
-      font-size: 10px;
+      font-size: 12px;
       font-weight: 650;
     }
 
-    .primary-rank .starter-line {
-      margin-left: 36px;
+    .primary-rank .model-name {
+      font-size: 38px;
+      line-height: 1.05;
     }
 
-    .primary-rank .fit-readout {
-      margin-top: 15px;
+    .primary-facts {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr);
+      gap: 12px;
+      margin: 10px 0 0 36px;
     }
 
-    .artifact-note {
-      margin: 12px 0 0;
+    .primary-facts span {
+      min-width: 0;
+    }
+
+    .primary-facts b {
+      display: block;
       color: var(--ink-3);
-      font-size: 10.5px;
-      line-height: 1.45;
+      font-size: 12px;
+    }
+
+    .primary-facts code {
+      display: block;
+      margin-top: 2px;
+      color: var(--ink-2);
+      font-size: 12px;
+      line-height: 1.3;
+      overflow-wrap: anywhere;
+    }
+
+    .primary-rank .guidance-list {
+      margin-top: 8px;
+      border-top: 1px solid var(--line);
+    }
+
+    .primary-rank .guidance-item {
+      grid-template-columns: 92px minmax(0, 1fr);
+      gap: 10px;
+      padding: 8px 0;
+    }
+
+    .primary-rank .guidance-item dt,
+    .primary-rank .guidance-item dd,
+    .primary-rank .guidance-item dd.mono {
+      font-size: 12px;
+      line-height: 1.35;
     }
 
     .source-actions {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px 14px;
-      margin-top: 12px;
+      gap: 6px 14px;
+      margin-top: 8px;
     }
 
     .source-link {
       display: inline-flex;
       align-items: center;
       gap: 5px;
-      min-height: 28px;
+      min-height: 32px;
       padding: 4px 0 3px;
       border-bottom: 1px solid currentColor;
       color: var(--ink-2);
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 720;
       line-height: 1.25;
       text-decoration: none;
@@ -2413,9 +2447,20 @@
     }
 
     .primary-rank .hosted-fallback {
-      margin-top: 16px;
-      padding-top: 12px;
+      display: grid;
+      grid-template-columns: 122px minmax(0, 1fr);
+      gap: 10px;
+      align-items: start;
+      margin-top: 10px;
+      padding-top: 10px;
       border-top: 1px solid var(--line);
+    }
+
+    .primary-rank .hosted-fallback strong,
+    .primary-rank .hosted-fallback p {
+      margin: 0;
+      font-size: 12px;
+      line-height: 1.4;
     }
 
     .ranked-alternatives {
@@ -2423,14 +2468,14 @@
     }
 
     .alternatives-label {
-      padding: 14px 22px 6px;
+      padding: 8px 20px 4px;
       color: var(--ink-2);
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 760;
     }
 
     .alternative-row {
-      padding: 14px 22px 15px;
+      padding: 9px 20px 10px;
       border-bottom: 1px solid var(--line);
     }
 
@@ -2443,73 +2488,122 @@
       overflow-wrap: anywhere;
     }
 
-    .alternative-meta {
+    .alternative-facts {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr);
-      gap: 7px 12px;
-      margin: 10px 0 0 36px;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr);
+      gap: 12px;
+      margin: 6px 0 0 36px;
     }
 
-    .alternative-meta div {
+    .alternative-facts span {
       min-width: 0;
     }
 
-    .alternative-meta dt {
+    .alternative-facts b {
+      display: inline;
+      margin-right: 4px;
       color: var(--ink-3);
-      font-size: 9.5px;
+      font-size: 12px;
       font-weight: 740;
     }
 
-    .alternative-meta dd {
+    .alternative-facts code {
+      display: inline;
       min-width: 0;
-      margin: 2px 0 0;
       color: var(--ink-2);
       font-family: var(--font-mono);
-      font-size: 10px;
-      line-height: 1.35;
+      font-size: 12px;
+      line-height: 1.3;
       overflow-wrap: anywhere;
     }
 
     .lower-reason,
-    .alternative-row .artifact-note,
     .alternative-row .source-actions {
       margin-left: 36px;
     }
 
     .lower-reason {
-      margin-top: 9px;
+      margin-top: 5px;
       margin-bottom: 0;
       color: var(--ink-2);
-      font-size: 10.5px;
-      line-height: 1.45;
+      font-size: 12px;
+      line-height: 1.4;
     }
 
     .lower-reason strong {
       color: var(--ink);
     }
 
+    .alternative-row .source-actions {
+      margin-top: 5px;
+    }
+
+    .shared-artifact-guidance {
+      padding: 9px 20px 10px;
+      border-top: 1px solid var(--line);
+      background: rgba(245, 242, 239, 0.5);
+    }
+
+    .shared-artifact-guidance strong {
+      display: block;
+      color: var(--ink-2);
+      font-size: 12px;
+    }
+
+    .shared-artifact-guidance p {
+      margin: 4px 0 0;
+      color: var(--ink-3);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
     .not-recommended {
-      padding: 15px 22px 18px;
+      padding: 9px 20px 11px;
       background: rgba(255, 240, 231, 0.44);
     }
 
     .not-recommended strong {
       display: block;
       color: var(--review);
-      font-size: 11px;
+      font-size: 12px;
     }
 
     .not-recommended p {
       margin: 5px 0 0;
       color: var(--ink-2);
-      font-size: 10.5px;
-      line-height: 1.45;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .match-controls {
+      padding: 14px 20px;
+    }
+
+    .task-option span,
+    .deployment-option span,
+    .match-controls legend {
+      font-size: 12px;
+    }
+
+    .task-option span {
+      min-height: 50px;
+    }
+
+    main {
+      padding-bottom: 14px;
+    }
+
+    @media (min-width: 821px) {
+      .match-zone {
+        margin-top: 96px;
+      }
     }
 
     @media (max-width: 520px) {
       .rank-context,
       .primary-rank,
       .alternative-row,
+      .shared-artifact-guidance,
       .not-recommended {
         padding-inline: 16px;
       }
@@ -2524,19 +2618,68 @@
       }
 
       .rank-fit {
-        max-width: 112px;
+        flex-basis: 120px;
+        max-width: 120px;
       }
 
       .rank-heading-copy .model-name {
         font-size: 27px;
       }
 
-      .alternative-meta {
-        grid-template-columns: minmax(0, 1fr);
+      .primary-facts {
+        margin-left: 0;
+      }
+
+      .primary-rank .guidance-item {
+        grid-template-columns: 92px minmax(0, 1fr);
+        gap: 8px;
       }
 
       .source-actions {
-        gap-block: 10px;
+        gap-block: 6px;
+      }
+
+      .primary-rank .hosted-fallback {
+        grid-template-columns: 96px minmax(0, 1fr);
+        gap: 8px;
+      }
+
+      .alternative-facts,
+      .lower-reason,
+      .alternative-row .source-actions {
+        margin-left: 0;
+      }
+
+      .task-option span {
+        min-height: 44px;
+      }
+
+      .deployment-control {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0;
+        border: 1px solid var(--line-strong);
+        border-radius: 7px;
+        background: var(--white);
+      }
+
+      .deployment-option,
+      .deployment-option:not(:last-child) {
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+      }
+
+      .deployment-option:not(:last-child) {
+        border-right: 1px solid var(--line);
+      }
+
+      .deployment-option span {
+        min-height: 46px;
+        padding-inline: 4px;
+      }
+
+      .match-zone {
+        margin-bottom: 24px;
       }
     }
 
@@ -2875,13 +3018,15 @@ GPU：NVIDIA GeForce RTX 4070 SUPER - 12GB 显存
         cloudOk: "Cloud acceptable",
         tryFirst: "TRY FIRST",
         rankingBasisTitle: "Ranked for practical fit on this profile",
-        rankingBasisBody: "This is not an overall quality or benchmark ranking. Fit scores are illustrative for the reviewed hardware.",
-        sourceInternetNote: "Scanning and ranking stay in this browser. Source links use the internet only when opened.",
+        rankingBasisBody: "Practical fit for this reviewed hardware, not an overall or benchmark rank. Scores are illustrative.",
+        sourceInternetNote: "Ranking stays local; internet is used only when a source link opens.",
         alternativesLabel: "Other viable options",
-        illustrativeFit: "Illustrative fit {score} / 100",
+        illustrativeFit: "Illustrative {score}/100",
         whyLower: "Why lower",
         modelTarget: "Size / format target",
         downloadDetails: "Download and model details",
+        artifactGuidanceTitle: "Sources and compatible files",
+        artifactGuidanceCopy: "Model pages link creator weights. Quantized or optimized files may be community-maintained; confirm compatibility on the model or runtime page. Ranking stays local; only links use the internet.",
         notRecommendedHardware: "Not recommended on this hardware",
         strongFit: "Strong local fit",
         fitScore: "88 / 100 hardware fit",
@@ -2890,7 +3035,7 @@ GPU：NVIDIA GeForce RTX 4070 SUPER - 12GB 显存
         hardwareFit: "Hardware fit",
         avoid: "Avoid when",
         hostedFallback: "Secondary hosted fallback",
-        hostedCopy: "Use hosted open-weight inference only when queue time, larger context, or higher resolution outweighs local privacy.",
+        hostedCopy: "Use hosted open-weight inference when local context, speed, or resolution is insufficient; provider privacy terms apply.",
         lockedTitle: "Review before matching",
         lockedBody: "Resolve the conflicting VRAM evidence, then apply the detected setup.",
         mockOnly: "Interactive design mock - no live parsing, model download, or backend.",
@@ -2983,13 +3128,15 @@ GPU：NVIDIA GeForce RTX 4070 SUPER - 12GB 显存
         cloudOk: "可接受云端托管",
         tryFirst: "建议先试",
         rankingBasisTitle: "按这台电脑的实际适配度排序",
-        rankingBasisBody: "这不是模型综合实力或跑分排名；适配分仅用于说明当前硬件下的相对判断。",
-        sourceInternetNote: "解析与排序始终在本机浏览器中完成；只有打开来源链接时才会联网。",
+        rankingBasisBody: "按已确认的硬件评估实际适配度，不代表综合实力或跑分排名；分数仅作示意。",
+        sourceInternetNote: "排序在本机完成；只有打开来源链接时才会联网。",
         alternativesLabel: "其他可行方案",
-        illustrativeFit: "示意适配分 {score} / 100",
-        whyLower: "排序靠后的原因",
+        illustrativeFit: "示意分 {score}/100",
+        whyLower: "排序说明",
         modelTarget: "规格 / 格式目标",
         downloadDetails: "下载与模型详情",
+        artifactGuidanceTitle: "来源与兼容文件",
+        artifactGuidanceCopy: "模型页链接创作者权重；量化或优化文件可能由社区维护，请在模型页或运行工具中确认兼容性。排序在本机完成，仅打开链接时联网。",
         notRecommendedHardware: "不建议在此配置上使用",
         strongFit: "适合本地运行",
         fitScore: "配置匹配 88 / 100",
@@ -2998,7 +3145,7 @@ GPU：NVIDIA GeForce RTX 4070 SUPER - 12GB 显存
         hardwareFit: "配置匹配说明",
         avoid: "不建议用于",
         hostedFallback: "云端备选方案",
-        hostedCopy: "如果本地速度、上下文长度或出图分辨率达不到要求，可再考虑云端托管；上传的提示词和文件可能由服务商处理。",
+        hostedCopy: "本地上下文、速度或出图分辨率不足时可用云端托管；提示词和文件将按服务商规则处理。",
         lockedTitle: "请先确认识别结果",
         lockedBody: "显存容量存在冲突。确认有效记录后，再应用此配置。",
         mockOnly: "交互设计稿，不进行真实解析、模型下载或联网推荐。",
@@ -3065,8 +3212,8 @@ GPU：NVIDIA GeForce RTX 4070 SUPER - 12GB 显存
             runtime: "Ollama, LM Studio, or llama.cpp",
             target: "8B / 4-bit GGUF",
             whyLower: {
-              en: "Slightly larger, and its license needs closer review; broad runtime support keeps it practical.",
-              zh: "模型略大，且需要更仔细核对许可条款；但运行工具支持广泛，仍然实用。"
+              en: "Slightly larger and its license needs closer review, though runtime support is broad.",
+              zh: "模型略大且需仔细核对许可条款，但运行工具支持广泛。"
             },
             artifact: artifactGuidance.communityQuant,
             sources: [
@@ -3082,8 +3229,8 @@ GPU：NVIDIA GeForce RTX 4070 SUPER - 12GB 显存
             runtime: "Ollama or LM Studio",
             target: "7B / 4-bit GGUF",
             whyLower: {
-              en: "Lightweight and quick to set up, but the quality ceiling is lower than the first two choices.",
-              zh: "模型较轻、配置简单，但综合能力上限低于前两个方案。"
+              en: "Quick to set up, but its quality ceiling is lower than the first two options.",
+              zh: "配置简单，但综合能力上限低于前两个方案。"
             },
             artifact: artifactGuidance.communityQuant,
             sources: [
@@ -3128,8 +3275,8 @@ GPU：NVIDIA GeForce RTX 4070 SUPER - 12GB 显存
             runtime: "Transformers or llama.cpp where supported",
             target: "Lite MoE / compatible quantized artifact",
             whyLower: {
-              en: "It fits the 32GB RAM floor, but 12GB VRAM is below the preferred 16GB tier and setup is heavier.",
-              zh: "32GB 内存达到运行条件，但 12GB 显存低于更理想的 16GB 档位，配置也更复杂。"
+              en: "32GB RAM is sufficient, but 12GB VRAM is below the preferred 16GB tier.",
+              zh: "32GB 内存足够，但 12GB 显存低于更理想的 16GB 档位。"
             },
             artifact: artifactGuidance.communityQuant,
             sources: [
@@ -3145,8 +3292,8 @@ GPU：NVIDIA GeForce RTX 4070 SUPER - 12GB 显存
             runtime: "Transformers or llama.cpp-compatible builds",
             target: "15B / compatible quantized build",
             whyLower: {
-              en: "The 15B footprint is workable with quantization and 32GB RAM, but it will be slower and needs more memory management.",
-              zh: "量化后可利用 32GB 内存运行，但 15B 规模速度更慢，也需要更谨慎地管理显存和内存。"
+              en: "Quantization makes 15B workable in 32GB RAM, but it is slower and harder to manage.",
+              zh: "量化后可用 32GB 内存运行，但速度更慢、内存管理更复杂。"
             },
             artifact: artifactGuidance.communityQuant,
             sources: [
@@ -3191,8 +3338,8 @@ GPU：NVIDIA GeForce RTX 4070 SUPER - 12GB 显存
             runtime: "ComfyUI or Diffusers",
             target: "Medium / optimized local weights",
             whyLower: {
-              en: "It is viable at 12GB VRAM with optimization, but the preferred tier is 16GB and setup is less forgiving.",
-              zh: "经过优化可在 12GB 显存上运行，但更理想的档位是 16GB，配置容错也更低。"
+              en: "It can run in 12GB VRAM with optimization, but 16GB is the more forgiving tier.",
+              zh: "优化后可在 12GB 显存上运行，但 16GB 档位更稳妥。"
             },
             artifact: artifactGuidance.optimizedWeights,
             sources: [
@@ -3208,8 +3355,8 @@ GPU：NVIDIA GeForce RTX 4070 SUPER - 12GB 显存
             runtime: "AUTOMATIC1111, ComfyUI, or Diffusers",
             target: "SDXL Base / FP16 or optimized checkpoint",
             whyLower: {
-              en: "It is the most predictable memory fit, but ranks lower for modern prompt following and output quality.",
-              zh: "它对显存最友好、运行更稳定，但在新一代提示词理解和画面质量上排序靠后。"
+              en: "Memory use is predictable, but prompt following and output quality trail the first two.",
+              zh: "显存适配更稳，但提示词理解和画面质量不及前两个方案。"
             },
             artifact: artifactGuidance.optimizedWeights,
             sources: [
@@ -3254,8 +3401,8 @@ GPU：NVIDIA GeForce RTX 4070 SUPER - 12GB 显存
             runtime: "faster-whisper",
             target: "Distilled large / CTranslate2 FP16 or int8",
             whyLower: {
-              en: "It is faster and lighter, but the distilled model can trade some language or edge-case accuracy for throughput.",
-              zh: "速度更快、占用更低，但蒸馏模型可能用部分语言或边缘场景准确率换取吞吐量。"
+              en: "It is faster and lighter, but distillation can reduce language and edge-case accuracy.",
+              zh: "速度更快、占用更低，但部分语言和边缘场景准确率可能下降。"
             },
             artifact: artifactGuidance.runtimeConversion,
             sources: [
@@ -3271,8 +3418,8 @@ GPU：NVIDIA GeForce RTX 4070 SUPER - 12GB 显存
             runtime: "NVIDIA NeMo",
             target: "0.6B / NeMo weights",
             whyLower: {
-              en: "Efficient on this NVIDIA GPU, but the NeMo setup and supported language/task envelope are narrower.",
-              zh: "在当前 NVIDIA 显卡上效率较高，但 NeMo 配置更专业，支持的语言和任务范围也更窄。"
+              en: "Efficient on this NVIDIA GPU, but NeMo setup and language coverage are narrower.",
+              zh: "在当前 NVIDIA 显卡上效率较高，但 NeMo 配置和语言覆盖更窄。"
             },
             artifact: artifactGuidance.officialRuntime,
             sources: [
@@ -3317,8 +3464,8 @@ GPU：NVIDIA GeForce RTX 4070 SUPER - 12GB 显存
             runtime: "sentence-transformers or ONNX Runtime",
             target: "Large English / FP16 or compatible ONNX",
             whyLower: {
-              en: "Excellent for English retrieval, but it ranks below BGE-M3 because it lacks the same multilingual and hybrid range.",
-              zh: "英文检索表现扎实，但多语言和混合检索能力不如 BGE-M3，因此排序靠后。"
+              en: "Strong for English retrieval, but multilingual and hybrid coverage trail BGE-M3.",
+              zh: "英文检索扎实，但多语言和混合检索能力不如 BGE-M3。"
             },
             artifact: artifactGuidance.alternateFormat,
             sources: [
@@ -3334,8 +3481,8 @@ GPU：NVIDIA GeForce RTX 4070 SUPER - 12GB 显存
             runtime: "Ollama or sentence-transformers",
             target: "Local-friendly / compatible quantized runtime",
             whyLower: {
-              en: "It is easy to run locally, but ranks lower for multilingual and hybrid retrieval breadth.",
-              zh: "本地部署简单，但多语言和混合检索能力范围较窄，因此排序靠后。"
+              en: "Easy to run locally, but multilingual and hybrid retrieval coverage is narrower.",
+              zh: "本地部署简单，但多语言和混合检索覆盖范围较窄。"
             },
             artifact: artifactGuidance.communityQuant,
             sources: [
@@ -3587,7 +3734,6 @@ GPU：NVIDIA GeForce RTX 4070 SUPER - 12GB 显存
               <span class="rank-number" aria-label="${escapeHtml(String(rank))}">${rank}</span>
               <div class="rank-heading-copy">
                 <h4 class="alternative-name">${escapeHtml(candidate.name)}</h4>
-                <span>${escapeHtml(candidate.target)}</span>
               </div>
             </div>
             <div class="rank-fit">
@@ -3595,12 +3741,11 @@ GPU：NVIDIA GeForce RTX 4070 SUPER - 12GB 显存
               <span>${escapeHtml(formatFitScore(candidate.score))}</span>
             </div>
           </div>
-          <dl class="alternative-meta">
-            <div><dt>${escapeHtml(t("modelTarget"))}</dt><dd class="mono">${escapeHtml(candidate.target)}</dd></div>
-            <div><dt>${escapeHtml(t("runtime"))}</dt><dd class="mono">${escapeHtml(candidate.runtime)}</dd></div>
-          </dl>
-          <p class="lower-reason"><strong>${escapeHtml(t("whyLower"))}</strong>${escapeHtml(localized(candidate.whyLower))}</p>
-          <p class="artifact-note">${escapeHtml(localized(candidate.artifact))}</p>
+          <div class="alternative-facts">
+            <span><b>${escapeHtml(t("modelTarget"))}</b><code>${escapeHtml(candidate.target)}</code></span>
+            <span><b>${escapeHtml(t("runtime"))}</b><code>${escapeHtml(candidate.runtime)}</code></span>
+          </div>
+          <p class="lower-reason"><strong>${escapeHtml(t("whyLower"))}:</strong> <span>${escapeHtml(localized(candidate.whyLower))}</span></p>
           <div class="source-actions">${renderSourceLinks(candidate)}</div>
         </article>`;
     }
@@ -3625,7 +3770,6 @@ GPU：NVIDIA GeForce RTX 4070 SUPER - 12GB 显存
         <div class="rank-context">
           <strong>${escapeHtml(t("rankingBasisTitle"))}</strong>
           <span>${escapeHtml(t("rankingBasisBody"))}</span>
-          <span>${escapeHtml(t("sourceInternetNote"))}</span>
         </div>
         <section class="primary-rank" data-rank="1" data-model-id="${escapeHtml(primary.id)}">
           <div class="rank-title-row">
@@ -3641,24 +3785,16 @@ GPU：NVIDIA GeForce RTX 4070 SUPER - 12GB 显存
               <span>${escapeHtml(formatFitScore(primary.score))}</span>
             </div>
           </div>
-          <p class="starter-line">${escapeHtml(primary.target)} &#8594; ${escapeHtml(primary.runtime)}</p>
-          <div class="fit-readout">
-            <span class="fit-gauge">${primary.score}</span>
-            <span class="fit-copy">
-              <strong>${escapeHtml(localized(primary.fitLabel))}</strong>
-              <span>${escapeHtml(formatFitScore(primary.score))}</span>
-            </span>
+          <div class="primary-facts">
+            <span><b>${escapeHtml(t("modelTarget"))}</b><code>${escapeHtml(primary.target)}</code></span>
+            <span><b>${escapeHtml(t("runtime"))}</b><code>${escapeHtml(primary.runtime)}</code></span>
           </div>
           <dl class="guidance-list">
-            <div class="guidance-item"><dt>${escapeHtml(t("runtime"))}</dt><dd class="mono">${escapeHtml(primary.runtime)}</dd></div>
-            <div class="guidance-item"><dt>${escapeHtml(t("modelTarget"))}</dt><dd class="mono">${escapeHtml(primary.target)}</dd></div>
             <div class="guidance-item"><dt>${escapeHtml(t("hardwareFit"))}</dt><dd>${escapeHtml(localized(primary.fit))}</dd></div>
             <div class="guidance-item"><dt>${escapeHtml(t("avoid"))}</dt><dd>${escapeHtml(localized(primary.avoid))}</dd></div>
           </dl>
-          <p class="artifact-note">${escapeHtml(localized(primary.artifact))}</p>
           <div class="source-actions">${renderSourceLinks(primary)}</div>
           <aside class="hosted-fallback" ${localOnly ? "hidden" : ""}>
-            <div class="hosted-rule"></div>
             <strong>${escapeHtml(t("hostedFallback"))}</strong>
             <p>${escapeHtml(t("hostedCopy"))}</p>
           </aside>
@@ -3668,6 +3804,10 @@ GPU：NVIDIA GeForce RTX 4070 SUPER - 12GB 显存
           ${renderAlternative(second, 2)}
           ${renderAlternative(third, 3)}
         </section>
+        <aside class="shared-artifact-guidance">
+          <strong>${escapeHtml(t("artifactGuidanceTitle"))}</strong>
+          <p>${escapeHtml(t("artifactGuidanceCopy"))}</p>
+        </aside>
         <aside class="not-recommended">
           <strong>${escapeHtml(t("notRecommendedHardware"))}</strong>
           <p>${escapeHtml(localized(set.notRecommended))}</p>
@@ -3841,8 +3981,8 @@ GPU：NVIDIA GeForce RTX 4070 SUPER - 12GB 显存
   3. Anchored primary actions and selected controls in near-black, with tangerine reserved for scan progress, focus, and unresolved review.
   4. Preserved a distinct semantic green for verified and applied states so warning and success never depend on the same color.
   5. Retained protected desktop and mobile overlaps so no evidence, source choice, source link, or focus ring sits beneath another plane.
-  6. Replaced the single result with three viable practical-fit options per task: Rank 1 expanded, Ranks 2 and 3 compact, and unsuitable guidance separated.
-  7. Added curated creator/model and official setup sources with explicit quantization provenance while preserving native Mandarin and the fixed two-line headline.
+  6. Kept Rank 1 expanded while turning Ranks 2 and 3 into compact facts ledgers with one comparison sentence and immediately visible sources.
+  7. Consolidated creator/community provenance once below all rankings while preserving native Mandarin, the fixed two-line headline, and separate unsuitable guidance.
   Trade-offs:
   1. Porcelain glass depends on backdrop-filter for full material depth, with deliberately flatter opaque fallbacks on unsupported browsers.
   2. The mobile flow is longer because exact review and all three candidates stay visible without hidden disclosures or another screen.
