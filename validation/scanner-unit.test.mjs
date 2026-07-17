@@ -1304,6 +1304,19 @@ test("keeps conjunction and sentence-delimited ownership local to GPU and RAM cl
     ]
   ];
 
+  for (const conjunction of ["与", "與", "並且", "及", "还有", "還有"]) {
+    cases.push(
+      [
+        `NVIDIA RTX 4070 12GB${conjunction}RAM 32GB`,
+        [["vram", 12, "NVIDIA RTX 4070 12GB"], ["ram", 32, "RAM 32GB"]]
+      ],
+      [
+        `RAM 32GB${conjunction}NVIDIA RTX 4070 12GB`,
+        [["ram", 32, "RAM 32GB"], ["vram", 12, "NVIDIA RTX 4070 12GB"]]
+      ]
+    );
+  }
+
   for (const [input, expected] of cases) {
     const document = normalizeSetupText(input);
     const candidates = extractCapacityCandidates(document);
@@ -1326,8 +1339,35 @@ test("rejects numeric suffixes after digit-comma prefixes", () => {
     "128，28GB RAM",
     "1，024GB SSD",
     "x-128,28GB RAM",
-    "Intel Core 128,28GB RAM"
+    "Intel Core 128,28GB RAM",
+    "128, 28GB RAM",
+    "128， 8GB VRAM",
+    "1, 024GB SSD",
+    "8， 5GB RAM",
+    "128,\t28GB RAM",
+    "128，\t8GB VRAM",
+    "128,,28GB RAM",
+    "128，，8GB VRAM",
+    "1,，\t024GB SSD",
+    "8 \t， ,\t5GB RAM"
   ]) {
     assert.deepEqual(extractCapacityCandidates(normalizeSetupText(input)), [], input);
   }
+});
+
+test("accepts spaced nonnumeric comma delimiters and sentence-final capacities", () => {
+  const document = normalizeSetupText("x, 8GB RAM;x，\t2GB VRAM;disk free 512GB.");
+
+  assert.deepEqual(
+    extractCapacityCandidates(document).map((candidate) => [
+      candidate.field,
+      candidate.value,
+      candidate.raw
+    ]),
+    [
+      ["ram", 8, "8GB RAM"],
+      ["vram", 2, "2GB VRAM"],
+      ["storage", 512, "disk free 512GB"]
+    ]
+  );
 });

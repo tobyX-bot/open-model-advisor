@@ -398,8 +398,16 @@ export const CAPACITY_CLAUSE_PATTERNS = freezePatterns([
     regex: /[ \t]+\band\b[ \t]+/iu
   },
   {
-    id: "capacity.clause.chinese-conjunction",
-    regex: /以及|并且|和/u
+    id: "capacity.clause.chinese-conjunction-long",
+    regex: /[ \t]*(?:並且|并且|還有|还有|以及)[ \t]*/u
+  },
+  {
+    id: "capacity.clause.chinese-conjunction-spaced",
+    regex: /[ \t]+(?:與|与|及|和)[ \t]+/u
+  },
+  {
+    id: "capacity.clause.chinese-conjunction-compact",
+    regex: /(?<=[Bb])(?:與|与|及|和)(?=[A-Z0-9\u3400-\u9FFF])/iu
   }
 ]);
 

@@ -168,22 +168,42 @@ function collectCapacityLabels(segment) {
 function hasUnsafeDigitCommaPrefix(segment, match, modelCandidates) {
   const amountText = match.groups.amount;
   const numberStart = match.index + match[0].indexOf(amountText);
-  const commaIndex = numberStart - 1;
+  let separatorStart = numberStart;
+  let sawComma = false;
+
+  while (separatorStart > 0) {
+    const character = segment.text[separatorStart - 1];
+    if (/[ \t]/u.test(character)) {
+      separatorStart -= 1;
+      continue;
+    }
+    if (/[,，]/u.test(character)) {
+      sawComma = true;
+      separatorStart -= 1;
+      continue;
+    }
+    break;
+  }
+
   if (
-    commaIndex < 1
-    || !/[,，]/u.test(segment.text[commaIndex])
-    || !/\d/u.test(segment.text[commaIndex - 1])
+    !sawComma
+    || separatorStart < 1
+    || !/\d/u.test(segment.text[separatorStart - 1])
   ) {
     return false;
   }
 
-  const globalCommaIndex = segment.start + commaIndex;
+  const separatorText = segment.text.slice(separatorStart, numberStart);
+  const commaCount = separatorText.match(/[,，]/gu)?.length ?? 0;
+  if (commaCount !== 1) return true;
+
+  const globalCommaIndex = segment.start + separatorStart;
   const followsHardwareModel = modelCandidates.some((candidate) => (
     candidate.segmentIndex === segment.index && candidate.end === globalCommaIndex
   ));
   if (followsHardwareModel) return false;
 
-  const precedingClause = segment.text.slice(0, commaIndex).split(/[,，.。!?！？]/u).at(-1);
+  const precedingClause = segment.text.slice(0, separatorStart).split(/[,，.。!?！？]/u).at(-1);
   const endsWithKnownUnparsedModel = /(?:\bIntel[ \t]+Core[ \t]+i[3579][ \t]*-[ \t]*\d{3,5}[A-Z]\d|\bXeon[ \t]+W-\d{4})$/iu.test(precedingClause);
   return !endsWithKnownUnparsedModel;
 }
