@@ -427,6 +427,11 @@ export const CAPACITY_DISQUALIFIER_PATTERNS = freezePatterns([
     allowAfterCapacity: true
   },
   {
+    id: "capacity.disqualifier.english-postposed-absence",
+    regex: /\bnot[ \t]+(?:installed|available|present|included)\b/iu,
+    allowAfterCapacity: true
+  },
+  {
     id: "capacity.disqualifier.symbolic-bound",
     regex: /(?:<=|>=|[<>≤≥])/u,
     allowAfterCapacity: true

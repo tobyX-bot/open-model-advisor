@@ -1160,6 +1160,19 @@ test("keeps non-exact filtering local to its owning amount and field", () => {
   }
 });
 
+test("abstains from post-capacity absence phrases without broadening negation", () => {
+  for (const input of [
+    "32GB RAM not installed",
+    "RAM 32GB not available",
+    "32GB RAM not present",
+    "RAM 32GB not present",
+    "32GB RAM not included",
+    "RAM 32GB not included"
+  ]) {
+    assert.deepEqual(extractCapacityCandidates(normalizeSetupText(input)), [], input);
+  }
+});
+
 test("rejects whitespace slash rates while preserving slash field delimiters", () => {
   for (const input of [
     "SSD read speed 7GB /s",
