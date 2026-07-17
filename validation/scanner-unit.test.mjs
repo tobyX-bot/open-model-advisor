@@ -926,6 +926,18 @@ test("keeps same-segment RAM, VRAM, and storage values field-local", () => {
 test("assigns compact capacity lists by label zones instead of nearest labels", () => {
   for (const [input, expected] of [
     [
+      "RAM 16GB VRAM 8GB SSD 512GB",
+      [["ram", 16, "RAM 16GB"], ["vram", 8, "VRAM 8GB"], ["storage", 512, "SSD 512GB"]]
+    ],
+    [
+      "RAM 16GB SSD 512GB VRAM 8GB",
+      [["ram", 16, "RAM 16GB"], ["storage", 512, "SSD 512GB"], ["vram", 8, "VRAM 8GB"]]
+    ],
+    [
+      "16GB RAM 8GB VRAM 512GB SSD",
+      [["ram", 16, "16GB RAM"], ["vram", 8, "8GB VRAM"], ["storage", 512, "512GB SSD"]]
+    ],
+    [
       "RAM: 16GB SSD: 512GB",
       [["ram", 16, "RAM: 16GB"], ["storage", 512, "SSD: 512GB"]]
     ],
@@ -940,6 +952,14 @@ test("assigns compact capacity lists by label zones instead of nearest labels", 
     [
       "RAM 16GB and SSD 512GB",
       [["ram", 16, "RAM 16GB"], ["storage", 512, "SSD 512GB"]]
+    ],
+    [
+      "RAM 16GB and VRAM 8GB and SSD 512GB",
+      [["ram", 16, "RAM 16GB"], ["vram", 8, "VRAM 8GB"], ["storage", 512, "SSD 512GB"]]
+    ],
+    [
+      "RAM 32GB SSD 512GB NVIDIA RTX 4070 12GB",
+      [["ram", 32, "RAM 32GB"], ["storage", 512, "SSD 512GB"], ["vram", 12, "NVIDIA RTX 4070 12GB"]]
     ]
   ]) {
     const document = normalizeSetupText(input);
@@ -948,6 +968,14 @@ test("assigns compact capacity lists by label zones instead of nearest labels", 
       candidates.map((candidate) => [candidate.field, candidate.value, candidate.raw]),
       expected,
       input
+    );
+    assert.deepEqual(
+      candidates.map((candidate) => [candidate.start, candidate.end]),
+      expected.map(([, , raw]) => {
+        const start = document.normalized.indexOf(raw);
+        return [start, start + raw.length];
+      }),
+      `${input} exact spans`
     );
     candidates.forEach((candidate) => assertCapacityCandidateContract(document, candidate));
   }

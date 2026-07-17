@@ -434,13 +434,43 @@ function ownershipOption(segment, amount, label) {
   };
 }
 
+function orderedLabelZoneOptions(segment, labels, amounts, amountPosition) {
+  if (labels.length < 2 || labels.length !== amounts.length) return null;
+
+  const options = amounts.map((amount, index) => (
+    ownershipOption(segment, amount, labels[index])
+  ));
+  if (options.some((option) => option?.amountPosition !== amountPosition)) return null;
+
+  const alternates = options.slice(0, -1).every((_, index) => (
+    amountPosition === "after-label"
+      ? amounts[index].end <= labels[index + 1].start
+      : labels[index].end <= amounts[index + 1].start
+  ));
+  return alternates ? options : null;
+}
+
+function orderedLabelZoneOwnership(segment, labels, amounts, amount) {
+  const amountIndex = amounts.indexOf(amount);
+  if (amountIndex < 0) return null;
+
+  for (const amountPosition of ["after-label", "before-label"]) {
+    const options = orderedLabelZoneOptions(segment, labels, amounts, amountPosition);
+    if (options) return options[amountIndex];
+  }
+  return null;
+}
+
 function labelHasAmountInPosition(segment, amounts, label, amountPosition) {
-  return amounts.some((amount) => (
-    ownershipOption(segment, amount, label)?.amountPosition === amountPosition
+  return amounts.some((candidate) => (
+    ownershipOption(segment, candidate, label)?.amountPosition === amountPosition
   ));
 }
 
 function findCapacityOwnership(segment, labels, amounts, amount) {
+  const orderedOwnership = orderedLabelZoneOwnership(segment, labels, amounts, amount);
+  if (orderedOwnership) return { status: "owned", ownership: orderedOwnership };
+
   let precedingLabel = null;
   let followingLabel = null;
 
