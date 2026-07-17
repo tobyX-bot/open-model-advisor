@@ -961,7 +961,7 @@ export function extractCapacityCandidates(document) {
   const cpuCandidates = extractCpuCandidates(document);
   const gpuCandidates = extractGpuCandidates(document);
   const gpuModels = gpuCandidates.filter((candidate) => (
-    candidate.field === "gpuModel" && candidate.value !== "No dedicated GPU"
+    candidate.field === "gpuModel"
   ));
   const dedicatedGpuModels = gpuModels.filter(isDedicatedGpuModel);
   const hasNoGpu = gpuCandidates.some((candidate) => (

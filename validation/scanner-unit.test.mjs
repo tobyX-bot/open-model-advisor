@@ -1329,6 +1329,59 @@ test("reserves direct GPU-adjacent amounts before pairing explicit field zones",
   }
 });
 
+test("reserves no-GPU-adjacent amounts without stealing labeled capacity fields", () => {
+  const sameClauseCases = [
+    ["no dedicated GPU", 12, "RAM 32GB SSD 512GB", [["ram", 32, "RAM 32GB"], ["storage", 512, "SSD 512GB"]]],
+    ["no dedicated GPU", 2, "RAM 16GB SSD 512GB", [["ram", 16, "RAM 16GB"], ["storage", 512, "SSD 512GB"]]],
+    ["无独立显卡", 12, "32GB RAM 512GB SSD", [["ram", 32, "32GB RAM"], ["storage", 512, "512GB SSD"]]],
+    ["無獨立顯卡", 2, "16GB RAM 512GB SSD", [["ram", 16, "16GB RAM"], ["storage", 512, "512GB SSD"]]],
+    ["integrated graphics only", 12, "SSD 512GB RAM 32GB", [["storage", 512, "SSD 512GB"], ["ram", 32, "RAM 32GB"]]],
+    ["只有 CPU", 2, "512GB SSD 16GB RAM", [["storage", 512, "512GB SSD"], ["ram", 16, "16GB RAM"]]]
+  ];
+
+  for (const [noGpu, reserved, fields, expected] of sameClauseCases) {
+    const input = `${noGpu} ${reserved}GB ${fields}`;
+    const document = normalizeSetupText(input);
+    const candidates = extractCapacityCandidates(document);
+
+    assert.deepEqual(
+      candidates.map((candidate) => [candidate.field, candidate.value, candidate.raw]),
+      expected,
+      input
+    );
+    assert.deepEqual(
+      candidates.map((candidate) => [candidate.start, candidate.end]),
+      expected.map(([, , raw]) => {
+        const start = document.normalized.indexOf(raw);
+        return [start, start + raw.length];
+      }),
+      `${input} exact spans`
+    );
+    assert.equal(candidates.some((candidate) => candidate.value === reserved), false, input);
+    candidates.forEach((candidate) => assertCapacityCandidateContract(document, candidate));
+  }
+
+  const controls = [
+    ["no dedicated GPU, RAM 32GB, SSD 512GB", [["ram", 32], ["storage", 512]]],
+    ["no dedicated GPU;12GB", []],
+    ["no dedicated GPU;VRAM 8GB", [["vram", 8]]],
+    ["无独立显卡;12GB RAM;512GB SSD", [["ram", 12], ["storage", 512]]],
+    ["無獨立顯卡。VRAM 8GB", [["vram", 8]]],
+    ["NVIDIA RTX 4070 12GB RAM 32GB", [["vram", 12], ["ram", 32]]],
+    ["AMD Vega 8 2GB RAM 16GB", [["ram", 16]]]
+  ];
+  for (const [input, expected] of controls) {
+    const document = normalizeSetupText(input);
+    const candidates = extractCapacityCandidates(document);
+    assert.deepEqual(
+      candidates.map((candidate) => [candidate.field, candidate.value]),
+      expected,
+      input
+    );
+    candidates.forEach((candidate) => assertCapacityCandidateContract(document, candidate));
+  }
+});
+
 test("preserves complete TB and TiB evidence for labeled memory fields", () => {
   const document = normalizeSetupText("RAM: 1TB;Memory 2 TiB;1TB available storage");
   const candidates = extractCapacityCandidates(document);
