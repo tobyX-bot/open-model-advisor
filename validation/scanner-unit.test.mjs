@@ -1217,6 +1217,35 @@ test("rejects natural and localized transfer-rate suffixes", () => {
   );
 });
 
+test("keeps natural ordinal inventory wording distinct from transfer rates", () => {
+  for (const [input, expected] of [
+    [
+      "SSD 512GB a second SSD 1TB",
+      [[512, "SSD 512GB"], [1000, "SSD 1TB"]]
+    ],
+    [
+      "SSD 512GB a second drive 1TB",
+      [[512, "SSD 512GB"], [1000, "drive 1TB"]]
+    ]
+  ]) {
+    assert.deepEqual(
+      extractStorageCandidates(normalizeSetupText(input)).map((candidate) => [
+        candidate.value,
+        candidate.raw
+      ]),
+      expected,
+      input
+    );
+  }
+
+  assert.deepEqual(extractCapacityCandidates(normalizeSetupText("SSD speed 7GB a second")), []);
+  assert.deepEqual(
+    extractCapacityCandidates(normalizeSetupText("SSD 512GB / second SSD 1TB;VRAM 8GB"))
+      .map((candidate) => [candidate.field, candidate.value, candidate.raw]),
+    [["storage", 512, "SSD 512GB"], ["storage", 1000, "SSD 1TB"], ["vram", 8, "VRAM 8GB"]]
+  );
+});
+
 test("rejects whitespace slash rates while preserving slash field delimiters", () => {
   for (const input of [
     "SSD read speed 7GB /s",
@@ -1729,6 +1758,52 @@ test("treats NVMe and M2 storage notation as non-Apple processor context", () =>
     );
     assert.equal(candidateValues(extractMemoryCandidates(document), "vram").length, 1, input);
   }
+});
+
+test("preserves strong Apple M2-family evidence before trailing NVMe storage", () => {
+  for (const [input, cpu, ram, vram] of [
+    ["MacBook Pro M2 Pro NVMe 1TB;16GB unified memory", "Apple M2 Pro", 16, 12],
+    ["MacBook Pro M2 NVMe 1TB;16GB unified memory", "Apple M2", 16, 12],
+    ["Mac Studio M2 Max NVMe 1TB;32GB unified memory", "Apple M2 Max", 32, 24],
+    ["Mac Studio M2 Ultra NVMe 1TB;64GB unified memory", "Apple M2 Ultra", 64, 48],
+    ["macOS;M2 Max NVMe 1TB;32GB unified memory", "Apple M2 Max", 32, 24]
+  ]) {
+    const document = normalizeSetupText(input);
+    assert.deepEqual(candidateValues(extractCpuCandidates(document), "cpuModel"), [cpu], input);
+    assert.deepEqual(
+      extractMemoryCandidates(document).map((candidate) => [
+        candidate.field,
+        candidate.value,
+        candidate.inferred
+      ]),
+      [["ram", ram, false], ["vram", vram, true]],
+      input
+    );
+  }
+
+  for (const input of [
+    "macOS;NVMe M2 1TB;16GB unified memory",
+    "MacBook;M2 NVMe 1TB;16GB unified memory"
+  ]) {
+    const document = normalizeSetupText(input);
+    assert.deepEqual(candidateValues(extractCpuCandidates(document), "cpuModel"), [], input);
+    assert.deepEqual(
+      extractMemoryCandidates(document).map((candidate) => [
+        candidate.field,
+        candidate.value,
+        candidate.inferred
+      ]),
+      [["ram", 16, false]],
+      input
+    );
+  }
+
+  const labeledCpu = normalizeSetupText("MacBook Pro;CPU M2 Pro;16GB unified memory");
+  assert.deepEqual(candidateValues(extractCpuCandidates(labeledCpu), "cpuModel"), ["Apple M2 Pro"]);
+  assert.deepEqual(
+    extractMemoryCandidates(labeledCpu).map((candidate) => [candidate.field, candidate.value, candidate.inferred]),
+    [["ram", 16, false], ["vram", 12, true]]
+  );
 });
 
 test("blocks Apple inference on explicit nonnumeric or invalid VRAM evidence", () => {

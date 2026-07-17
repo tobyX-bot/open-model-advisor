@@ -43,9 +43,10 @@ const MAX_CAPACITY_LABEL_GAP = 32;
 const MAX_GPU_PROXIMITY_GAP = 24;
 const APPLE_PLATFORM_CONTEXT = /\b(?:macOS|MacBook|Mac[ \t]+mini|Mac[ \t]+Studio|iMac|Apple[ \t]+(?:silicon|GPU))\b|苹果电脑|蘋果電腦|苹果系统|蘋果系統/iu;
 const NON_APPLE_M_SERIES_PREFIX = /\b(?:Intel(?:[ \t]+Core)?|Core)[ \t]*$/iu;
+const STRONG_APPLE_M_SERIES_PREFIX = /(?:\bMacBook(?:[ \t]+(?:Air|Pro))?|\bMac[ \t]+(?:mini|Studio|Pro)|\biMac|\b(?:CPU|processor|chip|SoC)|处理器|處理器|芯片|晶片)[ \t:,-]*$/iu;
 const STORAGE_M_SERIES_PREFIX = /\b(?:NVMe|SSD|storage|disk|drive)[ \t:-]*$/iu;
 const STORAGE_M_SERIES_SUFFIX = /^[ \t:-]*(?:NVMe|SSD|storage|disk|drive)\b/iu;
-const TRANSFER_RATE_SUFFIX = /^(?:[ \t]+(?:(?:\/[ \t]*|per[ \t]+)(?:(?:s|secs?|seconds?)\b|秒)(?![ \t]+(?:drive|SSD|HDD|disk|storage)\b)|(?:each|a)[ \t]+seconds?\b)|[ \t]*每[ \t]*秒)/iu;
+const TRANSFER_RATE_SUFFIX = /^(?:[ \t]+(?:(?:\/[ \t]*|per[ \t]+)(?:(?:s|secs?|seconds?)\b|秒)|(?:each|a)[ \t]+seconds?\b)(?![ \t]+(?:drive|SSD|HDD|disk|storage)\b)|[ \t]*每[ \t]*秒)/iu;
 
 function globalRegex(regex) {
   const flags = `${regex.flags.replace(/[gy]/g, "")}g`;
@@ -70,15 +71,21 @@ function candidateFromMatch(document, segment, pattern, match) {
   if (pattern.requiresAppleContext) {
     const precedingText = segment.text.slice(Math.max(0, match.index - 32), match.index);
     const followingText = segment.text.slice(match.index + match[0].length, match.index + match[0].length + 32);
+    const hasStrongAppleEvidence = (
+      Boolean(match.groups?.suffix)
+      || STRONG_APPLE_M_SERIES_PREFIX.test(precedingText)
+    );
+    const hasStorageContext = (
+      STORAGE_M_SERIES_PREFIX.test(precedingText)
+      || STORAGE_M_SERIES_SUFFIX.test(followingText)
+    );
     if (
       !APPLE_PLATFORM_CONTEXT.test(document.normalized)
       || NON_APPLE_M_SERIES_PREFIX.test(precedingText)
       || (
         pattern.rejectsStorageContext
-        && (
-          STORAGE_M_SERIES_PREFIX.test(precedingText)
-          || STORAGE_M_SERIES_SUFFIX.test(followingText)
-        )
+        && hasStorageContext
+        && !hasStrongAppleEvidence
       )
     ) return null;
   }
