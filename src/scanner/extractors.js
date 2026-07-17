@@ -1,5 +1,6 @@
 import {
   CAPACITY_AMOUNT_PATTERNS,
+  CAPACITY_CLAUSE_PATTERNS,
   CAPACITY_LABEL_PATTERNS,
   CPU_MODEL_PATTERNS,
   GPU_MODEL_PATTERNS,
@@ -164,11 +165,36 @@ function collectCapacityLabels(segment) {
   return accepted;
 }
 
-function collectCapacityAmounts(segment) {
+function hasUnsafeDigitCommaPrefix(segment, match, modelCandidates) {
+  const amountText = match.groups.amount;
+  const numberStart = match.index + match[0].indexOf(amountText);
+  const commaIndex = numberStart - 1;
+  if (
+    commaIndex < 1
+    || !/[,，]/u.test(segment.text[commaIndex])
+    || !/\d/u.test(segment.text[commaIndex - 1])
+  ) {
+    return false;
+  }
+
+  const globalCommaIndex = segment.start + commaIndex;
+  const followsHardwareModel = modelCandidates.some((candidate) => (
+    candidate.segmentIndex === segment.index && candidate.end === globalCommaIndex
+  ));
+  if (followsHardwareModel) return false;
+
+  const precedingClause = segment.text.slice(0, commaIndex).split(/[,，.。!?！？]/u).at(-1);
+  const endsWithKnownUnparsedModel = /(?:\bIntel[ \t]+Core[ \t]+i[3579][ \t]*-[ \t]*\d{3,5}[A-Z]\d|\bXeon[ \t]+W-\d{4})$/iu.test(precedingClause);
+  return !endsWithKnownUnparsedModel;
+}
+
+function collectCapacityAmounts(segment, modelCandidates) {
   const amounts = [];
 
   for (const [patternIndex, pattern] of CAPACITY_AMOUNT_PATTERNS.entries()) {
     for (const match of segment.text.matchAll(globalRegex(pattern.regex))) {
+      if (hasUnsafeDigitCommaPrefix(segment, match, modelCandidates)) continue;
+
       amounts.push({
         pattern,
         patternIndex,
@@ -193,21 +219,43 @@ function supportsCapacityField(amount, field) {
   return field === "storage" ? amount.pattern.storage : amount.pattern.memory;
 }
 
-function capacityClause(segment, amount) {
-  const precedingText = segment.text.slice(0, amount.start);
-  const start = Math.max(
-    precedingText.lastIndexOf(","),
-    precedingText.lastIndexOf("，")
-  ) + 1;
-  const followingBoundaries = [
-    segment.text.indexOf(",", amount.end),
-    segment.text.indexOf("，", amount.end)
-  ].filter((index) => index >= 0);
+function collectCapacityClauseBoundaries(segment) {
+  const boundaries = [];
 
-  return {
-    start,
-    end: followingBoundaries.length > 0 ? Math.min(...followingBoundaries) : segment.text.length
-  };
+  for (const [patternIndex, pattern] of CAPACITY_CLAUSE_PATTERNS.entries()) {
+    for (const match of segment.text.matchAll(globalRegex(pattern.regex))) {
+      boundaries.push({
+        patternIndex,
+        start: match.index,
+        end: match.index + match[0].length
+      });
+    }
+  }
+
+  boundaries.sort((left, right) => (
+    left.start - right.start
+    || left.end - right.end
+    || left.patternIndex - right.patternIndex
+  ));
+  return boundaries;
+}
+
+function capacityClause(segment, amount, boundaries) {
+  let start = 0;
+  let end = segment.text.length;
+
+  for (const boundary of boundaries) {
+    if (boundary.end <= amount.start) {
+      start = Math.max(start, boundary.end);
+      continue;
+    }
+    if (boundary.start >= amount.end) {
+      end = boundary.start;
+      break;
+    }
+  }
+
+  return { start, end };
 }
 
 function localSpanIsInClause(start, end, clause) {
@@ -426,6 +474,7 @@ export function extractTaskCandidates(document) {
 }
 
 export function extractCapacityCandidates(document) {
+  const cpuCandidates = extractCpuCandidates(document);
   const gpuCandidates = extractGpuCandidates(document);
   const gpuModels = gpuCandidates.filter((candidate) => (
     candidate.field === "gpuModel" && candidate.value !== "No dedicated GPU"
@@ -433,12 +482,17 @@ export function extractCapacityCandidates(document) {
   const hasNoGpu = gpuCandidates.some((candidate) => (
     candidate.field === "gpuModel" && candidate.value === "No dedicated GPU"
   ));
+  const modelCandidates = [
+    ...cpuCandidates.filter((candidate) => candidate.field === "cpuModel"),
+    ...gpuCandidates.filter((candidate) => candidate.field === "gpuModel")
+  ];
   const entries = [];
 
   for (const segment of document.segments) {
     const segmentLabels = collectCapacityLabels(segment);
-    for (const amount of collectCapacityAmounts(segment)) {
-      const clause = capacityClause(segment, amount);
+    const clauseBoundaries = collectCapacityClauseBoundaries(segment);
+    for (const amount of collectCapacityAmounts(segment, modelCandidates)) {
+      const clause = capacityClause(segment, amount, clauseBoundaries);
       const labels = segmentLabels.filter((label) => (
         localSpanIsInClause(label.start, label.end, clause)
       ));
@@ -456,7 +510,7 @@ export function extractCapacityCandidates(document) {
     || left.candidate.end - right.candidate.end
   ));
 
-  const hasAppleMSeries = extractCpuCandidates(document).some((candidate) => (
+  const hasAppleMSeries = cpuCandidates.some((candidate) => (
     candidate.source === "cpu.apple-m"
   ));
   const hasExplicitVram = entries.some((entry) => entry.candidate.field === "vram");

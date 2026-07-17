@@ -16,6 +16,7 @@ import {
 import { normalizeSetupText } from "../src/scanner/normalize.js";
 import {
   CAPACITY_AMOUNT_PATTERNS,
+  CAPACITY_CLAUSE_PATTERNS,
   CAPACITY_LABEL_PATTERNS,
   CPU_MODEL_PATTERNS,
   GPU_MODEL_PATTERNS,
@@ -389,6 +390,7 @@ test("deep freezes every exported pattern collection", () => {
     GPU_MODEL_PATTERNS,
     CAPACITY_LABEL_PATTERNS,
     CAPACITY_AMOUNT_PATTERNS,
+    CAPACITY_CLAUSE_PATTERNS,
     STORAGE_KIND_PATTERNS,
     TASK_PATTERNS
   ]) {
@@ -781,6 +783,12 @@ test("defines ordered non-global declarative capacity patterns", () => {
 
   for (const pattern of STORAGE_KIND_PATTERNS) {
     assert.ok(["free", "total"].includes(pattern.kind));
+    assert.equal(pattern.regex instanceof RegExp, true);
+    assert.equal(pattern.regex.global, false);
+  }
+
+  for (const pattern of CAPACITY_CLAUSE_PATTERNS) {
+    assert.equal(typeof pattern.id, "string");
     assert.equal(pattern.regex instanceof RegExp, true);
     assert.equal(pattern.regex.global, false);
   }
@@ -1266,4 +1274,60 @@ test("covers every Task 3 numeric capacity target in the frozen 200-record corpu
 
   assert.deepEqual(targetCounts, { ram: 185, vram: 109, storage: 195 });
   assert.deepEqual(coveredCounts, targetCounts);
+});
+
+test("keeps conjunction and sentence-delimited ownership local to GPU and RAM clauses", () => {
+  const cases = [
+    [
+      "NVIDIA RTX 4070 12GB and RAM 32GB",
+      [["vram", 12, "NVIDIA RTX 4070 12GB"], ["ram", 32, "RAM 32GB"]]
+    ],
+    [
+      "RAM 32GB and NVIDIA RTX 4070 12GB",
+      [["ram", 32, "RAM 32GB"], ["vram", 12, "NVIDIA RTX 4070 12GB"]]
+    ],
+    [
+      "NVIDIA RTX 4070 12GB. RAM 32GB",
+      [["vram", 12, "NVIDIA RTX 4070 12GB"], ["ram", 32, "RAM 32GB"]]
+    ],
+    [
+      "NVIDIA RTX 4070 12GB。RAM 32GB",
+      [["vram", 12, "NVIDIA RTX 4070 12GB"], ["ram", 32, "RAM 32GB"]]
+    ],
+    [
+      "NVIDIA RTX 4070 12GB 和 RAM 32GB",
+      [["vram", 12, "NVIDIA RTX 4070 12GB"], ["ram", 32, "RAM 32GB"]]
+    ],
+    [
+      "RAM 32GB以及NVIDIA RTX 4070 12GB",
+      [["ram", 32, "RAM 32GB"], ["vram", 12, "NVIDIA RTX 4070 12GB"]]
+    ]
+  ];
+
+  for (const [input, expected] of cases) {
+    const document = normalizeSetupText(input);
+    const candidates = extractCapacityCandidates(document);
+
+    assert.deepEqual(
+      candidates.map((candidate) => [candidate.field, candidate.value, candidate.raw]),
+      expected,
+      input
+    );
+    candidates.forEach((candidate) => assertCapacityCandidateContract(document, candidate));
+  }
+});
+
+test("rejects numeric suffixes after digit-comma prefixes", () => {
+  for (const input of [
+    "128,28GB RAM",
+    "128,8GB VRAM",
+    "1,024GB SSD",
+    "8,5GB RAM",
+    "128，28GB RAM",
+    "1，024GB SSD",
+    "x-128,28GB RAM",
+    "Intel Core 128,28GB RAM"
+  ]) {
+    assert.deepEqual(extractCapacityCandidates(normalizeSetupText(input)), [], input);
+  }
 });

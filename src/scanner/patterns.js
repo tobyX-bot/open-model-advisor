@@ -388,6 +388,21 @@ export const STORAGE_KIND_PATTERNS = freezePatterns([
   }
 ]);
 
+export const CAPACITY_CLAUSE_PATTERNS = freezePatterns([
+  {
+    id: "capacity.clause.punctuation",
+    regex: /[,，.。!?！？]/u
+  },
+  {
+    id: "capacity.clause.english-conjunction",
+    regex: /[ \t]+\band\b[ \t]+/iu
+  },
+  {
+    id: "capacity.clause.chinese-conjunction",
+    regex: /以及|并且|和/u
+  }
+]);
+
 export const TASK_PATTERNS = freezePatterns([
   {
     id: "task.coding-llm",
