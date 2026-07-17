@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import {
@@ -1073,4 +1074,196 @@ test("capacity extraction is deterministic, serializable, and does not mutate do
   assert.deepEqual(JSON.parse(JSON.stringify(first)), first);
   assert.deepEqual(document, snapshot);
   first.forEach((candidate) => assertCapacityCandidateContract(document, candidate));
+});
+
+test("keeps comma-delimited ownership local while allowing same-clause GPU proximity", () => {
+  const cases = [
+    [
+      "NVIDIA RTX 4070 12GB, RAM 32GB",
+      [["vram", 12, "NVIDIA RTX 4070 12GB"], ["ram", 32, "RAM 32GB"]]
+    ],
+    [
+      "RAM 32GB, NVIDIA RTX 4070 12GB",
+      [["ram", 32, "RAM 32GB"], ["vram", 12, "NVIDIA RTX 4070 12GB"]]
+    ],
+    [
+      "32GB RAM, NVIDIA RTX 4070 12GB",
+      [["ram", 32, "32GB RAM"], ["vram", 12, "NVIDIA RTX 4070 12GB"]]
+    ],
+    [
+      "NVIDIA RTX 4070 12GB, 512GB SSD",
+      [["vram", 12, "NVIDIA RTX 4070 12GB"], ["storage", 512, "512GB SSD"]]
+    ],
+    [
+      "NVIDIA RTX 4070 12GB, RAM unknown",
+      [["vram", 12, "NVIDIA RTX 4070 12GB"]]
+    ],
+    [
+      "NVIDIA RTX 4070 12GB，RAM 32GB",
+      [["vram", 12, "NVIDIA RTX 4070 12GB"], ["ram", 32, "RAM 32GB"]]
+    ]
+  ];
+
+  for (const [input, expected] of cases) {
+    const document = normalizeSetupText(input);
+    const candidates = extractCapacityCandidates(document);
+
+    assert.deepEqual(
+      candidates.map((candidate) => [candidate.field, candidate.value, candidate.raw]),
+      expected,
+      input
+    );
+    candidates.forEach((candidate) => assertCapacityCandidateContract(document, candidate));
+  }
+});
+
+test("distinguishes ordinary comma and sentence punctuation from numeric continuations", () => {
+  const document = normalizeSetupText("x,8GB 内存;x，2GB 显存;disk free 512GB.");
+  const candidates = extractCapacityCandidates(document);
+
+  assert.deepEqual(
+    candidates.map((candidate) => [candidate.field, candidate.value, candidate.raw]),
+    [
+      ["ram", 8, "8GB 内存"],
+      ["vram", 2, "2GB 显存"],
+      ["storage", 512, "disk free 512GB"]
+    ]
+  );
+
+  for (const input of [
+    "RAM 8.5GB",
+    "SSD 1.25TB",
+    "RAM .5GB",
+    "RAM 123456GB",
+    "VRAM 123456GiB",
+    "RAM 8GBx",
+    "SSD 1TBps"
+  ]) {
+    assert.deepEqual(extractCapacityCandidates(normalizeSetupText(input)), [], input);
+  }
+});
+
+test("natural memory candidates preserve the complete about phrase", () => {
+  for (const value of [8, 16, 32]) {
+    const evidence = `about ${value} gigs of memory`;
+    const document = normalizeSetupText(evidence);
+    const candidates = extractMemoryCandidates(document);
+
+    assert.equal(candidates.length, 1);
+    assert.deepEqual(
+      [candidates[0].field, candidates[0].value, candidates[0].raw],
+      ["ram", value, evidence]
+    );
+    assert.equal(document.normalized.slice(candidates[0].start, candidates[0].end), evidence);
+  }
+});
+
+test("all frozen natural-memory evidence is covered by exact candidate spans", () => {
+  const fixture = JSON.parse(readFileSync(
+    new URL("./fixtures/computer_setups_200_v1_1.json", import.meta.url),
+    "utf8"
+  ));
+  const records = fixture.records.filter((record) => (
+    record.parserExpected.sourceEvidence?.ram?.some((value) => (
+      /^about (?:8|16|32) gigs of memory$/i.test(value)
+    ))
+  ));
+
+  assert.equal(records.length, 10);
+  for (const record of records) {
+    const document = normalizeSetupText(record.setupText);
+    const evidence = record.parserExpected.sourceEvidence.ram[0].normalize("NFKC");
+    const candidate = extractMemoryCandidates(document).find((entry) => (
+      entry.field === "ram"
+      && entry.value === record.parserExpected.fields.ram
+      && entry.raw === evidence
+    ));
+
+    assert.ok(candidate, record.id);
+    assert.equal(document.normalized.slice(candidate.start, candidate.end), evidence, record.id);
+  }
+});
+
+test("classifies scoped Simplified and Traditional Chinese remaining storage as free", () => {
+  const document = normalizeSetupText([
+    "硬盘还剩 512GB",
+    "硬盤還剩 384GB",
+    "硬碟剩 256GB",
+    "硬盘不剩 128GB",
+    "硬盘剩下容量 64GB"
+  ].join(";"));
+  const candidates = extractStorageCandidates(document);
+
+  assert.deepEqual(
+    candidates.map((candidate) => [candidate.value, candidate.storageKind, candidate.raw]),
+    [
+      [512, "free", "硬盘还剩 512GB"],
+      [384, "free", "硬盤還剩 384GB"],
+      [256, "free", "硬碟剩 256GB"],
+      [128, "unknown", "硬盘不剩 128GB"],
+      [64, "unknown", "硬盘剩下容量 64GB"]
+    ]
+  );
+});
+
+test("all six frozen Chinese remaining-storage records are classified free", () => {
+  const fixture = JSON.parse(readFileSync(
+    new URL("./fixtures/computer_setups_200_v1_1.json", import.meta.url),
+    "utf8"
+  ));
+  const records = fixture.records.filter((record) => (
+    record.parserExpected.sourceEvidence?.storage?.some((value) => (
+      /(?:还剩|還剩|硬[盘盤碟]剩)/u.test(value)
+    ))
+  ));
+
+  assert.equal(records.length, 6);
+  for (const record of records) {
+    const document = normalizeSetupText(record.setupText);
+    const evidence = record.parserExpected.sourceEvidence.storage[0].normalize("NFKC");
+    const candidate = extractStorageCandidates(document).find((entry) => (
+      entry.value === record.parserExpected.fields.storage
+      && entry.raw.includes(evidence)
+    ));
+
+    assert.ok(candidate, record.id);
+    assert.equal(candidate.storageKind, "free", record.id);
+    assert.equal(document.normalized.slice(candidate.start, candidate.end), candidate.raw, record.id);
+  }
+});
+
+test("covers every Task 3 numeric capacity target in the frozen 200-record corpus", () => {
+  const fixture = JSON.parse(readFileSync(
+    new URL("./fixtures/computer_setups_200_v1_1.json", import.meta.url),
+    "utf8"
+  ));
+  const noGpuEvidence = /no dedicated GPU|无独立显卡|無獨立顯卡/u;
+  const targetCounts = { ram: 0, vram: 0, storage: 0 };
+  const coveredCounts = { ram: 0, vram: 0, storage: 0 };
+
+  for (const record of fixture.records) {
+    const document = normalizeSetupText(record.setupText);
+    const candidates = extractCapacityCandidates(document);
+
+    for (const field of ["ram", "vram", "storage"]) {
+      const expectedValue = record.parserExpected.fields[field];
+      if (!Number.isFinite(expectedValue)) continue;
+
+      const evidenceItems = record.parserExpected.sourceEvidence?.[field] ?? [];
+      if (field === "vram" && evidenceItems.some((value) => noGpuEvidence.test(value))) continue;
+      targetCounts[field] += 1;
+
+      const candidate = candidates.find((entry) => (
+        entry.field === field
+        && entry.value === expectedValue
+        && evidenceItems.some((value) => entry.raw.includes(value.normalize("NFKC")))
+      ));
+      assert.ok(candidate, `${record.id}.${field}: ${JSON.stringify(evidenceItems)}`);
+      assert.equal(document.normalized.slice(candidate.start, candidate.end), candidate.raw, `${record.id}.${field}`);
+      coveredCounts[field] += 1;
+    }
+  }
+
+  assert.deepEqual(targetCounts, { ram: 185, vram: 109, storage: 195 });
+  assert.deepEqual(coveredCounts, targetCounts);
 });

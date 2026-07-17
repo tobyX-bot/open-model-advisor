@@ -323,7 +323,7 @@ export const CAPACITY_AMOUNT_PATTERNS = freezePatterns([
     multiplier: 1024,
     memory: false,
     storage: true,
-    regex: /(?<![\d.,])(?<amount>\d{1,5})[ \t-]*TiB(?![A-Z0-9.])/iu
+    regex: /(?<![\d.])(?<amount>\d{1,5})[ \t-]*TiB(?![A-Z0-9])/iu
   },
   {
     id: "capacity.amount.tb",
@@ -331,7 +331,7 @@ export const CAPACITY_AMOUNT_PATTERNS = freezePatterns([
     multiplier: 1000,
     memory: false,
     storage: true,
-    regex: /(?<![\d.,])(?<amount>\d{1,5})[ \t-]*TB(?![A-Z0-9.])/iu
+    regex: /(?<![\d.])(?<amount>\d{1,5})[ \t-]*TB(?![A-Z0-9])/iu
   },
   {
     id: "capacity.amount.gib",
@@ -339,7 +339,7 @@ export const CAPACITY_AMOUNT_PATTERNS = freezePatterns([
     multiplier: 1,
     memory: true,
     storage: true,
-    regex: /(?<![\d.,])(?<amount>\d{1,5})[ \t-]*GiB(?![A-Z0-9.])/iu
+    regex: /(?<![\d.])(?<amount>\d{1,5})[ \t-]*GiB(?![A-Z0-9])/iu
   },
   {
     id: "capacity.amount.gb",
@@ -347,7 +347,7 @@ export const CAPACITY_AMOUNT_PATTERNS = freezePatterns([
     multiplier: 1,
     memory: true,
     storage: true,
-    regex: /(?<![\d.,])(?<amount>\d{1,5})[ \t-]*GB(?![A-Z0-9.])/iu
+    regex: /(?<![\d.])(?<amount>\d{1,5})[ \t-]*GB(?![A-Z0-9])/iu
   },
   {
     id: "capacity.amount.gigabyte",
@@ -355,7 +355,7 @@ export const CAPACITY_AMOUNT_PATTERNS = freezePatterns([
     multiplier: 1,
     memory: true,
     storage: false,
-    regex: /(?<![\d.,])(?<amount>\d{1,5})[ \t-]*gigabytes?\b/iu
+    regex: /(?:\babout[ \t]+)?(?<![\d.])(?<amount>\d{1,5})[ \t-]*gigabytes?\b/iu
   },
   {
     id: "capacity.amount.gig",
@@ -363,7 +363,7 @@ export const CAPACITY_AMOUNT_PATTERNS = freezePatterns([
     multiplier: 1,
     memory: true,
     storage: false,
-    regex: /(?<![\d.,])(?<amount>\d{1,5})[ \t-]*gigs?\b/iu
+    regex: /(?:\babout[ \t]+)?(?<![\d.])(?<amount>\d{1,5})[ \t-]*gigs?\b/iu
   },
   {
     id: "capacity.amount.g",
@@ -371,7 +371,7 @@ export const CAPACITY_AMOUNT_PATTERNS = freezePatterns([
     multiplier: 1,
     memory: true,
     storage: false,
-    regex: /(?<![\d.,])(?<amount>\d{1,5})[ \t-]*G(?![A-Z0-9.])/iu
+    regex: /(?<![\d.])(?<amount>\d{1,5})[ \t-]*G(?![A-Z0-9])/iu
   }
 ]);
 
@@ -379,7 +379,7 @@ export const STORAGE_KIND_PATTERNS = freezePatterns([
   {
     id: "capacity.storage-kind.free",
     kind: "free",
-    regex: /\b(?:free|available)\b|可用|剩余|剩餘|空闲|空閒/iu
+    regex: /\b(?:free|available)\b|可用|剩余|剩餘|空闲|空閒|(?:硬盘|硬盤|硬碟)[ \t]*(?:还剩|還剩|剩)(?=[ \t:]*\d)/iu
   },
   {
     id: "capacity.storage-kind.total",

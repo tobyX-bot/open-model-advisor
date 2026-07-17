@@ -193,6 +193,27 @@ function supportsCapacityField(amount, field) {
   return field === "storage" ? amount.pattern.storage : amount.pattern.memory;
 }
 
+function capacityClause(segment, amount) {
+  const precedingText = segment.text.slice(0, amount.start);
+  const start = Math.max(
+    precedingText.lastIndexOf(","),
+    precedingText.lastIndexOf("，")
+  ) + 1;
+  const followingBoundaries = [
+    segment.text.indexOf(",", amount.end),
+    segment.text.indexOf("，", amount.end)
+  ].filter((index) => index >= 0);
+
+  return {
+    start,
+    end: followingBoundaries.length > 0 ? Math.min(...followingBoundaries) : segment.text.length
+  };
+}
+
+function localSpanIsInClause(start, end, clause) {
+  return start >= clause.start && end <= clause.end;
+}
+
 function ownershipOption(segment, amount, label) {
   if (!supportsCapacityField(amount, label.pattern.field)) return null;
 
@@ -208,7 +229,6 @@ function ownershipOption(segment, amount, label) {
   return {
     label,
     gapLength: gap.length,
-    crossesClauseBoundary: /[,，]/u.test(gap),
     amountPosition: labelBeforeAmount ? "after-label" : "before-label"
   };
 }
@@ -233,15 +253,13 @@ function findOwningLabel(segment, labels, amount) {
     .map((label) => ownershipOption(segment, amount, label))
     .filter(Boolean)
     .sort((left, right) => (
-      Number(left.crossesClauseBoundary) - Number(right.crossesClauseBoundary)
-      || left.gapLength - right.gapLength
+      left.gapLength - right.gapLength
       || right.label.pattern.specificity - left.label.pattern.specificity
       || left.label.patternIndex - right.label.patternIndex
     ));
 
   if (
     options.length > 1
-    && options[0].crossesClauseBoundary === options[1].crossesClauseBoundary
     && options[0].gapLength === options[1].gapLength
     && options[0].label.pattern.field !== options[1].label.pattern.field
   ) {
@@ -305,7 +323,7 @@ function proximityOption(segment, amount, gpuModel) {
   };
 }
 
-function proximityVramEntry(document, segment, labels, amount, gpuModels, hasNoGpu) {
+function proximityVramEntry(document, segment, clause, labels, amount, gpuModels, hasNoGpu) {
   if (
     hasNoGpu
     || labels.length > 0
@@ -315,7 +333,14 @@ function proximityVramEntry(document, segment, labels, amount, gpuModels, hasNoG
   }
 
   const option = gpuModels
-    .filter((candidate) => candidate.segmentIndex === segment.index)
+    .filter((candidate) => (
+      candidate.segmentIndex === segment.index
+      && localSpanIsInClause(
+        candidate.start - segment.start,
+        candidate.end - segment.start,
+        clause
+      )
+    ))
     .map((candidate) => proximityOption(segment, amount, candidate))
     .filter(Boolean)
     .sort((left, right) => (
@@ -411,12 +436,16 @@ export function extractCapacityCandidates(document) {
   const entries = [];
 
   for (const segment of document.segments) {
-    const labels = collectCapacityLabels(segment);
+    const segmentLabels = collectCapacityLabels(segment);
     for (const amount of collectCapacityAmounts(segment)) {
+      const clause = capacityClause(segment, amount);
+      const labels = segmentLabels.filter((label) => (
+        localSpanIsInClause(label.start, label.end, clause)
+      ));
       const ownership = findOwningLabel(segment, labels, amount);
       const entry = ownership
         ? explicitCapacityEntry(document, segment, amount, ownership)
-        : proximityVramEntry(document, segment, labels, amount, gpuModels, hasNoGpu);
+        : proximityVramEntry(document, segment, clause, labels, amount, gpuModels, hasNoGpu);
       if (entry) entries.push(entry);
     }
   }
