@@ -1,61 +1,81 @@
-# Resolved Depth
+# Porcelain Suspension
 
-Resolved Depth makes workflow order physical. Input is a solid back plane, review is an active translucent plane, and the recommendation is a crisp foreground sheet. Their overlap expresses causality: pasted text becomes editable hardware, then becomes a bounded recommendation. The composition remains a working tool, meticulously aligned and information-dense, with depth doing explanatory work rather than acting as decoration.
+Porcelain Suspension treats information as a sequence of pale working planes held in still air. Form is quiet, exact, and visibly ordered: each surface advances by a measured offset, while protected negative space lets the eye understand which plane is raw, active, and resolved. The composition must feel meticulously crafted, as if every edge and interval survived countless refinements by a designer at the top of the field.
 
-The visual field is true white, cool Morandi blue, and restrained blue-gray. The input slab carries the deepest color; the review surface borrows light from both neighboring layers; the resolved sheet returns to opaque white. Hairlines, shallow shadows, and one cool-blue focus color establish material precision. There are no gradients, decorative textures, or atmospheric effects. Every separation should look painstakingly calibrated by an expert product team.
+Space communicates before decoration. Planes never tilt or perform; they suspend. Their stagger, overlap, and shadow falloff create depth without perspective tricks, while empty margins absorb every overlap so content remains untouched. Alignment is master-level and unforgiving: text, controls, focus rings, and status labels occupy stable functional zones, never the theatrical edges where materials cross.
 
-Type follows a precision-configurator hierarchy. SF/system sans carries product language at calm, readable sizes; monospace is reserved for exact hardware strings and source excerpts. Large type is earned only by the primary action and the recommended model. Status is always written, never carried by color alone. The craft lies in repeated baselines, stable control dimensions, and careful wrapping across English and Simplified Chinese.
+Light reveals material through contrast between solid warm stone and increasingly opaque white glass. Lower glass admits more of the underlay, middle glass clarifies evidence, and the foreground approaches porcelain white. Fine white edge highlights catch the implied light source; disciplined warm shadows release each plane from the one beneath it. This must look painstakingly calibrated, not filtered, with no gradients, bubbles, scenery, or atmospheric effects.
 
-Motion is limited to three meaningful events. The real shovel button sweeps through the pasted text in 700ms, the extracted profile rises into the active work surface in 400ms, and the recommendation sheet settles in 400ms after application. Hover and selection changes use 240ms transitions. Reduced motion preserves the same state sequence without travel, so animation clarifies the system without becoming a prerequisite.
+Color is sparse enough to behave like a signal system. Graphite anchors action and selection. Tangerine appears only when scanning, focusing, or resolving uncertainty. Verified green remains separate and restrained. The limited palette requires expert chromatic control: every neutral, hairline, and semantic state is tuned against the lightest surfaces rather than relying on spectacle.
 
-The excavation identity stays in spatial behavior and the shovel control, not in product vocabulary. Visible language remains immediate: configuration, recognition, source, conflict, correction, and recommendation. The final result should feel materially refined and original while remaining obvious on first use, with the same master-level attention applied to Mandarin, mobile overlap, keyboard focus, and unresolved evidence.
+Typography is integrated into the material architecture. SF/system sans keeps the product calm and precise; monospace marks only exact machine facts. Copy stays literal and essential, with the fixed two-line Mandarin headline functioning as a visual cadence rather than a marketing gesture. The hierarchy should feel labored over with the care of a master instrument maker, even when the interface is dense.
+
+Motion is rare and consequential. The shovel sweeps once through the source, extracted facts rise, and the recommendation settles; nothing parallax-scrolls or rotates in space. Reduced motion preserves every state without travel. The finished screenshots are the visual canvases for this movement, but the functional HTML remains its most complete expression.
+
+## Material Levels
+
+1. **Raw input / lower-opacity glass:** `rgba(255,255,255,0.52)` over `#d9d1ca`. It keeps the source visible while feeling closest to unprocessed material.
+2. **Detected setup / medium-opacity glass:** `rgba(255,255,255,0.78)`. The evidence becomes clearer, while the active inspector retains a smaller permitted glass treatment.
+3. **Recommendation / high-opacity glass:** `rgba(255,255,255,0.93)` with the strongest soft elevation. It reads as the resolved foreground without becoming an opaque card.
+
+The page is solid mineral white (`#eeeae6`); the stage underlay is solid warm stone (`#d9d1ca`). Nested evidence rows, textarea, source choices, segmented controls, editor fields, and buttons stay crisp and do not receive backdrop blur. Browsers without backdrop-filter use opaque `#ede8e4`, `#f7f4f1`, and `#fdfcfb` fallbacks for the three major levels.
+
+## Suspension System
+
+- **Elevation 1 / raw input:** the baseline plane uses `--elevation-1`, the shortest and lightest falloff, plus white top and leading-edge highlights.
+- **Elevation 2 / detected setup:** desktop position advances 52px vertically and overlaps the prior plane by 16px only inside protected edge padding. `--elevation-2` extends farther and slightly darker.
+- **Elevation 3 / recommendation:** desktop position advances 108px from the baseline and another protected 16px horizontally. `--elevation-3` has the clearest two-stage falloff.
+- **Mobile suspension:** the three planes use distinct 6-18px side offsets, reduced negative vertical margins, and the same ordered shadow strengths.
+- No plane uses rotation, perspective, parallax, or content-covering overlap. Interactive content and its 3px focus allowance remain outside every overlap zone.
+
+## Contrast Tokens
+
+Contrast values use sRGB calculations against the lowest-opacity composite (`#ede9e6`), which is the most demanding major surface.
+
+| Token | Value | Role | Minimum contrast |
+| --- | --- | --- | ---: |
+| `--ink` | `#1c1a19` | Headlines and primary text | 14.37:1 |
+| `--ink-2` | `#403b37` | Body and guidance text | 9.16:1 |
+| `--ink-3` | `#5f5751` | Secondary labels and metadata | 5.86:1 |
+| `--review` | `#9a3d0c` | Unresolved conflict and warning | 5.71:1 |
+| `--verified` | `#2f6956` | Verified and applied state | 5.31:1 |
+| White on `--morandi-900` | `#ffffff` on `#1d1b19` | Primary and selected controls | 17.17:1 |
+
+Hairlines are structural and are not used as the only carrier of text or state. Focus uses a 3px tangerine outline plus shape and position; status always includes explicit copy and icons.
 
 ## Depth And Interaction Model
 
-- **Input / back plane:** a solid Morandi-blue slab keeps the pasted source visible throughout the workflow.
-- **Resolve / active plane:** a translucent overlapping work surface holds detected fields, exact source excerpts, confidence, conflicts, and manual correction.
-- **Match / foreground plane:** an elevated opaque sheet shows task and deployment controls plus one concrete recommendation.
-- Overlap never covers a control or required label. It only occupies protected edge space between functional regions.
-- The shovel is the actual scan button. Its sweep tracks the staged **Input -> Extract -> Verify -> Match** progress.
-- Conflict resolution remains blocking; resolved conflicts stay visible as review history.
-- On mobile, the same planes form one vertical sequence with small negative margins and reserved bottom space, preserving depth without horizontal scrolling.
+- The three planes keep their staggered desktop offsets and controlled mobile overlap.
+- Overlap occupies protected edge space only; no evidence, source choice, or action can sit underneath another plane.
+- The shovel remains the actual scan button and sweeps through the pasted source.
+- Scan stages remain Input, Extract, Verify, and Match, with active tangerine progress and graphite completed progress.
+- Conflict resolution remains blocking; reviewed source history remains visible.
+- Manual hardware correction stays inline and invalidates the applied setup until re-applied.
+- Task, deployment, local recommendation, and hosted fallback behavior are unchanged.
 
 ## Mandarin Language Principles
 
-- Use concise Mainland Chinese product language, written for comprehension rather than mirroring English structure.
-- Translate user intent, not the excavation metaphor. Terms such as “core sample,” “strata,” “lens,” and “evidence inspector” never appear as Chinese UI jargon.
-- Prefer direct verbs and familiar nouns: `解析配置`, `识别结果`, `查看原文位置`, `人工确认`, `应用识别结果`, `修改硬件信息`, `开源模型推荐`.
-- Keep CPU, GPU, model, runtime, quantization, and operating-system names exact; localize surrounding labels and explanations.
-- Make status distinctions explicit: `已识别` for parser output, `待确认` for unresolved conflict, `已人工确认` for a user decision, and `已应用此配置` for the scoring input.
-- Write recommendations as decision guidance, using `适合本地运行`, `配置匹配说明`, `不建议用于`, and `云端备选方案` instead of translated noun piles.
-- Validate every Chinese state at 1440px and 390px, including source choices, form options, ARIA labels, and long recommendation explanations.
+- Keep concise Mainland Chinese product language and preserve exact hardware/model strings.
+- Keep the headline as two deliberate lines: `从电脑配置，找到` and `适合你的模型。`.
+- Do not translate the excavation metaphor into interface jargon.
+- Preserve explicit distinctions among `已识别`, `待确认`, `已人工确认`, and `已应用此配置`.
+- Validate all visible copy and accessible names at 1440px and 390px.
 
-## Material, Color, And Type
+## Intentional Departures From The Morandi Pass
 
-- **Back plane:** solid Morandi blue (`#314954`) with high-contrast white text.
-- **Active plane:** translucent true-white with cool blue-gray inspection areas and an opaque fallback.
-- **Foreground sheet:** true white with no border and a shallow soft shadow.
-- **Focus:** cool blue (`#2f7391`); review amber is reserved for blocking issue semantics.
-- **Type:** SF/system sans for hierarchy; SF Mono/system monospace only for hardware and source excerpts.
-- **Geometry:** 6-12px radii, hairline separators, no nested cards, and no decorative glass.
-- **Timing:** 240ms selection, 400ms resolve/match transitions, 700ms source sweep, all using Apple-style easing curves.
-
-## Intentional Departures From The First V3 Pass
-
-1. Replaces three equal dashboard columns with overlapping back, active, and foreground planes.
-2. Moves the shovel from a scanner tray into the pasted source, making it a visible spatial scan control.
-3. Uses the review surface itself as the extraction lens rather than placing glass inside a flat column.
-4. Elevates the recommendation as a resolved output sheet while keeping its cause visible behind it.
-5. Rewrites all Mandarin copy and accessibility labels as native product Chinese.
-6. Removes metaphorical interface wording while preserving the excavation identity in motion and composition.
-7. Gives mobile the same depth logic through controlled vertical overlap rather than flattening every section.
+1. Replaces the dark blue raw-input slab with translucent warm-white glass over a solid stone underlay.
+2. Gives all three major workflow sections distinct glass opacity instead of reserving translucency for the middle plane.
+3. Replaces cool blue focus and progress with a restrained tangerine signal.
+4. Moves primary and selected controls to near-black while keeping warnings orange and success green.
+5. Warms borders, shadows, and opaque controls without adding beige monochrome decoration or photographic scenery.
+6. Keeps dense rows and controls crisp, using blur only for the major planes, utility bar, scanner tray, and active inspector.
 
 ## User Tests Before Production
 
-1. Do users understand the Input -> Resolve -> Match order from the overlap without needing explanatory copy?
-2. Does the shovel sweep make local parsing visible without suggesting live AI or automatic hardware detection?
-3. Can Mandarin users distinguish `已识别`, `待确认`, `已人工确认`, and `已应用此配置` immediately?
-4. Do users notice the blocking VRAM conflict and understand that choosing a source is an explicit decision?
-5. At 390px, does the vertical overlap preserve context without hiding controls or causing scroll fatigue?
-6. Is the hosted option clearly secondary to the concrete local recommendation?
-7. Can keyboard and assistive-technology users follow the same state sequence and accessible names in both languages?
+1. Do users still read Input -> Resolve -> Match from opacity and elevation without explanatory copy?
+2. Does the raw input remain clearly interactive despite its lower-opacity material?
+3. Are unresolved orange and verified green immediately distinguishable in both languages?
+4. Does the porcelain palette remain legible in bright displays and reduced-transparency environments?
+5. At 390px, does the overlap retain depth without hiding controls or creating scroll fatigue?
+6. Is the hosted option still visibly secondary to the local recommendation?
+7. Can keyboard and assistive-technology users follow the same sequence and names in EN and ZH?

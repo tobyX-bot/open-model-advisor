@@ -4,32 +4,37 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="A high-fidelity Model Digger core sample interface exploration.">
-  <meta name="theme-color" content="#314954">
+  <meta name="theme-color" content="#eeeae6">
   <title>Model Digger - Core Sample Interface</title>
   <link rel="icon" href="../../assets/shovel.svg" type="image/svg+xml">
   <style>
     :root {
-      --ink: #17242a;
-      --ink-2: #344850;
-      --ink-3: #52666e;
-      --morandi-950: #233842;
-      --morandi-900: #314954;
-      --morandi-800: #46616c;
-      --morandi-700: #566f79;
-      --morandi-200: #d7e1e4;
-      --morandi-100: #e8eef0;
-      --morandi-50: #f3f6f7;
+      --ink: #1c1a19;
+      --ink-2: #403b37;
+      --ink-3: #5f5751;
+      --morandi-950: #121110;
+      --morandi-900: #1d1b19;
+      --morandi-800: #393532;
+      --morandi-700: #6b625b;
+      --morandi-200: #d9d1ca;
+      --morandi-100: #e8e2dd;
+      --morandi-50: #f5f2ef;
       --white: #ffffff;
-      --line: #c7d2d6;
-      --line-strong: #9cabb1;
-      --review: #8a5a17;
-      --review-bg: #fff5df;
-      --verified: #25634f;
-      --verified-bg: #e9f4ef;
+      --line: #d6cec7;
+      --line-strong: #aaa097;
+      --review: #9a3d0c;
+      --review-bg: #fff0e7;
+      --verified: #2f6956;
+      --verified-bg: #e9f2ed;
       --danger: #8a3940;
-      --focus: #c36f3e;
-      --glass-dark: rgba(255, 255, 255, 0.11);
-      --glass-light: rgba(239, 244, 245, 0.84);
+      --focus: #c3571d;
+      --glass-dark: rgba(255, 255, 255, 0.44);
+      --glass-light: rgba(255, 255, 255, 0.62);
+      --mineral: #eeeae6;
+      --stone: #d9d1ca;
+      --elevation-1: 0 8px 18px -12px rgba(49, 41, 35, 0.38), 0 18px 34px -28px rgba(49, 41, 35, 0.3);
+      --elevation-2: 0 14px 30px -14px rgba(49, 41, 35, 0.44), 0 28px 46px -30px rgba(49, 41, 35, 0.38);
+      --elevation-3: 0 22px 46px -18px rgba(49, 41, 35, 0.52), 0 38px 68px -34px rgba(49, 41, 35, 0.44);
       --font-ui: "SF Pro Text", -apple-system, BlinkMacSystemFont, "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
       --font-display: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
       --font-mono: "SFMono-Regular", "SF Mono", ui-monospace, Menlo, Consolas, monospace;
@@ -1551,7 +1556,7 @@
 
     /* Second pass: spatial depth communicates input -> resolve -> match. */
     :root {
-      --focus: #2f7391;
+      --focus: #c3571d;
       --duration-fast: 240ms;
       --duration-medium: 400ms;
       --duration-long: 700ms;
@@ -1979,6 +1984,284 @@
       html[lang="zh-CN"] .row-status,
       html[lang="zh-CN"] .profile-state {
         white-space: normal;
+      }
+    }
+
+    /* Porcelain glass pass: warm solid underlays reveal three calibrated glass levels. */
+    body,
+    main {
+      background: var(--mineral);
+    }
+
+    .topbar {
+      border-bottom: 1px solid rgba(78, 68, 60, 0.12);
+      background: rgba(250, 248, 246, 0.84);
+      -webkit-backdrop-filter: blur(24px) saturate(108%);
+      backdrop-filter: blur(24px) saturate(108%);
+      box-shadow: 0 1px 0 rgba(255, 255, 255, 0.82);
+    }
+
+    .brand-mark,
+    .language-switch button[aria-pressed="true"] {
+      background: var(--morandi-900);
+      color: var(--white);
+    }
+
+    .language-switch {
+      border-color: var(--line-strong);
+      background: var(--white);
+    }
+
+    .flowbar {
+      border: 1px solid rgba(255, 255, 255, 0.78);
+      background: rgba(255, 255, 255, 0.64);
+      -webkit-backdrop-filter: blur(22px) saturate(105%);
+      backdrop-filter: blur(22px) saturate(105%);
+      box-shadow:
+        0 8px 22px -18px rgba(49, 41, 35, 0.46),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    }
+
+    .stage-list li.is-complete .stage-dot {
+      border-color: var(--morandi-800);
+      background: var(--morandi-800);
+    }
+
+    .stage-list li.is-active .stage-dot {
+      border-color: var(--focus);
+      box-shadow: 0 0 0 3px rgba(195, 87, 29, 0.16);
+    }
+
+    .instrument::before {
+      content: "";
+      position: absolute;
+      inset: 22px 20px 32px 0;
+      z-index: 0;
+      border: 1px solid rgba(255, 255, 255, 0.46);
+      border-radius: 14px;
+      background: var(--stone);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.42);
+      pointer-events: none;
+    }
+
+    .sample-zone {
+      color: var(--ink);
+      border: 1px solid rgba(255, 255, 255, 0.76);
+      background: rgba(255, 255, 255, 0.52);
+      -webkit-backdrop-filter: blur(24px) saturate(104%);
+      backdrop-filter: blur(24px) saturate(104%);
+      box-shadow:
+        var(--elevation-1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.96),
+        inset 1px 0 0 rgba(255, 255, 255, 0.68);
+    }
+
+    .zone-index,
+    .sample-number,
+    .setup-label span:last-child {
+      color: #6b625b;
+    }
+
+    .sample-subtitle,
+    .local-note,
+    .scan-copy span {
+      color: var(--ink-3);
+    }
+
+    .setup-label {
+      color: var(--ink-2);
+    }
+
+    .source-stage textarea {
+      border: 1px solid rgba(76, 65, 57, 0.16);
+      background: rgba(255, 255, 255, 0.92);
+      color: var(--ink);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.94),
+        0 4px 14px -12px rgba(46, 38, 33, 0.5);
+    }
+
+    textarea::placeholder,
+    input::placeholder {
+      color: var(--ink-3);
+    }
+
+    .scan-button {
+      background: var(--morandi-900);
+      color: var(--white);
+      box-shadow:
+        0 6px 14px -8px rgba(28, 25, 23, 0.72),
+        inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    }
+
+    .scan-button:hover:not(:disabled) {
+      background: var(--morandi-950);
+    }
+
+    .scan-button.is-scanning {
+      background: var(--focus);
+    }
+
+    .scan-button img {
+      filter: brightness(0) invert(1);
+    }
+
+    .scanner-tray {
+      border: 1px solid rgba(255, 255, 255, 0.66);
+      background: rgba(255, 255, 255, 0.42);
+      -webkit-backdrop-filter: blur(18px) saturate(104%);
+      backdrop-filter: blur(18px) saturate(104%);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+    }
+
+    .lens-track span {
+      background: rgba(28, 26, 25, 0.15);
+    }
+
+    .lens-track span.is-complete {
+      background: var(--morandi-800);
+    }
+
+    .lens-track span.is-active {
+      background: var(--focus);
+    }
+
+    .evidence-zone {
+      border: 1px solid rgba(255, 255, 255, 0.84);
+      background: rgba(255, 255, 255, 0.78);
+      -webkit-backdrop-filter: blur(28px) saturate(106%);
+      backdrop-filter: blur(28px) saturate(106%);
+      box-shadow:
+        var(--elevation-2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.98),
+        inset 1px 0 0 rgba(255, 255, 255, 0.78);
+    }
+
+    .zone-head {
+      background: rgba(255, 255, 255, 0.46);
+    }
+
+    .evidence-row {
+      border-bottom-color: var(--morandi-100);
+      background: rgba(255, 255, 255, 0.7);
+    }
+
+    .evidence-row:hover,
+    .evidence-row[aria-pressed="true"] {
+      background: #faf8f6;
+    }
+
+    .depth-mark,
+    .source-choice,
+    input,
+    select {
+      background: var(--white);
+    }
+
+    .inspector {
+      border-color: rgba(154, 61, 12, 0.24);
+      background: rgba(255, 255, 255, 0.58);
+      -webkit-backdrop-filter: blur(18px) saturate(104%);
+      backdrop-filter: blur(18px) saturate(104%);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82);
+    }
+
+    .manual-editor {
+      background: #f5f2ef;
+    }
+
+    .button-primary,
+    .task-option input:checked + span,
+    .deployment-option input:checked + span {
+      background: var(--morandi-900);
+      color: var(--white);
+    }
+
+    .button-primary:hover:not(:disabled) {
+      background: var(--morandi-950);
+    }
+
+    .button-primary:disabled {
+      background: #d1cac4;
+      color: var(--ink-3);
+    }
+
+    .button-secondary,
+    .task-control,
+    .deployment-control {
+      background: var(--white);
+    }
+
+    .match-zone {
+      border: 1px solid rgba(255, 255, 255, 0.94);
+      background: rgba(255, 255, 255, 0.93);
+      -webkit-backdrop-filter: blur(32px) saturate(106%);
+      backdrop-filter: blur(32px) saturate(106%);
+      box-shadow:
+        var(--elevation-3),
+        inset 0 1px 0 rgba(255, 255, 255, 1),
+        inset 1px 0 0 rgba(255, 255, 255, 0.9);
+    }
+
+    .match-head,
+    .match-controls {
+      background: rgba(255, 255, 255, 0.64);
+    }
+
+    .try-label,
+    .starter-line {
+      color: var(--ink-3);
+    }
+
+    .hosted-rule {
+      background: var(--line-strong);
+    }
+
+    .mock-note {
+      color: var(--ink-3);
+    }
+
+    @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+      .topbar,
+      .flowbar {
+        background: #f8f5f2;
+      }
+
+      .sample-zone {
+        background: #ede8e4;
+      }
+
+      .evidence-zone {
+        background: #f7f4f1;
+      }
+
+      .match-zone {
+        background: #fdfcfb;
+      }
+
+      .scanner-tray,
+      .inspector {
+        background: #f3eee9;
+      }
+    }
+
+    @media (max-width: 820px) {
+      .instrument::before {
+        inset: 18px 2px 24px;
+        border-radius: 12px;
+      }
+
+      .sample-zone {
+        margin: 0 18px 0 6px;
+        border-radius: 12px;
+      }
+
+      .evidence-zone {
+        margin: -34px 6px 0 12px;
+      }
+
+      .match-zone {
+        margin: -10px 14px 36px 6px;
       }
     }
 
@@ -2918,15 +3201,15 @@ GPU：NVIDIA GeForce RTX 4070 SUPER - 12GB 显存
 
   <!-- design-review:self-diff v1
   Design decisions:
-  1. Rebuilt the equal three-column dashboard as three overlapping planes: Morandi input slab, translucent review surface, and elevated recommendation sheet.
-  2. Used depth to encode workflow order; each foreground plane partially covers the resolved edge of the prior plane without covering its controls.
-  3. Moved the real shovel scan button onto the pasted source and animated one 700ms vertical sweep through the text.
-  4. Limited supporting motion to the extracted-profile rise and recommendation-sheet settle, with instant reduced-motion equivalents.
-  5. Rewrote every Mandarin string as concise Mainland Chinese product copy and removed translated excavation jargon from visible UI and ARIA labels.
-  6. Preserved exact source inspection, conflict history, manual correction, five tasks, deployment choices, and concrete fit guidance.
-  7. Converted the mobile layout into one overlapping vertical sequence with protected bottom space between interactive surfaces.
+  1. Replaced the dark Morandi slab with a solid warm-stone underlay and three progressively more opaque porcelain-glass workflow planes.
+  2. Kept blur on major materials, the scanner tray, and active inspector while leaving dense rows, fields, segments, and buttons crisp.
+  3. Anchored primary actions and selected controls in near-black, with tangerine reserved for scan progress, focus, and unresolved review.
+  4. Preserved a distinct semantic green for verified and applied states so warning and success never depend on the same color.
+  5. Retained the protected desktop and mobile overlaps so no evidence, source choice, or action sits beneath another plane.
+  6. Preserved the shovel sweep, exact-source review, manual correction, five tasks, deployment choices, and concrete fit guidance.
+  7. Kept the native Mandarin copy and fixed two-line Chinese headline unchanged while moving all surfaces to WCAG-checked dark-on-light contrast.
   Trade-offs:
-  1. The layered desktop composition prioritizes causal workflow over simultaneous equal-width comparison.
+  1. Porcelain glass depends on backdrop-filter for full material depth, with deliberately flatter opaque fallbacks on unsupported browsers.
   2. The mobile flow remains long because exact source review and editing stay inline instead of moving into another screen.
   3. Parsing and fit scores remain deterministic mock values, not production scanner or recommendation outputs.
   -->
