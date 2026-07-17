@@ -1708,6 +1708,57 @@ test("recognizes semantic post-capacity bounds and absence grammar", () => {
   }
 });
 
+test("classifies attached absence and lower-bound qualifiers across capacity fields", () => {
+  for (const input of [
+    "RAM 32GB is unavailable",
+    "RAM 32GB was unavailable",
+    "RAM 32GB currently unavailable",
+    "32GB RAM is unavailable",
+    "VRAM 8GiB presently unavailable",
+    "vRaM 8gib PRESENTLY UNAVAILABLE",
+    "8GiB VRAM is still unavailable",
+    "storage 1TB is currently unavailable",
+    "storage 2TiB IS NOT CURRENTLY AVAILABLE",
+    "1TB storage was unavailable",
+    "RAM 32GB is not currently available",
+    "32GB RAM was presently not installed",
+    "RAM 32GB or higher",
+    "RAM 32GB or above",
+    "RAM 32GB and above",
+    "RAM 32GB and up",
+    "VRAM 8GiB OR HIGHER",
+    "8GB VRAM and above",
+    "Memory 2 TiB and above",
+    "RAM 16 gigabytes or higher",
+    "storage 1TB and up",
+    "1TB storage or more"
+  ]) {
+    assert.deepEqual(extractCapacityCandidates(normalizeSetupText(input)), [], input);
+  }
+
+  const positives = [
+    ["RAM 32GB available", [["ram", 32, "RAM 32GB"]]],
+    ["RAM 32GB installed", [["ram", 32, "RAM 32GB"]]],
+    ["storage 1TB available", [["storage", 1000, "storage 1TB available"]]],
+    ["RAM 32GB and VRAM 8GB", [["ram", 32, "RAM 32GB"], ["vram", 8, "VRAM 8GB"]]],
+    ["RAM 32GB and SSD 512GB", [["ram", 32, "RAM 32GB"], ["storage", 512, "SSD 512GB"]]],
+    ["RAM 32GB and more storage", [["ram", 32, "RAM 32GB"]]],
+    ["RAM 32GB and above-average bandwidth", [["ram", 32, "RAM 32GB"]]],
+    ["RAM 32GB not overclocked", [["ram", 32, "RAM 32GB"]]],
+    ["VRAM 8GB not shared", [["vram", 8, "VRAM 8GB"]]]
+  ];
+  for (const [input, expected] of positives) {
+    const document = normalizeSetupText(input);
+    const candidates = extractCapacityCandidates(document);
+    assert.deepEqual(
+      candidates.map((candidate) => [candidate.field, candidate.value, candidate.raw]),
+      expected,
+      input
+    );
+    candidates.forEach((candidate) => assertCapacityCandidateContract(document, candidate));
+  }
+});
+
 test("rejects natural and localized transfer-rate suffixes", () => {
   for (const input of [
     "显存带宽 12GB每秒",

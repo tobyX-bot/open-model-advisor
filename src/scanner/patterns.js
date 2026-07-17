@@ -440,12 +440,12 @@ export const CAPACITY_DISQUALIFIER_PATTERNS = freezePatterns([
   },
   {
     id: "capacity.disqualifier.english-postposed",
-    regex: /\b(?:or[ \t-]+(?:more|less|greater)|at[ \t]+(?:least|most)|min(?:imum)?|max(?:imum)?|(?:is[ \t]+)?(?:required|needed))\b/iu,
+    regex: /\b(?:or[ \t-]+(?:more|less|greater|higher|above)|and[ \t-]+(?:above|up)|at[ \t]+(?:least|most)|min(?:imum)?|max(?:imum)?|(?:is[ \t]+)?(?:required|needed))(?![A-Z0-9-])/iu,
     allowAfterCapacity: true
   },
   {
     id: "capacity.disqualifier.english-postposed-absence",
-    regex: /\b(?:(?:(?:modules?|DIMMs?|kits?|sticks?|memory)[ \t]+)?(?:(?:is|are|was|were|currently|presently)[ \t]+)*not[ \t]+(?:installed|available|present|included)|unavailable)\b/iu,
+    regex: /\b(?:(?:(?:modules?|DIMMs?|kits?|sticks?|memory)[ \t]+)?(?:(?:is|are|was|were)[ \t]+)?(?:(?:currently|presently|still)[ \t]+)?(?:unavailable|not[ \t]+(?:(?:currently|presently|still)[ \t]+)?(?:installed|available|present|included)))\b/iu,
     allowAfterCapacity: true
   },
   {
@@ -497,7 +497,7 @@ export const CAPACITY_CLAUSE_PATTERNS = freezePatterns([
   },
   {
     id: "capacity.clause.english-conjunction",
-    regex: /[ \t]+\b(?:and|but)\b[ \t]+/iu
+    regex: /[ \t]+\b(?:but|and(?![ \t]+(?:above|up)(?![A-Z0-9-])))\b[ \t]+/iu
   },
   {
     id: "capacity.clause.english-with",
