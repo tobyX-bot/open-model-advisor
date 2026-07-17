@@ -43,6 +43,9 @@ const MAX_CAPACITY_LABEL_GAP = 32;
 const MAX_GPU_PROXIMITY_GAP = 24;
 const APPLE_PLATFORM_CONTEXT = /\b(?:macOS|MacBook|Mac[ \t]+mini|Mac[ \t]+Studio|iMac|Apple[ \t]+(?:silicon|GPU))\b|苹果电脑|蘋果電腦|苹果系统|蘋果系統/iu;
 const NON_APPLE_M_SERIES_PREFIX = /\b(?:Intel(?:[ \t]+Core)?|Core)[ \t]*$/iu;
+const STORAGE_M_SERIES_PREFIX = /\b(?:SSD|storage|disk|drive)[ \t:-]*$/iu;
+const STORAGE_M_SERIES_SUFFIX = /^[ \t:-]*(?:SSD|storage|disk|drive)\b/iu;
+const TRANSFER_RATE_SUFFIX = /^[ \t]+(?:\/[ \t]*|per[ \t]+)(?:(?:s|secs?|seconds?)\b|秒)(?![ \t]+(?:drive|SSD|HDD|disk|storage)\b)/iu;
 
 function globalRegex(regex) {
   const flags = `${regex.flags.replace(/[gy]/g, "")}g`;
@@ -66,9 +69,17 @@ function isValidEvidence(pattern, evidence, followingText) {
 function candidateFromMatch(document, segment, pattern, match) {
   if (pattern.requiresAppleContext) {
     const precedingText = segment.text.slice(Math.max(0, match.index - 32), match.index);
+    const followingText = segment.text.slice(match.index + match[0].length, match.index + match[0].length + 32);
     if (
       !APPLE_PLATFORM_CONTEXT.test(document.normalized)
       || NON_APPLE_M_SERIES_PREFIX.test(precedingText)
+      || (
+        pattern.rejectsStorageContext
+        && (
+          STORAGE_M_SERIES_PREFIX.test(precedingText)
+          || STORAGE_M_SERIES_SUFFIX.test(followingText)
+        )
+      )
     ) return null;
   }
 
@@ -228,7 +239,7 @@ function hasUnsafeSignPrefix(segment, match, labels) {
 function hasTransferRateSuffix(document, segment, match) {
   const globalEnd = segment.start + match.index + match[0].length;
   const followingText = document.normalized.slice(globalEnd, globalEnd + 32);
-  return /^[ \t]+(?:\/[ \t]*(?:s|sec|second)\b|per[ \t]+(?:s|sec|second)\b)/iu.test(followingText);
+  return TRANSFER_RATE_SUFFIX.test(followingText);
 }
 
 function hasUnsafeDigitCommaPrefix(segment, match, modelCandidates) {
@@ -359,14 +370,27 @@ function hasAttachedDisqualifier(segment, clause, disqualifiers, amount, ownersh
     ? Math.max(ownership.label.end, amount.end)
     : amount.end;
 
-  return disqualifiers
-    .filter((match) => localSpanIsInClause(match.start, match.end, clause))
-    .some((match) => {
-      let gap = "";
-      if (match.end <= localStart) gap = segment.text.slice(match.end, localStart);
-      else if (match.start >= localEnd) gap = segment.text.slice(localEnd, match.start);
-      return /^[ \t:]*$/u.test(gap);
-    });
+  return disqualifiers.some((match) => {
+    if (
+      match.start < localEnd
+      && match.end > localStart
+      && localSpanIsInClause(match.start, match.end, clause)
+    ) {
+      return true;
+    }
+
+    if (match.end <= localStart) {
+      if (!localSpanIsInClause(match.start, match.end, clause)) return false;
+      return /^[ \t:()（）-]*$/u.test(segment.text.slice(match.end, localStart));
+    }
+
+    if (match.start >= localEnd && match.pattern.allowAfterCapacity) {
+      const gap = segment.text.slice(localEnd, match.start);
+      if (match.pattern.requireAdjacentAfterCapacity && gap.length > 0) return false;
+      return /^[ \t:()（）-]*$/u.test(gap);
+    }
+    return false;
+  });
 }
 
 function ownershipOption(segment, amount, label) {

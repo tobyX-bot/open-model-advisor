@@ -1106,12 +1106,19 @@ test("abstains from negated bounded and required capacity language", () => {
 test("abstains from attached preposed and postposed capacity bounds", () => {
   for (const input of [
     "RAM 32GB or more",
+    "RAM 32GB+",
+    "RAM 32GB or greater",
+    "RAM 32GB max",
+    "RAM max 32GB",
+    "RAM 32GB (or more)",
+    "RAM 32GB-or-more",
     "RAM <32GB",
     "RAM <=32GB",
     "RAM >=32GB",
     "RAM >32GB",
     "RAM 32GB >",
     "内存32GB以上",
+    "内存32GB（以上）",
     "内存32GB以下",
     "内存32GB以内",
     "顯存12GB以內"
@@ -1124,13 +1131,21 @@ test("abstains from attached preposed and postposed capacity bounds", () => {
       .map((candidate) => [candidate.field, candidate.value, candidate.raw]),
     [["vram", 12, "VRAM 12GB"]]
   );
+
+  assert.deepEqual(
+    extractCapacityCandidates(normalizeSetupText("RAM 32GB + VRAM 12GB"))
+      .map((candidate) => [candidate.field, candidate.value, candidate.raw]),
+    [["ram", 32, "RAM 32GB"], ["vram", 12, "VRAM 12GB"]]
+  );
 });
 
 test("keeps non-exact filtering local to its owning amount and field", () => {
   const cases = [
     ["RAM 32GB but VRAM not specified", [["ram", 32, "RAM 32GB"]]],
     ["内存32GB但显存不是12GB", [["ram", 32, "内存32GB"]]],
-    ["32GB RAM spread over 2 DIMMs", [["ram", 32, "32GB RAM"]]]
+    ["32GB RAM spread over 2 DIMMs", [["ram", 32, "32GB RAM"]]],
+    ["32GB RAM not overclocked", [["ram", 32, "32GB RAM"]]],
+    ["RAM 32GB not shared with GPU", [["ram", 32, "RAM 32GB"]]]
   ];
 
   for (const [input, expected] of cases) {
@@ -1149,7 +1164,10 @@ test("rejects whitespace slash rates while preserving slash field delimiters", (
   for (const input of [
     "SSD read speed 7GB /s",
     "SSD read speed 7 GB / second",
-    "VRAM bandwidth 12GiB / sec"
+    "VRAM bandwidth 12GiB / sec",
+    "SSD read speed 7 GB / seconds",
+    "SSD read speed 7 GB per seconds",
+    "显存带宽 12GB / 秒"
   ]) {
     assert.deepEqual(extractCapacityCandidates(normalizeSetupText(input)), [], input);
   }
@@ -1167,6 +1185,18 @@ test("rejects whitespace slash rates while preserving slash field delimiters", (
       ["ram", 32, "RAM 32GB", 1]
     ]
   );
+
+  for (const input of [
+    "SSD 512GB / second drive 1TB",
+    "SSD 512GB / second SSD 1TB"
+  ]) {
+    const candidates = extractStorageCandidates(normalizeSetupText(input));
+    assert.deepEqual(
+      candidates.map((candidate) => [candidate.value, candidate.raw]),
+      [[512, "SSD 512GB"], [1000, /drive/u.test(input) ? "drive 1TB" : "SSD 1TB"]],
+      input
+    );
+  }
 });
 
 test("capacity offsets use normalized source when Unicode lowercase changes length", () => {
@@ -1502,6 +1532,23 @@ test("allows GPU proximity when unrelated labels own other amounts", () => {
   );
 });
 
+test("treats English but as a capacity ownership boundary", () => {
+  for (const input of [
+    "NVIDIA RTX 4070 12GB but RAM unknown",
+    "NVIDIA RTX 4070 12GB but RAM not specified"
+  ]) {
+    const document = normalizeSetupText(input);
+    const candidates = extractCapacityCandidates(document);
+
+    assert.deepEqual(
+      candidates.map((candidate) => [candidate.field, candidate.value, candidate.raw]),
+      [["vram", 12, "NVIDIA RTX 4070 12GB"]],
+      input
+    );
+    candidates.forEach((candidate) => assertCapacityCandidateContract(document, candidate));
+  }
+});
+
 test("hardens Apple unified-memory inference against dedicated and false M-series evidence", () => {
   for (const input of [
     "Apple M3 Pro;NVIDIA GPU;16GB unified memory",
@@ -1539,6 +1586,32 @@ test("hardens Apple unified-memory inference against dedicated and false M-serie
   assert.deepEqual(candidateValues(extractMemoryCandidates(contextualFalseApple), "vram"), []);
 });
 
+test("does not treat M2 storage notation as an Apple processor", () => {
+  const cases = [
+    ["iMac;Intel Core i5-8500;SSD M2 1TB;16GB unified memory", 16],
+    ["Mac mini;Intel Core i7-8700;M2 SSD 1TB;32GB unified memory", 32],
+    ["MacBook Pro;Intel Core i7-9750H;SSD M2 1TB;16GB unified memory", 16]
+  ];
+
+  for (const [input, ram] of cases) {
+    const document = normalizeSetupText(input);
+    const cpuCandidates = extractCpuCandidates(document);
+    const memoryCandidates = extractMemoryCandidates(document);
+
+    assert.equal(
+      cpuCandidates.some((candidate) => candidate.value === "Apple M2"),
+      false,
+      input
+    );
+    assert.deepEqual(
+      memoryCandidates.map((candidate) => [candidate.field, candidate.value, candidate.inferred]),
+      [["ram", ram, false]],
+      input
+    );
+    memoryCandidates.forEach((candidate) => assertCapacityCandidateContract(document, candidate));
+  }
+});
+
 test("blocks Apple inference on explicit nonnumeric or invalid VRAM evidence", () => {
   for (const input of [
     "Apple M3 Pro;36GB unified memory;VRAM less than 8GB",
@@ -1560,6 +1633,9 @@ test("requires a dedicated GPU model for unlabeled VRAM proximity", () => {
   const cases = [
     ["Intel Iris Xe 2GB", []],
     ["Intel Iris Xe with 2GB VRAM", [["vram", 2, "2GB VRAM"]]],
+    ["AMD Vega 8 2GB", []],
+    ["Intel Arc A550M 8GB", [["vram", 8, "Intel Arc A550M 8GB"]]],
+    ["Intel Arc A370M 4GB", [["vram", 4, "Intel Arc A370M 4GB"]]],
     ["Intel Arc A750 8GB", [["vram", 8, "Intel Arc A750 8GB"]]],
     ["NVIDIA RTX 4070 12GB", [["vram", 12, "NVIDIA RTX 4070 12GB"]]],
     ["AMD Radeon RX 7900 XT 24GiB", [["vram", 24, "AMD Radeon RX 7900 XT 24GiB"]]]

@@ -152,6 +152,7 @@ export const CPU_MODEL_PATTERNS = freezePatterns([
     vendor: "apple",
     regex: /\bM(?<generation>[1-4])(?:[ \t]*(?<suffix>Pro|Max|Ultra))?\b(?![A-Z0-9-])/iu,
     requiresAppleContext: true,
+    rejectsStorageContext: true,
     confidence: "high",
     specificity: 90,
     normalize(match) {
@@ -202,11 +203,23 @@ export const GPU_MODEL_PATTERNS = freezePatterns([
     }
   },
   {
+    id: "gpu.amd-vega",
+    field: "gpuModel",
+    vendor: "amd",
+    dedicated: false,
+    regex: /\bAMD[ \t]+(?:Radeon[ \t]+)?Vega[ \t]+(?<model>[0-9]{1,2})(?![A-Z0-9-])/iu,
+    confidence: "high",
+    specificity: 100,
+    normalize(match) {
+      return `AMD Vega ${match.groups.model}`;
+    }
+  },
+  {
     id: "gpu.intel-arc",
     field: "gpuModel",
     vendor: "intel",
     dedicated: true,
-    regex: /\bIntel[ \t]+Arc[ \t]+(?<model>[A-Z][0-9]{3,4})(?![A-Z0-9-])/iu,
+    regex: /\bIntel[ \t]+Arc[ \t]+(?<model>[A-Z][0-9]{3,4}[A-Z]?)(?![A-Z0-9-])/iu,
     confidence: "high",
     specificity: 100,
     normalize(match) {
@@ -402,7 +415,7 @@ export const CAPACITY_AMOUNT_PATTERNS = freezePatterns([
 export const CAPACITY_DISQUALIFIER_PATTERNS = freezePatterns([
   {
     id: "capacity.disqualifier.english",
-    regex: /\b(?:not|less[ \t]+than|more[ \t]+than|under|over|at[ \t]+least|at[ \t]+most|up[ \t]+to|minimum|maximum|require|required|requires|requiring|need|needs|needed)\b/iu
+    regex: /\b(?:not|less[ \t]+than|more[ \t]+than|under|over|at[ \t]+least|at[ \t]+most|up[ \t]+to|min(?:imum)?|max(?:imum)?|require|required|requires|requiring|need|needs|needed)\b/iu
   },
   {
     id: "capacity.disqualifier.chinese",
@@ -410,15 +423,24 @@ export const CAPACITY_DISQUALIFIER_PATTERNS = freezePatterns([
   },
   {
     id: "capacity.disqualifier.english-postposed",
-    regex: /\bor[ \t]+(?:more|less)\b/iu
+    regex: /\b(?:or[ \t-]+(?:more|less|greater)|max(?:imum)?)\b/iu,
+    allowAfterCapacity: true
   },
   {
     id: "capacity.disqualifier.symbolic-bound",
-    regex: /(?:<=|>=|[<>≤≥])/u
+    regex: /(?:<=|>=|[<>≤≥])/u,
+    allowAfterCapacity: true
+  },
+  {
+    id: "capacity.disqualifier.compact-plus",
+    regex: /\+(?![ \t]*\d)/u,
+    allowAfterCapacity: true,
+    requireAdjacentAfterCapacity: true
   },
   {
     id: "capacity.disqualifier.chinese-postposed",
-    regex: /以上|以下|以内|以內/u
+    regex: /以上|以下|以内|以內/u,
+    allowAfterCapacity: true
   }
 ]);
 
@@ -453,7 +475,7 @@ export const CAPACITY_CLAUSE_PATTERNS = freezePatterns([
   },
   {
     id: "capacity.clause.english-conjunction",
-    regex: /[ \t]+\band\b[ \t]+/iu
+    regex: /[ \t]+\b(?:and|but)\b[ \t]+/iu
   },
   {
     id: "capacity.clause.english-with",
