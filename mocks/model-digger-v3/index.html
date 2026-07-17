@@ -1628,6 +1628,18 @@
       letter-spacing: -0.025em;
     }
 
+    html[lang="zh-CN"] .zone-heading h1 {
+      max-width: none;
+      font-size: 40px;
+      line-height: 1.18;
+      letter-spacing: 0;
+    }
+
+    .zh-headline-line {
+      display: block;
+      white-space: nowrap;
+    }
+
     .source-stage {
       --sweep-distance: 206px;
       position: relative;
@@ -1960,6 +1972,7 @@
         max-width: none;
         font-size: 32px;
         line-height: 1.2;
+        letter-spacing: 0;
       }
 
       html[lang="zh-CN"] .source-choice b,
@@ -2047,7 +2060,7 @@
       <section class="sample-zone" aria-labelledby="sampleTitle">
         <div class="zone-index" data-i18n="rawSample">PASTED SETUP / LOCAL</div>
         <div class="zone-heading">
-          <h1 id="sampleTitle" data-i18n="sampleTitle">Find models that fit your machine.</h1>
+          <h1 id="sampleTitle">Find models that fit your machine.</h1>
           <span class="sample-number">CS-014</span>
         </div>
         <p class="sample-subtitle" data-i18n="sampleSubtitle">Paste specifications or a system report. Review every detected field before applying it.</p>
@@ -2341,6 +2354,8 @@ GPU：NVIDIA GeForce RTX 4070 SUPER - 12GB 显存
         statusScanning: "正在本地解析",
         rawSample: "原始配置",
         sampleTitle: "从电脑配置，找到适合你的模型。",
+        sampleTitleLine1: "从电脑配置，找到",
+        sampleTitleLine2: "适合你的模型。",
         sampleSubtitle: "粘贴系统报告、商品参数或手动记录。应用前可逐项检查识别结果。",
         pasteLabel: "电脑配置原文",
         scanSetup: "解析配置",
@@ -2749,6 +2764,23 @@ GPU：NVIDIA GeForce RTX 4070 SUPER - 12GB 显存
       updateStages();
     }
 
+    function renderSampleTitle() {
+      const heading = document.getElementById("sampleTitle");
+      heading.setAttribute("aria-label", t("sampleTitle"));
+      if (state.language !== "zh") {
+        heading.textContent = t("sampleTitle");
+        return;
+      }
+
+      const firstLine = document.createElement("span");
+      const secondLine = document.createElement("span");
+      firstLine.className = "zh-headline-line";
+      secondLine.className = "zh-headline-line";
+      firstLine.textContent = t("sampleTitleLine1");
+      secondLine.textContent = t("sampleTitleLine2");
+      heading.replaceChildren(firstLine, secondLine);
+    }
+
     function applyLanguage(language) {
       const previousLanguage = state.language;
       state.language = language === "zh" ? "zh" : "en";
@@ -2763,6 +2795,7 @@ GPU：NVIDIA GeForce RTX 4070 SUPER - 12GB 显存
       document.querySelectorAll("[data-language]").forEach((button) => {
         button.setAttribute("aria-pressed", String(button.dataset.language === state.language));
       });
+      renderSampleTitle();
       if (setupText.value === samples[previousLanguage] || !setupText.value) setupText.value = samples[state.language];
       scanButton.setAttribute("title", t("scanSetup"));
       scanButton.setAttribute("aria-label", t("scanSetup"));
