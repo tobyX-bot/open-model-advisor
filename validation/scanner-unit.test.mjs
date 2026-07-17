@@ -1173,6 +1173,50 @@ test("abstains from post-capacity absence phrases without broadening negation", 
   }
 });
 
+test("classifies capacity disqualifiers by meaning rather than position", () => {
+  for (const input of [
+    "RAM 32GB minimum",
+    "RAM 32GB required",
+    "RAM 32GB is not available"
+  ]) {
+    assert.deepEqual(extractCapacityCandidates(normalizeSetupText(input)), [], input);
+  }
+
+  for (const [input, expected] of [
+    ["RAM not ECC 32GB", [["ram", 32, "RAM not ECC 32GB"]]],
+    ["VRAM not shared 8GB", [["vram", 8, "VRAM not shared 8GB"]]],
+    ["storage not encrypted: 1TB", [["storage", 1000, "storage not encrypted: 1TB"]]],
+    ["RAM is not 32GB", []],
+    ["32GB RAM not installed", []]
+  ]) {
+    assert.deepEqual(
+      extractCapacityCandidates(normalizeSetupText(input)).map((candidate) => [
+        candidate.field,
+        candidate.value,
+        candidate.raw
+      ]),
+      expected,
+      input
+    );
+  }
+});
+
+test("rejects natural and localized transfer-rate suffixes", () => {
+  for (const input of [
+    "显存带宽 12GB每秒",
+    "SSD speed 7GB each second",
+    "SSD speed 7GB a second"
+  ]) {
+    assert.deepEqual(extractCapacityCandidates(normalizeSetupText(input)), [], input);
+  }
+
+  assert.deepEqual(
+    extractCapacityCandidates(normalizeSetupText("SSD 512GB / second SSD 1TB;VRAM 8GB"))
+      .map((candidate) => [candidate.field, candidate.value, candidate.raw]),
+    [["storage", 512, "SSD 512GB"], ["storage", 1000, "SSD 1TB"], ["vram", 8, "VRAM 8GB"]]
+  );
+});
+
 test("rejects whitespace slash rates while preserving slash field delimiters", () => {
   for (const input of [
     "SSD read speed 7GB /s",
@@ -1562,6 +1606,34 @@ test("treats English but as a capacity ownership boundary", () => {
   }
 });
 
+test("uses with as an ownership filler unless it introduces another field", () => {
+  const cases = [
+    ["RAM with 32GB", [["ram", 32, "RAM with 32GB", undefined]]],
+    ["storage with 512GB free", [["storage", 512, "storage with 512GB free", "free"]]],
+    ["NVIDIA RTX 4070 with 12GB", [["vram", 12, "NVIDIA RTX 4070 with 12GB", undefined]]],
+    [
+      "NVIDIA RTX 4070 12GB with RAM 32GB",
+      [["vram", 12, "NVIDIA RTX 4070 12GB", undefined], ["ram", 32, "RAM 32GB", undefined]]
+    ],
+    [
+      "NVIDIA RTX 4070 12GB with 内存 unknown",
+      [["vram", 12, "NVIDIA RTX 4070 12GB", undefined]]
+    ],
+    ["RAM 32GB with VRAM 8GB", [["ram", 32, "RAM 32GB", undefined], ["vram", 8, "VRAM 8GB", undefined]]]
+  ];
+
+  for (const [input, expected] of cases) {
+    const document = normalizeSetupText(input);
+    const candidates = extractCapacityCandidates(document);
+    assert.deepEqual(
+      candidates.map((candidate) => [candidate.field, candidate.value, candidate.raw, candidate.storageKind]),
+      expected,
+      input
+    );
+    candidates.forEach((candidate) => assertCapacityCandidateContract(document, candidate));
+  }
+});
+
 test("hardens Apple unified-memory inference against dedicated and false M-series evidence", () => {
   for (const input of [
     "Apple M3 Pro;NVIDIA GPU;16GB unified memory",
@@ -1625,6 +1697,40 @@ test("does not treat M2 storage notation as an Apple processor", () => {
   }
 });
 
+test("treats NVMe and M2 storage notation as non-Apple processor context", () => {
+  for (const [input, ram] of [
+    ["macOS;NVMe M2 1TB;16GB unified memory", 16],
+    ["MacBook;M2 NVMe 1TB;16GB unified memory", 16],
+    ["macOS;NVMe M2 SSD 1TB;32GB unified memory", 32]
+  ]) {
+    const document = normalizeSetupText(input);
+    assert.equal(
+      extractCpuCandidates(document).some((candidate) => candidate.value === "Apple M2"),
+      false,
+      input
+    );
+    assert.deepEqual(
+      extractMemoryCandidates(document).map((candidate) => [candidate.field, candidate.value, candidate.inferred]),
+      [["ram", ram, false]],
+      input
+    );
+  }
+
+  for (const input of [
+    "MacBook M2;16GB unified memory",
+    "MacBook Pro;CPU M2 Pro;16GB unified memory",
+    "Mac Studio M2 Max;32GB unified memory"
+  ]) {
+    const document = normalizeSetupText(input);
+    assert.equal(
+      extractCpuCandidates(document).some((candidate) => candidate.value.startsWith("Apple M2")),
+      true,
+      input
+    );
+    assert.equal(candidateValues(extractMemoryCandidates(document), "vram").length, 1, input);
+  }
+});
+
 test("blocks Apple inference on explicit nonnumeric or invalid VRAM evidence", () => {
   for (const input of [
     "Apple M3 Pro;36GB unified memory;VRAM less than 8GB",
@@ -1640,6 +1746,36 @@ test("blocks Apple inference on explicit nonnumeric or invalid VRAM evidence", (
     );
     candidates.forEach((candidate) => assertCapacityCandidateContract(document, candidate));
   }
+});
+
+test("blocks Apple inference for reversed-vendor and external GPU evidence", () => {
+  for (const input of [
+    "Apple M3 Pro;GPU: NVIDIA;16GB unified memory",
+    "Apple M3 Pro;GPU: AMD;16GB unified memory",
+    "Apple M3 Pro;external GPU;16GB unified memory",
+    "Apple M3 Pro;eGPU;16GB unified memory"
+  ]) {
+    assert.deepEqual(
+      extractMemoryCandidates(normalizeSetupText(input)).map((candidate) => [
+        candidate.field,
+        candidate.value,
+        candidate.inferred
+      ]),
+      [["ram", 16, false]],
+      input
+    );
+  }
+
+  assert.deepEqual(
+    extractMemoryCandidates(normalizeSetupText("Apple M3 Pro;16GB unified memory"))
+      .map((candidate) => [candidate.field, candidate.value, candidate.inferred]),
+    [["ram", 16, false], ["vram", 12, true]]
+  );
+  assert.deepEqual(
+    extractMemoryCandidates(normalizeSetupText("Apple M3 Pro;16GB unified memory;VRAM 8GB"))
+      .map((candidate) => [candidate.field, candidate.value, candidate.inferred]),
+    [["ram", 16, false], ["vram", 8, false]]
+  );
 });
 
 test("requires a dedicated GPU model for unlabeled VRAM proximity", () => {
@@ -1663,6 +1799,26 @@ test("requires a dedicated GPU model for unlabeled VRAM proximity", () => {
       input
     );
     candidates.forEach((candidate) => assertCapacityCandidateContract(document, candidate));
+  }
+});
+
+test("classifies dedicated and integrated AMD Vega families separately", () => {
+  for (const [input, expected] of [
+    ["AMD Radeon Vega 64 8GB", [["vram", 8, "AMD Radeon Vega 64 8GB"]]],
+    ["AMD Radeon Vega 56 8GB", [["vram", 8, "AMD Radeon Vega 56 8GB"]]],
+    ["AMD Vega 64 8GB", [["vram", 8, "AMD Vega 64 8GB"]]],
+    ["AMD Vega 8 2GB", []],
+    ["AMD Vega 8 with 2GB VRAM", [["vram", 2, "2GB VRAM"]]]
+  ]) {
+    assert.deepEqual(
+      extractMemoryCandidates(normalizeSetupText(input)).map((candidate) => [
+        candidate.field,
+        candidate.value,
+        candidate.raw
+      ]),
+      expected,
+      input
+    );
   }
 });
 

@@ -203,11 +203,23 @@ export const GPU_MODEL_PATTERNS = freezePatterns([
     }
   },
   {
+    id: "gpu.amd-radeon-vega-dedicated",
+    field: "gpuModel",
+    vendor: "amd",
+    dedicated: true,
+    regex: /\bAMD[ \t]+Radeon[ \t]+Vega[ \t]+(?<model>56|64)(?![A-Z0-9-])/iu,
+    confidence: "high",
+    specificity: 100,
+    normalize(match) {
+      return `AMD Radeon Vega ${match.groups.model}`;
+    }
+  },
+  {
     id: "gpu.amd-vega",
     field: "gpuModel",
     vendor: "amd",
     dedicated: false,
-    regex: /\bAMD[ \t]+(?:Radeon[ \t]+)?Vega[ \t]+(?<model>[0-9]{1,2})(?![A-Z0-9-])/iu,
+    regex: /\bAMD[ \t]+(?:Radeon[ \t]+)?Vega[ \t]+(?<model>(?!(?:56|64)\b)[0-9]{1,2})(?![A-Z0-9-])/iu,
     confidence: "high",
     specificity: 100,
     normalize(match) {
@@ -415,7 +427,12 @@ export const CAPACITY_AMOUNT_PATTERNS = freezePatterns([
 export const CAPACITY_DISQUALIFIER_PATTERNS = freezePatterns([
   {
     id: "capacity.disqualifier.english",
-    regex: /\b(?:not|less[ \t]+than|more[ \t]+than|under|over|at[ \t]+least|at[ \t]+most|up[ \t]+to|min(?:imum)?|max(?:imum)?|require|required|requires|requiring|need|needs|needed)\b/iu
+    regex: /\b(?:less[ \t]+than|more[ \t]+than|under|over|at[ \t]+least|at[ \t]+most|up[ \t]+to|min(?:imum)?|max(?:imum)?|require|required|requires|requiring|need|needs|needed)\b/iu
+  },
+  {
+    id: "capacity.disqualifier.english-exact-negation",
+    regex: /\bnot\b/iu,
+    requireAmountAdjacency: true
   },
   {
     id: "capacity.disqualifier.chinese",
@@ -423,12 +440,12 @@ export const CAPACITY_DISQUALIFIER_PATTERNS = freezePatterns([
   },
   {
     id: "capacity.disqualifier.english-postposed",
-    regex: /\b(?:or[ \t-]+(?:more|less|greater)|max(?:imum)?)\b/iu,
+    regex: /\b(?:or[ \t-]+(?:more|less|greater)|min(?:imum)?|max(?:imum)?|(?:is[ \t]+)?(?:required|needed))\b/iu,
     allowAfterCapacity: true
   },
   {
     id: "capacity.disqualifier.english-postposed-absence",
-    regex: /\bnot[ \t]+(?:installed|available|present|included)\b/iu,
+    regex: /\b(?:is[ \t]+)?not[ \t]+(?:installed|available|present|included)\b/iu,
     allowAfterCapacity: true
   },
   {
@@ -452,11 +469,11 @@ export const CAPACITY_DISQUALIFIER_PATTERNS = freezePatterns([
 export const DEDICATED_GPU_EVIDENCE_PATTERNS = freezePatterns([
   {
     id: "capacity.dedicated-gpu.explicit",
-    regex: /\b(?:dedicated|discrete)[ \t]+(?:GPU|graphics(?:[ \t]+card)?)\b|独立显卡|獨立顯卡/iu
+    regex: /\b(?:(?:dedicated|discrete|external)[ \t]+(?:GPU|graphics(?:[ \t]+card)?)|eGPU)\b|独立显卡|獨立顯卡/iu
   },
   {
     id: "capacity.dedicated-gpu.vendor",
-    regex: /\b(?:NVIDIA[ \t]+GPU|AMD[ \t]+GPU|GeForce|RTX|Radeon|Intel[ \t]+Arc)\b/iu
+    regex: /\b(?:NVIDIA[ \t]+GPU|AMD[ \t]+GPU|GPU[ \t]*(?::[ \t]*)?(?:NVIDIA|AMD)|GeForce|RTX|Radeon|Intel[ \t]+Arc)\b/iu
   }
 ]);
 
@@ -484,7 +501,7 @@ export const CAPACITY_CLAUSE_PATTERNS = freezePatterns([
   },
   {
     id: "capacity.clause.english-with",
-    regex: /[ \t]+\bwith\b[ \t]+/iu
+    regex: /[ \t]+\bwith\b[ \t]+(?=(?:(?:RAM|VRAM|memory|storage|SSD|HDD|disk|drive|NVIDIA|AMD|Intel|Apple|GeForce|RTX|Radeon|RX|Arc|CPU|GPU)\b|统一内存|統一內存|统一記憶體|統一記憶體|系统内存|系統内存|系統內存|系统記憶體|系統記憶體|显存|顯存|内存|內存|記憶體|存储|存儲|硬盘|硬盤|硬碟|\d{1,5}[ \t-]*(?:TiB|TB|GiB|GB|G)\b[ \t]+(?:(?:RAM|VRAM|memory|storage|SSD|HDD|disk|drive)\b|统一内存|統一內存|统一記憶體|統一記憶體|系统内存|系統内存|系統內存|系统記憶體|系統記憶體|显存|顯存|内存|內存|記憶體|存储|存儲|硬盘|硬盤|硬碟)))/iu
   },
   {
     id: "capacity.clause.symbol-conjunction",
