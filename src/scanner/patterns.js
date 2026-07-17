@@ -497,7 +497,7 @@ export const CAPACITY_CLAUSE_PATTERNS = freezePatterns([
   },
   {
     id: "capacity.clause.english-conjunction",
-    regex: /[ \t]+\b(?:but|and(?![ \t]+(?:above|up)(?![A-Z0-9-])))\b[ \t]+/iu
+    regex: /[ \t]+\b(?:but|and(?![ \t]+(?:above|up)(?![A-Z0-9-])(?:[ \t]*[)）])?[ \t]*(?:$|[,，.。!?！？])))\b[ \t]+/iu
   },
   {
     id: "capacity.clause.english-with",
@@ -505,7 +505,7 @@ export const CAPACITY_CLAUSE_PATTERNS = freezePatterns([
   },
   {
     id: "capacity.clause.symbol-conjunction",
-    regex: /[ \t]*(?:\+|&)[ \t]*/u
+    regex: /[ \t]*(?:\+(?![ \t]*(?:[)）][ \t]*)?(?:$|[,，.。!?！？]))|&)[ \t]*/u
   },
   {
     id: "capacity.clause.chinese-conjunction-long",

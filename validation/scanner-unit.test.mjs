@@ -1759,6 +1759,46 @@ test("classifies attached absence and lower-bound qualifiers across capacity fie
   }
 });
 
+test("treats and bounds as qualifiers only when the complete suffix is terminal", () => {
+  const positives = [
+    ["RAM 32GB and up to 2TB storage", [["ram", 32, "RAM 32GB"]]],
+    ["VRAM 8GiB and above average bandwidth", [["vram", 8, "VRAM 8GiB"]]],
+    ["storage 1TB and up to date encryption", [["storage", 1000, "storage 1TB"]]],
+    ["RAM 32GB and up-to-date firmware", [["ram", 32, "RAM 32GB"]]],
+    ["Memory 2 TiB and above-average load", [["ram", 2048, "Memory 2 TiB"]]],
+    ["RAM 32GB and VRAM 8GB", [["ram", 32, "RAM 32GB"], ["vram", 8, "VRAM 8GB"]]]
+  ];
+  for (const [input, expected] of positives) {
+    const document = normalizeSetupText(input);
+    const candidates = extractCapacityCandidates(document);
+    assert.deepEqual(
+      candidates.map((candidate) => [candidate.field, candidate.value, candidate.raw]),
+      expected,
+      input
+    );
+    candidates.forEach((candidate) => assertCapacityCandidateContract(document, candidate));
+  }
+
+  const terminalBounds = [
+    ["RAM 32GB and above", []],
+    ["RAM 32GB and up", []],
+    ["VRAM 8GiB and above.", []],
+    ["2 TiB Memory and above!", []],
+    ["storage 1TB and up, RAM 32GB", [["ram", 32, "RAM 32GB"]]],
+    ["RAM 32GB and above, VRAM 8GB", [["vram", 8, "VRAM 8GB"]]]
+  ];
+  for (const [input, expected] of terminalBounds) {
+    const document = normalizeSetupText(input);
+    const candidates = extractCapacityCandidates(document);
+    assert.deepEqual(
+      candidates.map((candidate) => [candidate.field, candidate.value, candidate.raw]),
+      expected,
+      input
+    );
+    candidates.forEach((candidate) => assertCapacityCandidateContract(document, candidate));
+  }
+});
+
 test("rejects natural and localized transfer-rate suffixes", () => {
   for (const input of [
     "显存带宽 12GB每秒",

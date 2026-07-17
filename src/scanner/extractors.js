@@ -407,6 +407,7 @@ function hasAttachedDisqualifier(segment, clause, disqualifiers, amount, ownersh
     }
 
     if (match.start >= localEnd && match.pattern.allowAfterCapacity) {
+      if (!localSpanIsInClause(match.start, match.end, clause)) return false;
       const gap = segment.text.slice(localEnd, match.start);
       if (match.pattern.requireAdjacentAfterCapacity && gap.length > 0) return false;
       return /^[ \t:()（）-]*$/u.test(gap);
