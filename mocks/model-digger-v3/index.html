@@ -1,0 +1,2447 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A high-fidelity Model Digger core sample interface exploration.">
+  <meta name="theme-color" content="#314954">
+  <title>Model Digger - Core Sample Interface</title>
+  <link rel="icon" href="../../assets/shovel.svg" type="image/svg+xml">
+  <style>
+    :root {
+      --ink: #17242a;
+      --ink-2: #344850;
+      --ink-3: #52666e;
+      --morandi-950: #233842;
+      --morandi-900: #314954;
+      --morandi-800: #46616c;
+      --morandi-700: #566f79;
+      --morandi-200: #d7e1e4;
+      --morandi-100: #e8eef0;
+      --morandi-50: #f3f6f7;
+      --white: #ffffff;
+      --line: #c7d2d6;
+      --line-strong: #9cabb1;
+      --review: #8a5a17;
+      --review-bg: #fff5df;
+      --verified: #25634f;
+      --verified-bg: #e9f4ef;
+      --danger: #8a3940;
+      --focus: #c36f3e;
+      --glass-dark: rgba(255, 255, 255, 0.11);
+      --glass-light: rgba(239, 244, 245, 0.84);
+      --font-ui: "SF Pro Text", -apple-system, BlinkMacSystemFont, "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
+      --font-display: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
+      --font-mono: "SFMono-Regular", "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+      --ease-out: cubic-bezier(0.25, 1, 0.5, 1);
+      --z-sticky: 20;
+      --z-skip: 40;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      min-width: 320px;
+      margin: 0;
+      background: var(--white);
+      color: var(--ink);
+      font-family: var(--font-ui);
+      font-size: 15px;
+      line-height: 1.45;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button,
+    summary,
+    label {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button,
+    summary {
+      cursor: pointer;
+    }
+
+    button:disabled,
+    input:disabled,
+    select:disabled {
+      cursor: not-allowed;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin-top: 0;
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin-bottom: 0;
+      font-family: var(--font-display);
+      letter-spacing: 0;
+      line-height: 1.12;
+      text-wrap: balance;
+    }
+
+    p {
+      text-wrap: pretty;
+    }
+
+    .sr-only {
+      position: absolute !important;
+      width: 1px !important;
+      height: 1px !important;
+      padding: 0 !important;
+      margin: -1px !important;
+      overflow: hidden !important;
+      clip: rect(0, 0, 0, 0) !important;
+      white-space: nowrap !important;
+      border: 0 !important;
+    }
+
+    .skip-link {
+      position: fixed;
+      top: 10px;
+      left: 12px;
+      z-index: var(--z-skip);
+      padding: 10px 14px;
+      border: 2px solid var(--ink);
+      border-radius: 6px;
+      background: var(--white);
+      color: var(--ink);
+      transform: translateY(-150%);
+    }
+
+    .skip-link:focus {
+      transform: translateY(0);
+    }
+
+    :focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 3px;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: var(--z-sticky);
+      min-height: 62px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 10px clamp(14px, 2.7vw, 38px);
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.94);
+      -webkit-backdrop-filter: blur(20px) saturate(110%);
+      backdrop-filter: blur(20px) saturate(110%);
+    }
+
+    .brand {
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      gap: 11px;
+    }
+
+    .brand-mark {
+      width: 36px;
+      height: 36px;
+      flex: 0 0 36px;
+      display: grid;
+      place-items: center;
+      border-radius: 6px;
+      background: var(--morandi-900);
+    }
+
+    .brand-mark img {
+      width: 21px;
+      height: 21px;
+      filter: brightness(0) invert(1);
+    }
+
+    .brand-copy {
+      min-width: 0;
+      display: grid;
+      gap: 1px;
+    }
+
+    .brand-copy strong {
+      font-family: var(--font-display);
+      font-size: 17px;
+      font-weight: 650;
+    }
+
+    .brand-copy span {
+      color: var(--ink-3);
+      font-size: 12px;
+      overflow-wrap: anywhere;
+    }
+
+    .top-tools {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .privacy {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      color: var(--ink-2);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .privacy svg {
+      width: 16px;
+      height: 16px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .language-switch {
+      display: inline-flex;
+      padding: 2px;
+      border: 1px solid var(--line-strong);
+      border-radius: 7px;
+      background: var(--white);
+    }
+
+    .language-switch button {
+      min-width: 42px;
+      min-height: 32px;
+      padding: 4px 8px;
+      border: 0;
+      border-radius: 5px;
+      background: transparent;
+      color: var(--ink-3);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .language-switch button[aria-pressed="true"] {
+      background: var(--morandi-900);
+      color: var(--white);
+    }
+
+    main {
+      padding: 20px clamp(12px, 2.6vw, 38px) 36px;
+      background: var(--morandi-50);
+    }
+
+    .flowbar,
+    .instrument {
+      width: min(1500px, 100%);
+      margin-inline: auto;
+    }
+
+    .flowbar {
+      min-width: 0;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 12px;
+      padding: 0 2px;
+    }
+
+    .flow-title {
+      color: var(--ink-3);
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    .stage-list {
+      min-width: 0;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      padding: 0;
+      margin: 0;
+      list-style: none;
+    }
+
+    .stage-list li {
+      position: relative;
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      color: var(--ink-3);
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    .stage-list li:not(:last-child)::after {
+      content: "";
+      height: 1px;
+      flex: 1 1 auto;
+      margin-right: 8px;
+      background: var(--line);
+    }
+
+    .stage-list .stage-dot {
+      width: 20px;
+      height: 20px;
+      flex: 0 0 20px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line-strong);
+      border-radius: 50%;
+      background: var(--white);
+      color: var(--ink-3);
+      font-family: var(--font-mono);
+      font-size: 9px;
+    }
+
+    .stage-list li.is-complete .stage-dot {
+      border-color: var(--morandi-800);
+      background: var(--morandi-800);
+      color: var(--white);
+    }
+
+    .stage-list li.is-active {
+      color: var(--ink);
+    }
+
+    .stage-list li.is-active .stage-dot {
+      border-color: var(--focus);
+      color: var(--ink);
+      box-shadow: 0 0 0 3px rgba(195, 111, 62, 0.15);
+    }
+
+    .flow-status {
+      min-width: 118px;
+      color: var(--verified);
+      font-size: 12px;
+      font-weight: 700;
+      text-align: right;
+    }
+
+    .instrument {
+      min-width: 0;
+      display: grid;
+      grid-template-columns: minmax(330px, 0.92fr) minmax(400px, 1.12fr) minmax(360px, 1fr);
+      overflow: hidden;
+      border: 1px solid var(--line-strong);
+      border-radius: 10px;
+      background: var(--white);
+    }
+
+    .sample-zone,
+    .evidence-zone,
+    .match-zone {
+      min-width: 0;
+      min-height: 790px;
+    }
+
+    .sample-zone {
+      display: flex;
+      flex-direction: column;
+      padding: clamp(22px, 2.5vw, 34px);
+      background: var(--morandi-900);
+      color: var(--white);
+    }
+
+    .zone-index {
+      margin-bottom: 16px;
+      color: rgba(255, 255, 255, 0.64);
+      font-family: var(--font-mono);
+      font-size: 11px;
+    }
+
+    .zone-heading {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .zone-heading h1 {
+      max-width: 11ch;
+      font-size: clamp(31px, 3.1vw, 48px);
+      font-weight: 650;
+    }
+
+    .sample-number {
+      flex: 0 0 auto;
+      padding-top: 5px;
+      color: rgba(255, 255, 255, 0.68);
+      font-family: var(--font-mono);
+      font-size: 11px;
+    }
+
+    .sample-subtitle {
+      max-width: 48ch;
+      margin: 12px 0 0;
+      color: rgba(255, 255, 255, 0.76);
+      font-size: 14px;
+    }
+
+    .setup-label {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 24px;
+      color: rgba(255, 255, 255, 0.86);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .setup-label span:last-child {
+      color: rgba(255, 255, 255, 0.52);
+      font-family: var(--font-mono);
+      font-weight: 500;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 278px;
+      margin-top: 8px;
+      padding: 15px 16px;
+      resize: vertical;
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      border-radius: 7px;
+      background: #f9fbfb;
+      color: #17242a;
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      line-height: 1.65;
+      caret-color: var(--focus);
+    }
+
+    textarea::placeholder,
+    input::placeholder {
+      color: #596a71;
+      opacity: 1;
+    }
+
+    .scanner-tray {
+      position: relative;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 13px;
+      align-items: center;
+      margin-top: auto;
+      padding: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      border-radius: 9px;
+      background: var(--glass-dark);
+      -webkit-backdrop-filter: blur(18px) saturate(115%);
+      backdrop-filter: blur(18px) saturate(115%);
+    }
+
+    .scan-button {
+      width: 54px;
+      height: 54px;
+      display: grid;
+      place-items: center;
+      padding: 0;
+      border: 0;
+      border-radius: 8px;
+      background: var(--white);
+      color: var(--morandi-950);
+    }
+
+    .scan-button:hover:not(:disabled) {
+      background: #eef3f5;
+    }
+
+    .scan-button img {
+      width: 25px;
+      height: 25px;
+    }
+
+    .scan-button.is-scanning img {
+      animation: scan-pulse 520ms var(--ease-out) infinite alternate;
+    }
+
+    @keyframes scan-pulse {
+      from { transform: translateY(2px); opacity: 0.65; }
+      to { transform: translateY(-2px); opacity: 1; }
+    }
+
+    .scan-copy {
+      min-width: 0;
+    }
+
+    .scan-copy strong,
+    .scan-copy span {
+      display: block;
+      overflow-wrap: anywhere;
+    }
+
+    .scan-copy strong {
+      font-size: 14px;
+    }
+
+    .scan-copy span {
+      margin-top: 3px;
+      color: rgba(255, 255, 255, 0.67);
+      font-size: 11.5px;
+    }
+
+    .lens-track {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 4px;
+      padding-top: 2px;
+    }
+
+    .lens-track span {
+      height: 3px;
+      border-radius: 2px;
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    .lens-track span.is-complete,
+    .lens-track span.is-active {
+      background: rgba(255, 255, 255, 0.88);
+    }
+
+    .local-note {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin: 14px 0 0;
+      color: rgba(255, 255, 255, 0.74);
+      font-size: 11.5px;
+    }
+
+    .local-note svg {
+      width: 15px;
+      height: 15px;
+      flex: 0 0 15px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .evidence-zone {
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--line);
+      background: var(--white);
+    }
+
+    .zone-head,
+    .match-head {
+      padding: 25px 26px 19px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .zone-title-line,
+    .match-title-line {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .zone-title-line h2,
+    .match-title-line h2 {
+      font-size: 23px;
+      font-weight: 650;
+    }
+
+    .zone-title-line p,
+    .match-title-line p {
+      max-width: 54ch;
+      margin: 6px 0 0;
+      color: var(--ink-3);
+      font-size: 13px;
+    }
+
+    .count-state {
+      flex: 0 0 auto;
+      padding-top: 4px;
+      color: var(--review);
+      font-size: 11.5px;
+      font-weight: 750;
+      text-align: right;
+    }
+
+    .sample-stack {
+      position: relative;
+      padding: 0 26px;
+    }
+
+    .sample-stack::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 37px;
+      width: 1px;
+      background: var(--line);
+    }
+
+    .evidence-row {
+      position: relative;
+      width: 100%;
+      min-width: 0;
+      display: grid;
+      grid-template-columns: 24px minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      padding: 11px 0;
+      border: 0;
+      border-bottom: 1px solid var(--morandi-100);
+      background: var(--white);
+      color: var(--ink);
+      text-align: left;
+    }
+
+    .evidence-row:hover,
+    .evidence-row[aria-pressed="true"] {
+      background: var(--morandi-50);
+    }
+
+    .depth-mark {
+      position: relative;
+      z-index: 1;
+      width: 24px;
+      height: 24px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line-strong);
+      border-radius: 50%;
+      background: var(--white);
+      color: var(--ink-3);
+      font-family: var(--font-mono);
+      font-size: 8.5px;
+    }
+
+    .evidence-row.is-review .depth-mark {
+      border-color: var(--review);
+      background: var(--review-bg);
+      color: var(--review);
+    }
+
+    .evidence-row.is-verified .depth-mark,
+    .evidence-row.is-manual .depth-mark {
+      border-color: var(--verified);
+      color: var(--verified);
+    }
+
+    .evidence-value {
+      min-width: 0;
+      display: grid;
+      gap: 2px;
+    }
+
+    .evidence-value span {
+      color: var(--ink-3);
+      font-size: 10.5px;
+      font-weight: 700;
+    }
+
+    .evidence-value strong {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 650;
+      overflow-wrap: anywhere;
+    }
+
+    .row-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      color: var(--verified);
+      font-size: 10.5px;
+      font-weight: 750;
+      white-space: nowrap;
+    }
+
+    .row-status svg {
+      width: 13px;
+      height: 13px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .is-review .row-status {
+      color: var(--review);
+    }
+
+    .inspector {
+      margin: 15px 26px 0;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--glass-light);
+      -webkit-backdrop-filter: blur(16px) saturate(105%);
+      backdrop-filter: blur(16px) saturate(105%);
+    }
+
+    .inspector-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .inspector-head strong {
+      font-size: 13px;
+    }
+
+    .inspector-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      color: var(--review);
+      font-size: 10.5px;
+      font-weight: 750;
+    }
+
+    .inspector-status svg {
+      width: 14px;
+      height: 14px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .source-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .source-choice {
+      min-width: 0;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 9px;
+      align-items: center;
+      min-height: 44px;
+      padding: 8px 9px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--white);
+      color: var(--ink);
+      text-align: left;
+    }
+
+    .source-choice:hover {
+      border-color: var(--morandi-700);
+    }
+
+    .source-choice.is-selected {
+      border-color: var(--verified);
+      background: var(--verified-bg);
+    }
+
+    .source-choice .radio-dot {
+      width: 14px;
+      height: 14px;
+      border: 1px solid var(--line-strong);
+      border-radius: 50%;
+      background: var(--white);
+    }
+
+    .source-choice.is-selected .radio-dot {
+      border: 4px solid var(--verified);
+    }
+
+    .source-choice code {
+      min-width: 0;
+      color: var(--ink-2);
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+
+    .source-choice b {
+      color: var(--ink);
+      font-family: var(--font-mono);
+      font-size: 11px;
+    }
+
+    .conflict-note {
+      margin: 10px 0 0;
+      color: var(--ink-2);
+      font-size: 11.5px;
+    }
+
+    .evidence-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: auto 26px 0;
+      padding: 18px 0 22px;
+    }
+
+    .button {
+      min-height: 42px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 8px 13px;
+      border: 1px solid transparent;
+      border-radius: 7px;
+      font-weight: 720;
+    }
+
+    .button svg {
+      width: 17px;
+      height: 17px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .button-primary {
+      flex: 1 1 190px;
+      background: var(--morandi-900);
+      color: var(--white);
+    }
+
+    .button-primary:hover:not(:disabled) {
+      background: var(--morandi-950);
+    }
+
+    .button-primary:disabled {
+      background: #b8c3c7;
+      color: #43555d;
+      opacity: 0.72;
+    }
+
+    .button-secondary {
+      flex: 0 1 auto;
+      border-color: var(--line-strong);
+      background: var(--white);
+      color: var(--ink);
+    }
+
+    .button-secondary:hover {
+      border-color: var(--morandi-800);
+      background: var(--morandi-50);
+    }
+
+    .manual-editor {
+      border-top: 1px solid var(--line);
+      background: var(--morandi-50);
+    }
+
+    .manual-editor[hidden] {
+      display: none;
+    }
+
+    .manual-inner {
+      padding: 18px 26px 24px;
+    }
+
+    .manual-title {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    .manual-title strong {
+      font-size: 14px;
+    }
+
+    .manual-title span {
+      color: var(--ink-3);
+      font-size: 11px;
+    }
+
+    .manual-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 11px;
+    }
+
+    .manual-grid label {
+      min-width: 0;
+      display: grid;
+      gap: 5px;
+      color: var(--ink-2);
+      font-size: 10.5px;
+      font-weight: 700;
+    }
+
+    .manual-grid .wide {
+      grid-column: 1 / -1;
+    }
+
+    input,
+    select {
+      width: 100%;
+      min-width: 0;
+      min-height: 40px;
+      padding: 7px 9px;
+      border: 1px solid var(--line-strong);
+      border-radius: 6px;
+      background: var(--white);
+      color: var(--ink);
+    }
+
+    .manual-grid input {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+    }
+
+    .match-zone {
+      display: flex;
+      flex-direction: column;
+      background: var(--morandi-50);
+    }
+
+    .match-head {
+      background: var(--white);
+    }
+
+    .profile-state {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding-top: 3px;
+      color: var(--verified);
+      font-size: 10.5px;
+      font-weight: 750;
+      text-align: right;
+    }
+
+    .profile-state svg {
+      width: 14px;
+      height: 14px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .match-controls {
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--line);
+      background: var(--white);
+    }
+
+    fieldset {
+      min-width: 0;
+      padding: 0;
+      margin: 0;
+      border: 0;
+    }
+
+    fieldset + fieldset {
+      margin-top: 15px;
+    }
+
+    legend {
+      padding: 0;
+      margin-bottom: 7px;
+      color: var(--ink-2);
+      font-size: 11px;
+      font-weight: 750;
+    }
+
+    .task-control {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      border: 1px solid var(--line-strong);
+      border-radius: 7px;
+      background: var(--white);
+    }
+
+    .task-option,
+    .deployment-option {
+      position: relative;
+      min-width: 0;
+    }
+
+    .task-option:not(:last-child),
+    .deployment-option:not(:last-child) {
+      border-right: 1px solid var(--line);
+    }
+
+    .task-option input,
+    .deployment-option input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .task-option span {
+      min-height: 55px;
+      display: grid;
+      place-items: center;
+      padding: 6px 3px;
+      color: var(--ink-3);
+      font-size: 9.5px;
+      font-weight: 720;
+      line-height: 1.15;
+      text-align: center;
+      overflow-wrap: anywhere;
+    }
+
+    .task-option input:checked + span,
+    .deployment-option input:checked + span {
+      background: var(--morandi-900);
+      color: var(--white);
+    }
+
+    .task-option input:focus-visible + span,
+    .deployment-option input:focus-visible + span {
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+    }
+
+    .deployment-control {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      border: 1px solid var(--line-strong);
+      border-radius: 7px;
+      background: var(--white);
+    }
+
+    .deployment-option span {
+      min-height: 38px;
+      display: grid;
+      place-items: center;
+      padding: 6px 8px;
+      color: var(--ink-3);
+      font-size: 10px;
+      font-weight: 720;
+      text-align: center;
+      overflow-wrap: anywhere;
+    }
+
+    .recommendation {
+      min-width: 0;
+      display: flex;
+      flex: 1 1 auto;
+      flex-direction: column;
+      padding: 22px;
+    }
+
+    .recommendation.is-locked {
+      justify-content: center;
+    }
+
+    .locked-state {
+      display: grid;
+      justify-items: start;
+      gap: 8px;
+      padding: 22px 0;
+    }
+
+    .locked-state svg {
+      width: 28px;
+      height: 28px;
+      fill: none;
+      stroke: var(--review);
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .locked-state strong {
+      font-size: 18px;
+    }
+
+    .locked-state p {
+      max-width: 44ch;
+      margin: 0;
+      color: var(--ink-3);
+    }
+
+    .try-label {
+      color: var(--morandi-700);
+      font-size: 11px;
+      font-weight: 780;
+    }
+
+    .model-name {
+      margin-top: 6px;
+      font-size: clamp(28px, 3vw, 42px);
+      font-weight: 660;
+      overflow-wrap: anywhere;
+    }
+
+    .starter-line {
+      margin: 9px 0 0;
+      color: var(--morandi-800);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 650;
+      overflow-wrap: anywhere;
+    }
+
+    .fit-readout {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 12px;
+      align-items: center;
+      margin-top: 17px;
+      padding: 13px 0;
+      border-block: 1px solid var(--line);
+    }
+
+    .fit-gauge {
+      width: 58px;
+      height: 58px;
+      display: grid;
+      place-items: center;
+      border: 5px solid var(--morandi-200);
+      border-top-color: var(--verified);
+      border-right-color: var(--verified);
+      border-radius: 50%;
+      color: var(--verified);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .fit-copy strong,
+    .fit-copy span {
+      display: block;
+    }
+
+    .fit-copy strong {
+      font-size: 13px;
+    }
+
+    .fit-copy span {
+      margin-top: 3px;
+      color: var(--ink-3);
+      font-size: 11.5px;
+    }
+
+    .guidance-list {
+      display: grid;
+      gap: 0;
+      margin: 0;
+    }
+
+    .guidance-item {
+      display: grid;
+      grid-template-columns: 82px minmax(0, 1fr);
+      gap: 12px;
+      padding: 11px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .guidance-item dt {
+      color: var(--ink-3);
+      font-size: 10.5px;
+      font-weight: 750;
+    }
+
+    .guidance-item dd {
+      min-width: 0;
+      margin: 0;
+      color: var(--ink-2);
+      font-size: 11.5px;
+      overflow-wrap: anywhere;
+    }
+
+    .guidance-item dd.mono {
+      font-family: var(--font-mono);
+      font-size: 11px;
+    }
+
+    .hosted-fallback {
+      margin-top: auto;
+      padding: 14px 0 0;
+    }
+
+    .hosted-fallback[hidden] {
+      display: none;
+    }
+
+    .hosted-rule {
+      width: 32px;
+      height: 2px;
+      margin-bottom: 10px;
+      background: var(--line-strong);
+    }
+
+    .hosted-fallback strong {
+      display: block;
+      color: var(--ink-2);
+      font-size: 11px;
+    }
+
+    .hosted-fallback p {
+      margin: 5px 0 0;
+      color: var(--ink-3);
+      font-size: 11.5px;
+    }
+
+    .mock-note {
+      width: min(1500px, 100%);
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      margin: 12px auto 0;
+      color: var(--ink-3);
+      font-size: 11px;
+    }
+
+    .mock-note span:last-child {
+      text-align: right;
+    }
+
+    @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+      .topbar {
+        background: var(--white);
+      }
+
+      .scanner-tray {
+        background: #3d5661;
+      }
+
+      .inspector {
+        background: var(--morandi-100);
+      }
+    }
+
+    @media (max-width: 1220px) {
+      .instrument {
+        grid-template-columns: minmax(310px, 0.85fr) minmax(380px, 1.15fr);
+      }
+
+      .match-zone {
+        grid-column: 1 / -1;
+        min-height: 0;
+        border-top: 1px solid var(--line);
+      }
+
+      .match-controls {
+        display: grid;
+        grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+        gap: 18px;
+      }
+
+      .match-controls fieldset + fieldset {
+        margin-top: 0;
+      }
+
+      .recommendation {
+        display: grid;
+        grid-template-columns: minmax(280px, 0.9fr) minmax(360px, 1.1fr);
+        gap: 0 28px;
+      }
+
+      .recommendation .recommendation-main,
+      .recommendation .guidance-list {
+        min-width: 0;
+      }
+
+      .hosted-fallback {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (max-width: 820px) {
+      .topbar {
+        position: static;
+      }
+
+      .privacy {
+        display: none;
+      }
+
+      main {
+        padding-inline: 0;
+        padding-top: 12px;
+      }
+
+      .flowbar {
+        grid-template-columns: 1fr auto;
+        padding-inline: 14px;
+      }
+
+      .flow-title {
+        display: none;
+      }
+
+      .stage-list {
+        grid-column: 1 / -1;
+        grid-row: 2;
+      }
+
+      .instrument {
+        grid-template-columns: 1fr;
+        border-inline: 0;
+        border-radius: 0;
+      }
+
+      .sample-zone,
+      .evidence-zone,
+      .match-zone {
+        min-height: 0;
+      }
+
+      .sample-zone {
+        min-height: 650px;
+      }
+
+      .evidence-zone {
+        border-top: 1px solid var(--line);
+        border-right: 0;
+      }
+
+      .match-zone {
+        grid-column: auto;
+      }
+
+      .match-controls,
+      .recommendation {
+        display: block;
+      }
+
+      .match-controls fieldset + fieldset {
+        margin-top: 15px;
+      }
+
+      .hosted-fallback {
+        margin-top: 20px;
+      }
+
+      .mock-note {
+        padding-inline: 14px;
+      }
+    }
+
+    @media (max-width: 520px) {
+      body {
+        font-size: 15px;
+      }
+
+      .topbar {
+        min-height: 58px;
+        padding: 9px 12px;
+      }
+
+      .brand-copy span {
+        display: none;
+      }
+
+      .brand-copy strong {
+        font-size: 16px;
+      }
+
+      .language-switch button {
+        min-width: 39px;
+        min-height: 34px;
+      }
+
+      .flowbar {
+        gap: 8px;
+      }
+
+      .flow-status {
+        min-width: 0;
+        font-size: 10.5px;
+      }
+
+      .stage-list li {
+        gap: 4px;
+        font-size: 10px;
+      }
+
+      .stage-list li:not(:last-child)::after {
+        margin-right: 4px;
+      }
+
+      .stage-list .stage-dot {
+        width: 18px;
+        height: 18px;
+        flex-basis: 18px;
+        font-size: 8px;
+      }
+
+      .sample-zone {
+        min-height: 620px;
+        padding: 22px 16px;
+      }
+
+      .zone-heading h1 {
+        max-width: 12ch;
+        font-size: 34px;
+      }
+
+      textarea {
+        min-height: 260px;
+        font-size: 12px;
+      }
+
+      .scanner-tray {
+        grid-template-columns: 48px minmax(0, 1fr);
+      }
+
+      .scan-button {
+        width: 48px;
+        height: 48px;
+      }
+
+      .zone-head,
+      .match-head {
+        padding: 21px 16px 16px;
+      }
+
+      .zone-title-line h2,
+      .match-title-line h2 {
+        font-size: 21px;
+      }
+
+      .sample-stack {
+        padding-inline: 16px;
+      }
+
+      .sample-stack::before {
+        left: 27px;
+      }
+
+      .evidence-row {
+        grid-template-columns: 22px minmax(0, 1fr);
+        gap: 9px;
+      }
+
+      .depth-mark {
+        width: 22px;
+        height: 22px;
+      }
+
+      .row-status {
+        grid-column: 2;
+        justify-self: start;
+        white-space: normal;
+      }
+
+      .inspector {
+        margin-inline: 16px;
+        padding: 14px;
+      }
+
+      .source-choice {
+        grid-template-columns: auto minmax(0, 1fr);
+      }
+
+      .source-choice b {
+        grid-column: 2;
+      }
+
+      .evidence-actions {
+        margin-inline: 16px;
+      }
+
+      .button-primary,
+      .button-secondary {
+        flex: 1 1 100%;
+      }
+
+      .manual-inner {
+        padding-inline: 16px;
+      }
+
+      .manual-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .manual-grid .wide {
+        grid-column: auto;
+      }
+
+      .match-controls,
+      .recommendation {
+        padding: 17px 16px;
+      }
+
+      .task-control {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        border: 0;
+        gap: 6px;
+        background: transparent;
+      }
+
+      .task-option,
+      .task-option:not(:last-child) {
+        border: 1px solid var(--line-strong);
+        border-radius: 6px;
+        background: var(--white);
+      }
+
+      .task-option:last-child {
+        grid-column: 1 / -1;
+      }
+
+      .task-option span {
+        min-height: 43px;
+        padding: 7px 8px;
+        font-size: 10.5px;
+      }
+
+      .deployment-control {
+        grid-template-columns: 1fr;
+        border: 0;
+        gap: 6px;
+        background: transparent;
+      }
+
+      .deployment-option,
+      .deployment-option:not(:last-child) {
+        border: 1px solid var(--line-strong);
+        border-radius: 6px;
+        background: var(--white);
+      }
+
+      .deployment-option span {
+        min-height: 40px;
+      }
+
+      .model-name {
+        font-size: 31px;
+      }
+
+      .guidance-item {
+        grid-template-columns: 1fr;
+        gap: 4px;
+      }
+
+      .mock-note {
+        flex-direction: column;
+        padding-bottom: 4px;
+      }
+
+      .mock-note span:last-child {
+        text-align: left;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html {
+        scroll-behavior: auto;
+      }
+
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+
+    @media (forced-colors: active) {
+      .sample-zone,
+      .scanner-tray,
+      .inspector,
+      .match-zone,
+      .manual-editor,
+      .task-option input:checked + span,
+      .deployment-option input:checked + span {
+        background: Canvas;
+        color: CanvasText;
+        border-color: CanvasText;
+      }
+
+      .scan-button,
+      .button,
+      .language-switch,
+      .source-choice,
+      .depth-mark {
+        forced-color-adjust: auto;
+        border-color: ButtonText;
+      }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#mainContent" data-i18n="skip">Skip to the core sample</a>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"><img src="../../assets/shovel.svg" alt=""></span>
+      <div class="brand-copy">
+        <strong>Model Digger</strong>
+        <span data-i18n="tagline">Local hardware evidence -> concrete open-model starters</span>
+      </div>
+    </div>
+    <div class="top-tools">
+      <span class="privacy">
+        <svg aria-hidden="true" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+        <span data-i18n="privacy">Input stays in this browser</span>
+      </span>
+      <div class="language-switch" role="group" data-i18n-aria="languageLabel" aria-label="Language">
+        <button type="button" data-language="en" aria-pressed="true">EN</button>
+        <button type="button" data-language="zh" aria-pressed="false">中文</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="mainContent">
+    <div class="flowbar" data-i18n-aria="flowLabel" aria-label="Scan progress">
+      <span class="flow-title" data-i18n="workflow">Local scan workflow</span>
+      <ol class="stage-list" id="stageList">
+        <li data-stage="0"><span class="stage-dot">01</span><span data-i18n="stageInput">Input</span></li>
+        <li data-stage="1"><span class="stage-dot">02</span><span data-i18n="stageExtract">Extract</span></li>
+        <li data-stage="2"><span class="stage-dot">03</span><span data-i18n="stageVerify">Verify</span></li>
+        <li data-stage="3"><span class="stage-dot">04</span><span data-i18n="stageMatch">Match</span></li>
+      </ol>
+      <span class="flow-status" id="flowStatus">Profile applied</span>
+    </div>
+
+    <section class="instrument" data-i18n-aria="workspaceLabel" aria-label="Model Digger core sample workspace">
+      <section class="sample-zone" aria-labelledby="sampleTitle">
+        <div class="zone-index" data-i18n="rawSample">RAW SAMPLE / LOCAL</div>
+        <div class="zone-heading">
+          <h1 id="sampleTitle" data-i18n="sampleTitle">Your machine, as evidence.</h1>
+          <span class="sample-number">CS-014</span>
+        </div>
+        <p class="sample-subtitle" data-i18n="sampleSubtitle">Paste a system report, listing, or notes. Exact strings stay visible through review.</p>
+
+        <label class="setup-label" for="setupText">
+          <span data-i18n="pasteLabel">Computer specifications</span>
+          <span id="charCount">253 / 20,000</span>
+        </label>
+        <textarea id="setupText" maxlength="20000" spellcheck="false"></textarea>
+
+        <div class="scanner-tray" data-i18n-aria="scannerTrayLabel" aria-label="Local scanner tray">
+          <button class="scan-button" id="scanButton" type="button" title="Scan setup" aria-label="Scan setup">
+            <img src="../../assets/shovel.svg" alt="" aria-hidden="true">
+          </button>
+          <div class="scan-copy">
+            <strong id="scanTitle" data-i18n="scanSetup">Scan setup</strong>
+            <span id="scanDetail" data-i18n="scanReady">Ready to re-extract this sample</span>
+          </div>
+          <div class="lens-track" id="lensTrack" aria-hidden="true">
+            <span></span><span></span><span></span><span></span>
+          </div>
+        </div>
+        <p class="local-note">
+          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-8 8.8C7.5 20.5 4 18 4 13V5l8-3 8 3z"></path><path d="m9 12 2 2 4-4"></path></svg>
+          <span data-i18n="privacyLong">Deterministic browser rules. No upload, account, API key, or download.</span>
+        </p>
+      </section>
+
+      <section class="evidence-zone" aria-labelledby="evidenceTitle">
+        <header class="zone-head">
+          <div class="zone-title-line">
+            <div>
+              <h2 id="evidenceTitle" data-i18n="evidenceTitle">Detected setup</h2>
+              <p data-i18n="evidenceSubtitle">Select a layer to inspect its exact source.</p>
+            </div>
+            <span class="count-state" id="countState">8 fields / 1 reviewed</span>
+          </div>
+        </header>
+
+        <div class="sample-stack" id="evidenceList" data-i18n-aria="evidenceListLabel" aria-label="Detected hardware evidence"></div>
+
+        <section class="inspector" id="inspector" aria-labelledby="inspectorTitle"></section>
+
+        <div class="evidence-actions">
+          <button class="button button-primary" id="applyButton" type="button">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"></path></svg>
+            <span data-i18n="apply">Apply detected setup</span>
+          </button>
+          <button class="button button-secondary" id="manualButton" type="button" aria-expanded="false" aria-controls="manualEditor">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>
+            <span data-i18n="editExact">Edit exact hardware</span>
+          </button>
+        </div>
+
+        <section class="manual-editor" id="manualEditor" hidden aria-labelledby="manualTitle">
+          <div class="manual-inner">
+            <div class="manual-title">
+              <strong id="manualTitle" data-i18n="manualTitle">Exact hardware editor</strong>
+              <span data-i18n="manualState">Edits require re-apply</span>
+            </div>
+            <div class="manual-grid">
+              <label><span data-i18n="os">Operating system</span>
+                <select id="fieldOs">
+                  <option value="Windows 11 Pro">Windows 11 Pro</option>
+                  <option value="macOS 15">macOS 15</option>
+                  <option value="Ubuntu 24.04">Ubuntu 24.04</option>
+                </select>
+              </label>
+              <label><span data-i18n="device">Device</span>
+                <select id="fieldDevice">
+                  <option value="Desktop workstation">Desktop workstation</option>
+                  <option value="Laptop">Laptop</option>
+                  <option value="Server">Server</option>
+                </select>
+              </label>
+              <label class="wide"><span data-i18n="cpu">CPU model</span>
+                <input id="fieldCpu" value="AMD Ryzen 7 7800X3D">
+              </label>
+              <label><span data-i18n="ram">RAM (GB)</span>
+                <input id="fieldRam" type="number" min="2" max="512" value="32">
+              </label>
+              <label><span data-i18n="gpuVendor">GPU vendor</span>
+                <select id="fieldGpuVendor">
+                  <option value="NVIDIA">NVIDIA</option>
+                  <option value="AMD">AMD</option>
+                  <option value="Intel">Intel</option>
+                  <option value="Apple">Apple</option>
+                  <option value="None">None</option>
+                </select>
+              </label>
+              <label class="wide"><span data-i18n="gpu">GPU model</span>
+                <input id="fieldGpu" value="NVIDIA GeForce RTX 4070 SUPER">
+              </label>
+              <label><span data-i18n="vram">VRAM (GB)</span>
+                <input id="fieldVram" type="number" min="0" max="128" value="12">
+              </label>
+              <label><span data-i18n="storage">Free storage (GB)</span>
+                <input id="fieldStorage" type="number" min="1" max="4096" value="184">
+              </label>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section class="match-zone" aria-labelledby="matchTitle">
+        <header class="match-head">
+          <div class="match-title-line">
+            <div>
+              <h2 id="matchTitle" data-i18n="matchTitle">Open-model starter</h2>
+              <p data-i18n="matchSubtitle">Specific, local-first, and bounded by the reviewed setup.</p>
+            </div>
+            <span class="profile-state" id="profileState">
+              <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"></path></svg>
+              <span data-i18n="applied">Applied</span>
+            </span>
+          </div>
+        </header>
+
+        <div class="match-controls">
+          <fieldset>
+            <legend data-i18n="task">Task</legend>
+            <div class="task-control">
+              <label class="task-option"><input type="radio" name="task" value="chat"><span data-i18n="taskChat">Chat / writing</span></label>
+              <label class="task-option"><input type="radio" name="task" value="coding"><span data-i18n="taskCoding">Coding</span></label>
+              <label class="task-option"><input type="radio" name="task" value="image" checked><span data-i18n="taskImage">Image generation</span></label>
+              <label class="task-option"><input type="radio" name="task" value="speech"><span data-i18n="taskSpeech">Speech to text</span></label>
+              <label class="task-option"><input type="radio" name="task" value="embeddings"><span data-i18n="taskEmbeddings">Embeddings / search</span></label>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend data-i18n="deployment">Deployment boundary</legend>
+            <div class="deployment-control">
+              <label class="deployment-option"><input type="radio" name="deployment" value="local-only"><span data-i18n="localOnly">Local only</span></label>
+              <label class="deployment-option"><input type="radio" name="deployment" value="local-first" checked><span data-i18n="localFirst">Local first</span></label>
+              <label class="deployment-option"><input type="radio" name="deployment" value="cloud-ok"><span data-i18n="cloudOk">Cloud acceptable</span></label>
+            </div>
+          </fieldset>
+        </div>
+
+        <section class="recommendation" id="recommendation" aria-live="polite"></section>
+      </section>
+    </section>
+
+    <p class="mock-note">
+      <span data-i18n="mockOnly">Interactive design mock - no live parsing, model download, or backend.</span>
+      <span data-i18n="historyNote">Reviewed conflicts remain visible as evidence history.</span>
+    </p>
+    <div class="sr-only" id="statusRegion" role="status" aria-live="polite" aria-atomic="true"></div>
+  </main>
+
+  <script>
+    const samples = {
+      en: `OS: Windows 11 Pro
+Device: desktop workstation
+CPU: AMD Ryzen 7 7800X3D
+GPU: NVIDIA GeForce RTX 4070 SUPER - 12GB VRAM
+Memory: 32GB DDR5
+System drive: 1TB total, 184GB free
+Earlier utility report: 8GB VRAM
+Use: local image generation`,
+      zh: `操作系统：Windows 11 专业版
+设备：台式工作站
+CPU：AMD Ryzen 7 7800X3D
+GPU：NVIDIA GeForce RTX 4070 SUPER - 12GB 显存
+内存：32GB DDR5
+系统盘：总计 1TB，可用 184GB
+旧版工具记录：8GB 显存
+用途：本地图像生成`
+    };
+
+    const copy = {
+      en: {
+        documentTitle: "Model Digger - Core Sample Interface",
+        skip: "Skip to the core sample",
+        tagline: "Local hardware evidence -> concrete open-model starters",
+        privacy: "Input stays in this browser",
+        privacyLong: "Deterministic browser rules. No upload, account, API key, or download.",
+        languageLabel: "Language",
+        flowLabel: "Scan progress",
+        workspaceLabel: "Model Digger core sample workspace",
+        scannerTrayLabel: "Local scanner tray",
+        evidenceListLabel: "Detected hardware evidence",
+        workflow: "Local scan workflow",
+        stageInput: "Input",
+        stageExtract: "Extract",
+        stageVerify: "Verify",
+        stageMatch: "Match",
+        statusApplied: "Profile applied",
+        statusReview: "1 field needs review",
+        statusScanning: "Scanning locally",
+        rawSample: "RAW SAMPLE / LOCAL",
+        sampleTitle: "Your machine, as evidence.",
+        sampleSubtitle: "Paste a system report, listing, or notes. Exact strings stay visible through review.",
+        pasteLabel: "Computer specifications",
+        scanSetup: "Scan setup",
+        scanReady: "Ready to re-extract this sample",
+        scanInput: "Reading the raw sample",
+        scanExtract: "Separating hardware evidence",
+        scanVerify: "Checking conflicts and confidence",
+        scanMatch: "Preparing the reviewed profile",
+        scanDone: "8 fields extracted; 1 needs review",
+        evidenceTitle: "Detected setup",
+        evidenceSubtitle: "Select a layer to inspect its exact source.",
+        countReviewed: "8 fields / 1 reviewed",
+        countReview: "8 fields / 1 needs review",
+        verified: "Verified",
+        reviewed: "Reviewed",
+        manual: "Manual",
+        needsReview: "Needs review",
+        high: "High confidence",
+        medium: "Medium confidence",
+        sourceInspector: "Active evidence inspector",
+        conflictTitle: "Two VRAM values conflict",
+        conflictResolved: "Conflict resolved by review",
+        conflictHelp: "Choose the current source, or enter the exact value in the hardware editor.",
+        sourceCurrent: "current GPU line",
+        sourceOld: "earlier utility report",
+        apply: "Apply detected setup",
+        reapplied: "Setup applied",
+        editExact: "Edit exact hardware",
+        closeEditor: "Close hardware editor",
+        manualTitle: "Exact hardware editor",
+        manualState: "Edits require re-apply",
+        os: "Operating system",
+        device: "Device",
+        cpu: "CPU model",
+        ram: "RAM (GB)",
+        gpuVendor: "GPU vendor",
+        gpu: "GPU model",
+        vram: "VRAM (GB)",
+        storage: "Free storage (GB)",
+        taskEvidence: "Detected task",
+        matchTitle: "Open-model starter",
+        matchSubtitle: "Specific, local-first, and bounded by the reviewed setup.",
+        applied: "Applied",
+        notApplied: "Not applied",
+        task: "Task",
+        taskChat: "Chat / writing",
+        taskCoding: "Coding",
+        taskImage: "Image generation",
+        taskSpeech: "Speech to text",
+        taskEmbeddings: "Embeddings / search",
+        deployment: "Deployment boundary",
+        localOnly: "Local only",
+        localFirst: "Local first",
+        cloudOk: "Cloud acceptable",
+        tryFirst: "TRY FIRST",
+        strongFit: "Strong local fit",
+        fitScore: "88 / 100 hardware fit",
+        runtime: "Runtime",
+        quantization: "Size / quantization",
+        hardwareFit: "Hardware fit",
+        avoid: "Avoid when",
+        hostedFallback: "Secondary hosted fallback",
+        hostedCopy: "Use hosted open-weight inference only when queue time, larger context, or higher resolution outweighs local privacy.",
+        lockedTitle: "Review before matching",
+        lockedBody: "Resolve the conflicting VRAM evidence, then apply the detected setup.",
+        mockOnly: "Interactive design mock - no live parsing, model download, or backend.",
+        historyNote: "Reviewed conflicts remain visible as evidence history.",
+        selectedSource: "Selected source",
+        chooseSource: "Use this source",
+        sourceLabel: "Source snippet",
+        taskImageValue: "Local image generation"
+      },
+      zh: {
+        documentTitle: "Model Digger - 核心样本界面",
+        skip: "跳到核心样本",
+        tagline: "本地硬件证据 -> 具体开放模型起点",
+        privacy: "输入只保留在此浏览器中",
+        privacyLong: "确定性浏览器规则。不上传、不登录、不需要 API 密钥，也不下载模型。",
+        languageLabel: "语言",
+        flowLabel: "扫描进度",
+        workspaceLabel: "Model Digger 核心样本工作区",
+        scannerTrayLabel: "本地扫描托盘",
+        evidenceListLabel: "识别到的硬件证据",
+        workflow: "本地扫描流程",
+        stageInput: "输入",
+        stageExtract: "提取",
+        stageVerify: "核验",
+        stageMatch: "匹配",
+        statusApplied: "配置已应用",
+        statusReview: "1 个字段需要复核",
+        statusScanning: "正在本地扫描",
+        rawSample: "原始样本 / 本地",
+        sampleTitle: "把电脑配置变成可核验的证据。",
+        sampleSubtitle: "粘贴系统报告、商品配置或笔记；具体型号在整个复核过程中保持可见。",
+        pasteLabel: "电脑配置",
+        scanSetup: "扫描配置",
+        scanReady: "可重新提取此样本",
+        scanInput: "正在读取原始样本",
+        scanExtract: "正在拆分硬件证据",
+        scanVerify: "正在检查冲突和置信度",
+        scanMatch: "正在准备已复核配置",
+        scanDone: "已提取 8 个字段；1 个需要复核",
+        evidenceTitle: "识别到的配置",
+        evidenceSubtitle: "选择任一层，查看对应的原始证据。",
+        countReviewed: "8 个字段 / 1 个已复核",
+        countReview: "8 个字段 / 1 个待复核",
+        verified: "已核验",
+        reviewed: "已复核",
+        manual: "手动输入",
+        needsReview: "需要复核",
+        high: "高置信度",
+        medium: "中等置信度",
+        sourceInspector: "当前证据检查器",
+        conflictTitle: "检测到两个不同的显存数值",
+        conflictResolved: "冲突已通过人工复核解决",
+        conflictHelp: "请选择当前来源，或在硬件编辑器中输入准确数值。",
+        sourceCurrent: "当前 GPU 配置行",
+        sourceOld: "旧版工具记录",
+        apply: "应用识别配置",
+        reapplied: "配置已应用",
+        editExact: "编辑具体硬件",
+        closeEditor: "关闭硬件编辑器",
+        manualTitle: "具体硬件编辑器",
+        manualState: "修改后需要重新应用",
+        os: "操作系统",
+        device: "设备",
+        cpu: "CPU 型号",
+        ram: "内存 (GB)",
+        gpuVendor: "GPU 厂商",
+        gpu: "GPU 型号",
+        vram: "显存 (GB)",
+        storage: "可用存储 (GB)",
+        taskEvidence: "识别任务",
+        matchTitle: "开放模型起点",
+        matchSubtitle: "具体、本地优先，并严格受已复核配置约束。",
+        applied: "已应用",
+        notApplied: "尚未应用",
+        task: "任务",
+        taskChat: "对话 / 写作",
+        taskCoding: "编程",
+        taskImage: "图像生成",
+        taskSpeech: "语音转文字",
+        taskEmbeddings: "向量 / 搜索",
+        deployment: "部署边界",
+        localOnly: "仅本地",
+        localFirst: "本地优先",
+        cloudOk: "可接受云端",
+        tryFirst: "优先尝试",
+        strongFit: "本地适配良好",
+        fitScore: "硬件适配度 88 / 100",
+        runtime: "运行时",
+        quantization: "大小 / 量化",
+        hardwareFit: "硬件适配",
+        avoid: "避免情况",
+        hostedFallback: "次要托管备用方案",
+        hostedCopy: "仅当排队时间、更大上下文或更高分辨率比本地隐私更重要时，才考虑托管开放权重推理。",
+        lockedTitle: "完成复核后再匹配",
+        lockedBody: "先解决显存证据冲突，再应用识别配置。",
+        mockOnly: "交互设计模型 - 不含实时解析、模型下载或后端。",
+        historyNote: "人工解决的冲突会作为证据历史保留。",
+        selectedSource: "已选来源",
+        chooseSource: "使用此来源",
+        sourceLabel: "来源片段",
+        taskImageValue: "本地图像生成"
+      }
+    };
+
+    const recommendations = {
+      chat: {
+        name: "Qwen2.5 7B Instruct",
+        runtime: "Ollama or llama.cpp",
+        quantization: "7B / Q4_K_M GGUF",
+        fit: {
+          en: "32GB RAM and 12GB VRAM leave comfortable room for a 4-bit 7B chat model.",
+          zh: "32GB 内存与 12GB 显存为 4-bit 7B 对话模型留出充足空间。"
+        },
+        avoid: {
+          en: "Avoid treating it as a frontier model or using very long production context without evaluation.",
+          zh: "不要把它当作前沿大模型，也不要在未评估时用于超长生产上下文。"
+        }
+      },
+      coding: {
+        name: "Qwen2.5-Coder 7B Instruct",
+        runtime: "Ollama, LM Studio, or llama.cpp",
+        quantization: "7B / Q4_K_M GGUF",
+        fit: {
+          en: "A strong first coding assistant for this CPU, 32GB RAM, and 12GB NVIDIA GPU.",
+          zh: "这套 CPU、32GB 内存与 12GB NVIDIA GPU 很适合作为本地编程助手起点。"
+        },
+        avoid: {
+          en: "Avoid expecting autonomous work across a large repository without retrieval and evaluation.",
+          zh: "若没有检索与评估，不要期待它在大型代码库中自主完成工作。"
+        }
+      },
+      image: {
+        name: "FLUX.1 schnell",
+        runtime: "ComfyUI",
+        quantization: "memory-optimized / FP8 where supported",
+        fit: {
+          en: "The RTX 4070 SUPER's reviewed 12GB VRAM clears the practical starting range with memory optimization.",
+          zh: "经复核的 RTX 4070 SUPER 12GB 显存配合内存优化，可达到实用起步范围。"
+        },
+        avoid: {
+          en: "Avoid unoptimized high-resolution batches; use SDXL when predictable 8-12GB workflows matter more.",
+          zh: "避免未优化的高分辨率批处理；若更看重稳定的 8-12GB 工作流，可改用 SDXL。"
+        }
+      },
+      speech: {
+        name: "Whisper Large v3",
+        runtime: "faster-whisper",
+        quantization: "large / CTranslate2 int8_float16",
+        fit: {
+          en: "The 12GB NVIDIA GPU supports quality-focused local transcription with useful throughput.",
+          zh: "12GB NVIDIA GPU 可支持质量优先的本地转录，并提供实用吞吐量。"
+        },
+        avoid: {
+          en: "Avoid for strict real-time latency before testing your language, audio domain, and batch size.",
+          zh: "在验证语言、音频领域与批量大小之前，不要用于严格实时延迟场景。"
+        }
+      },
+      embeddings: {
+        name: "BGE-M3",
+        runtime: "FlagEmbedding or sentence-transformers",
+        quantization: "multilingual / FP16 or ONNX",
+        fit: {
+          en: "This system has ample memory for multilingual local retrieval and moderate indexing work.",
+          zh: "这套设备有充足内存，可用于多语言本地检索与中等规模索引。"
+        },
+        avoid: {
+          en: "Avoid when a smaller English-only model would reduce latency without hurting retrieval quality.",
+          zh: "若更小的英语专用模型能降低延迟且不影响检索质量，则无需使用它。"
+        }
+      }
+    };
+
+    const evidenceBlueprint = [
+      { id: "os", label: "os", value: "Windows 11 Pro", sourceEn: "OS: Windows 11 Pro", sourceZh: "操作系统：Windows 11 专业版", confidence: "high" },
+      { id: "device", label: "device", value: "Desktop workstation", sourceEn: "Device: desktop workstation", sourceZh: "设备：台式工作站", confidence: "high" },
+      { id: "cpu", label: "cpu", value: "AMD Ryzen 7 7800X3D", sourceEn: "CPU: AMD Ryzen 7 7800X3D", sourceZh: "CPU：AMD Ryzen 7 7800X3D", confidence: "high" },
+      { id: "ram", label: "ram", value: "32 GB DDR5", sourceEn: "Memory: 32GB DDR5", sourceZh: "内存：32GB DDR5", confidence: "high" },
+      { id: "gpu", label: "gpu", value: "NVIDIA GeForce RTX 4070 SUPER", sourceEn: "GPU: NVIDIA GeForce RTX 4070 SUPER", sourceZh: "GPU：NVIDIA GeForce RTX 4070 SUPER", confidence: "high" },
+      { id: "vram", label: "vram", value: "12 GB", sourceEn: "12GB VRAM / Earlier utility report: 8GB VRAM", sourceZh: "12GB 显存 / 旧版工具记录：8GB 显存", confidence: "medium", conflict: true },
+      { id: "storage", label: "storage", value: "184 GB free", sourceEn: "System drive: 1TB total, 184GB free", sourceZh: "系统盘：总计 1TB，可用 184GB", confidence: "high" },
+      { id: "task", label: "taskEvidence", value: "Local image generation", sourceEn: "Use: local image generation", sourceZh: "用途：本地图像生成", confidence: "high" }
+    ];
+
+    const state = {
+      language: "en",
+      activeField: "vram",
+      conflictResolved: true,
+      selectedVram: 12,
+      applied: true,
+      scanning: false,
+      stage: 3,
+      manualOpen: false,
+      manuallyEdited: new Set(),
+      timers: []
+    };
+
+    const setupText = document.getElementById("setupText");
+    const charCount = document.getElementById("charCount");
+    const scanButton = document.getElementById("scanButton");
+    const scanTitle = document.getElementById("scanTitle");
+    const scanDetail = document.getElementById("scanDetail");
+    const flowStatus = document.getElementById("flowStatus");
+    const countState = document.getElementById("countState");
+    const evidenceList = document.getElementById("evidenceList");
+    const inspector = document.getElementById("inspector");
+    const applyButton = document.getElementById("applyButton");
+    const manualButton = document.getElementById("manualButton");
+    const manualEditor = document.getElementById("manualEditor");
+    const recommendation = document.getElementById("recommendation");
+    const profileState = document.getElementById("profileState");
+    const statusRegion = document.getElementById("statusRegion");
+
+    function t(key) {
+      return copy[state.language][key] || copy.en[key] || key;
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, (character) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+      })[character]);
+    }
+
+    function announce(message) {
+      statusRegion.textContent = "";
+      window.requestAnimationFrame(() => {
+        statusRegion.textContent = message;
+      });
+    }
+
+    function iconCheck() {
+      return '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"></path></svg>';
+    }
+
+    function iconAlert() {
+      return '<svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M12 8v4"></path><path d="M12 16h.01"></path></svg>';
+    }
+
+    function fieldValue(item) {
+      const values = {
+        os: document.getElementById("fieldOs").value,
+        device: document.getElementById("fieldDevice").value,
+        cpu: document.getElementById("fieldCpu").value,
+        ram: `${document.getElementById("fieldRam").value} GB DDR5`,
+        gpu: document.getElementById("fieldGpu").value,
+        vram: `${document.getElementById("fieldVram").value} GB`,
+        storage: `${document.getElementById("fieldStorage").value} GB free`,
+        task: state.language === "zh" ? "本地图像生成" : "Local image generation"
+      };
+      return values[item.id] || item.value;
+    }
+
+    function updateCharCount() {
+      charCount.textContent = `${setupText.value.length.toLocaleString()} / 20,000`;
+    }
+
+    function updateStages() {
+      document.querySelectorAll("[data-stage]").forEach((item) => {
+        const index = Number(item.dataset.stage);
+        item.classList.toggle("is-complete", index < state.stage || (!state.scanning && state.applied));
+        item.classList.toggle("is-active", index === state.stage);
+        if (index === state.stage) item.setAttribute("aria-current", "step");
+        else item.removeAttribute("aria-current");
+      });
+      document.querySelectorAll("#lensTrack span").forEach((item, index) => {
+        item.classList.toggle("is-complete", index < state.stage || (!state.scanning && state.applied));
+        item.classList.toggle("is-active", index === state.stage);
+      });
+    }
+
+    function renderEvidence() {
+      evidenceList.innerHTML = evidenceBlueprint.map((item, index) => {
+        const manual = state.manuallyEdited.has(item.id);
+        const review = item.conflict && !state.conflictResolved;
+        const status = manual ? t("manual") : review ? t("needsReview") : item.conflict ? t("reviewed") : t("verified");
+        const rowClass = review ? "is-review" : manual ? "is-manual" : "is-verified";
+        const icon = review ? iconAlert() : iconCheck();
+        return `
+          <button class="evidence-row ${rowClass}" type="button" data-field="${item.id}" aria-pressed="${String(state.activeField === item.id)}">
+            <span class="depth-mark">${String(index + 1).padStart(2, "0")}</span>
+            <span class="evidence-value">
+              <span>${escapeHtml(t(item.label))}</span>
+              <strong>${escapeHtml(fieldValue(item))}</strong>
+            </span>
+            <span class="row-status">${icon}${escapeHtml(status)}</span>
+          </button>`;
+      }).join("");
+
+      evidenceList.querySelectorAll("[data-field]").forEach((button) => {
+        button.addEventListener("click", () => {
+          state.activeField = button.dataset.field;
+          renderEvidence();
+          renderInspector();
+        });
+      });
+
+      countState.textContent = state.conflictResolved ? t("countReviewed") : t("countReview");
+    }
+
+    function renderInspector() {
+      const item = evidenceBlueprint.find((entry) => entry.id === state.activeField) || evidenceBlueprint[0];
+      const source = state.language === "zh" ? item.sourceZh : item.sourceEn;
+      if (item.conflict) {
+        const resolved = state.conflictResolved;
+        inspector.innerHTML = `
+          <div class="inspector-head">
+            <strong id="inspectorTitle">${escapeHtml(resolved ? t("conflictResolved") : t("conflictTitle"))}</strong>
+            <span class="inspector-status">${resolved ? iconCheck() : iconAlert()}${escapeHtml(resolved ? t("reviewed") : t("needsReview"))}</span>
+          </div>
+          <div class="source-list" role="group" aria-label="${escapeHtml(t("conflictTitle"))}">
+            <button type="button" class="source-choice ${resolved && state.selectedVram === 12 ? "is-selected" : ""}" data-vram="12">
+              <span class="radio-dot" aria-hidden="true"></span>
+              <code>${escapeHtml(state.language === "zh" ? "GPU：... RTX 4070 SUPER - 12GB 显存" : "GPU: ... RTX 4070 SUPER - 12GB VRAM")}</code>
+              <b>${resolved && state.selectedVram === 12 ? escapeHtml(t("selectedSource")) : escapeHtml(t("chooseSource"))}</b>
+            </button>
+            <button type="button" class="source-choice ${resolved && state.selectedVram === 8 ? "is-selected" : ""}" data-vram="8">
+              <span class="radio-dot" aria-hidden="true"></span>
+              <code>${escapeHtml(state.language === "zh" ? "旧版工具记录：8GB 显存" : "Earlier utility report: 8GB VRAM")}</code>
+              <b>${resolved && state.selectedVram === 8 ? escapeHtml(t("selectedSource")) : escapeHtml(t("chooseSource"))}</b>
+            </button>
+          </div>
+          <p class="conflict-note">${escapeHtml(t("conflictHelp"))}</p>`;
+
+        inspector.querySelectorAll("[data-vram]").forEach((button) => {
+          button.addEventListener("click", () => resolveVram(Number(button.dataset.vram)));
+        });
+        return;
+      }
+
+      inspector.innerHTML = `
+        <div class="inspector-head">
+          <strong id="inspectorTitle">${escapeHtml(t("sourceInspector"))}</strong>
+          <span class="inspector-status" style="color: var(--verified)">${iconCheck()}${escapeHtml(t(item.confidence))}</span>
+        </div>
+        <div class="source-list">
+          <div class="source-choice is-selected" aria-label="${escapeHtml(t("sourceLabel"))}">
+            <span class="radio-dot" aria-hidden="true"></span>
+            <code>${escapeHtml(source)}</code>
+            <b>${escapeHtml(t("verified"))}</b>
+          </div>
+        </div>`;
+    }
+
+    function resolveVram(value) {
+      state.conflictResolved = true;
+      state.selectedVram = value;
+      state.applied = false;
+      document.getElementById("fieldVram").value = value;
+      renderAll();
+      announce(t("conflictResolved"));
+    }
+
+    function renderProfileState() {
+      profileState.innerHTML = `${state.applied ? iconCheck() : iconAlert()}<span>${escapeHtml(state.applied ? t("applied") : t("notApplied"))}</span>`;
+      profileState.style.color = state.applied ? "var(--verified)" : "var(--review)";
+      applyButton.disabled = !state.conflictResolved || state.scanning;
+      applyButton.querySelector("span").textContent = state.applied ? t("reapplied") : t("apply");
+      flowStatus.textContent = state.scanning ? t("statusScanning") : state.applied ? t("statusApplied") : t("statusReview");
+      flowStatus.style.color = state.applied ? "var(--verified)" : "var(--review)";
+    }
+
+    function selectedTask() {
+      return document.querySelector('input[name="task"]:checked').value;
+    }
+
+    function selectedDeployment() {
+      return document.querySelector('input[name="deployment"]:checked').value;
+    }
+
+    function renderRecommendation() {
+      if (!state.applied) {
+        recommendation.classList.add("is-locked");
+        recommendation.innerHTML = `
+          <div class="locked-state">
+            ${iconAlert()}
+            <strong>${escapeHtml(t("lockedTitle"))}</strong>
+            <p>${escapeHtml(t("lockedBody"))}</p>
+          </div>`;
+        return;
+      }
+
+      recommendation.classList.remove("is-locked");
+      const item = recommendations[selectedTask()];
+      const localOnly = selectedDeployment() === "local-only";
+      recommendation.innerHTML = `
+        <div class="recommendation-main">
+          <span class="try-label">${escapeHtml(t("tryFirst"))}</span>
+          <h3 class="model-name">${escapeHtml(item.name)}</h3>
+          <p class="starter-line">${escapeHtml(item.quantization)} -> ${escapeHtml(item.runtime)}</p>
+          <div class="fit-readout">
+            <span class="fit-gauge">88</span>
+            <span class="fit-copy">
+              <strong>${escapeHtml(t("strongFit"))}</strong>
+              <span>${escapeHtml(t("fitScore"))}</span>
+            </span>
+          </div>
+        </div>
+        <dl class="guidance-list">
+          <div class="guidance-item"><dt>${escapeHtml(t("runtime"))}</dt><dd class="mono">${escapeHtml(item.runtime)}</dd></div>
+          <div class="guidance-item"><dt>${escapeHtml(t("quantization"))}</dt><dd class="mono">${escapeHtml(item.quantization)}</dd></div>
+          <div class="guidance-item"><dt>${escapeHtml(t("hardwareFit"))}</dt><dd>${escapeHtml(item.fit[state.language])}</dd></div>
+          <div class="guidance-item"><dt>${escapeHtml(t("avoid"))}</dt><dd>${escapeHtml(item.avoid[state.language])}</dd></div>
+        </dl>
+        <aside class="hosted-fallback" ${localOnly ? "hidden" : ""}>
+          <div class="hosted-rule"></div>
+          <strong>${escapeHtml(t("hostedFallback"))}</strong>
+          <p>${escapeHtml(t("hostedCopy"))}</p>
+        </aside>`;
+    }
+
+    function renderAll() {
+      renderEvidence();
+      renderInspector();
+      renderProfileState();
+      renderRecommendation();
+      updateStages();
+    }
+
+    function applyLanguage(language) {
+      const previousLanguage = state.language;
+      state.language = language === "zh" ? "zh" : "en";
+      document.documentElement.lang = state.language === "zh" ? "zh-CN" : "en";
+      document.title = t("documentTitle");
+      document.querySelectorAll("[data-i18n]").forEach((node) => {
+        node.textContent = t(node.dataset.i18n);
+      });
+      document.querySelectorAll("[data-i18n-aria]").forEach((node) => {
+        node.setAttribute("aria-label", t(node.dataset.i18nAria));
+      });
+      document.querySelectorAll("[data-language]").forEach((button) => {
+        button.setAttribute("aria-pressed", String(button.dataset.language === state.language));
+      });
+      if (setupText.value === samples[previousLanguage] || !setupText.value) setupText.value = samples[state.language];
+      scanButton.setAttribute("title", t("scanSetup"));
+      scanButton.setAttribute("aria-label", t("scanSetup"));
+      manualButton.querySelector("span").textContent = state.manualOpen ? t("closeEditor") : t("editExact");
+      renderAll();
+      updateCharCount();
+    }
+
+    function clearTimers() {
+      state.timers.forEach((timer) => window.clearTimeout(timer));
+      state.timers = [];
+    }
+
+    function runScan() {
+      if (!setupText.value.trim() || state.scanning) return;
+      clearTimers();
+      state.scanning = true;
+      state.applied = false;
+      state.conflictResolved = false;
+      state.activeField = "vram";
+      state.stage = 0;
+      state.manuallyEdited.clear();
+      scanButton.disabled = true;
+      scanButton.classList.add("is-scanning");
+      scanTitle.textContent = t("statusScanning");
+      const stageKeys = ["scanInput", "scanExtract", "scanVerify", "scanMatch"];
+      stageKeys.forEach((key, index) => {
+        const timer = window.setTimeout(() => {
+          state.stage = index;
+          scanDetail.textContent = t(key);
+          updateStages();
+          renderProfileState();
+        }, index * 150);
+        state.timers.push(timer);
+      });
+      const completeTimer = window.setTimeout(() => {
+        state.scanning = false;
+        state.stage = 2;
+        scanButton.disabled = false;
+        scanButton.classList.remove("is-scanning");
+        scanTitle.textContent = t("scanSetup");
+        scanDetail.textContent = t("scanDone");
+        renderAll();
+        announce(t("scanDone"));
+        document.querySelector('[data-field="vram"]').focus();
+      }, 650);
+      state.timers.push(completeTimer);
+      renderAll();
+    }
+
+    scanButton.addEventListener("click", runScan);
+
+    setupText.addEventListener("input", () => {
+      state.applied = false;
+      updateCharCount();
+      renderProfileState();
+      renderRecommendation();
+    });
+
+    applyButton.addEventListener("click", () => {
+      if (!state.conflictResolved) return;
+      state.applied = true;
+      state.stage = 3;
+      renderAll();
+      announce(t("statusApplied"));
+    });
+
+    manualButton.addEventListener("click", () => {
+      state.manualOpen = !state.manualOpen;
+      manualEditor.hidden = !state.manualOpen;
+      manualButton.setAttribute("aria-expanded", String(state.manualOpen));
+      manualButton.querySelector("span").textContent = state.manualOpen ? t("closeEditor") : t("editExact");
+      if (state.manualOpen) document.getElementById("fieldOs").focus();
+    });
+
+    document.querySelectorAll("#manualEditor input, #manualEditor select").forEach((control) => {
+      control.addEventListener("input", () => {
+        const map = {
+          fieldOs: "os",
+          fieldDevice: "device",
+          fieldCpu: "cpu",
+          fieldRam: "ram",
+          fieldGpuVendor: "gpu",
+          fieldGpu: "gpu",
+          fieldVram: "vram",
+          fieldStorage: "storage"
+        };
+        state.manuallyEdited.add(map[control.id]);
+        if (control.id === "fieldVram") {
+          state.conflictResolved = true;
+          state.selectedVram = Number(control.value || 0);
+        }
+        state.applied = false;
+        renderAll();
+      });
+      control.addEventListener("change", () => control.dispatchEvent(new Event("input")));
+    });
+
+    document.querySelectorAll('input[name="task"], input[name="deployment"]').forEach((control) => {
+      control.addEventListener("change", renderRecommendation);
+    });
+
+    document.querySelectorAll("[data-language]").forEach((button) => {
+      button.addEventListener("click", () => applyLanguage(button.dataset.language));
+    });
+
+    setupText.value = samples.en;
+    applyLanguage("en");
+  </script>
+
+  <!-- design-review:self-diff v1
+  Design decisions:
+  1. Replaced the prior three-panel/rail composition with one continuous specimen table linking raw input, evidence, and recommendation.
+  2. Used solid Morandi blue only for the raw sample chamber; results and dense controls stay opaque white or cool gray.
+  3. Reserved liquid glass for the scanner tray and active evidence inspector, where material indicates an active state.
+  4. Made the shovel the actual scan control and kept the excavation identity out of decorative illustration.
+  5. Encoded every evidence layer with exact text, confidence/status words, source snippets, and non-color-only conflict treatment.
+  6. Kept manual correction inline and preserved resolved conflicts as evidence history after application.
+  7. Built desktop and 390px layouts from the same stable control dimensions, with bilingual copy and reduced-motion behavior.
+  Trade-offs:
+  1. The mock uses deterministic sample data rather than production scanner modules, so extraction is illustrative even though the state transitions are functional.
+  2. The evidence-dense mobile flow is intentionally long to preserve context and editability rather than hiding layers behind navigation.
+  3. Recommendation fit scores are presentation values for this exploration and are not a replacement for the production scoring policy.
+  -->
+</body>
+</html>
