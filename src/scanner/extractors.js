@@ -534,9 +534,6 @@ function pairingStateIsBetter(candidate, current) {
   if (candidate.pairs !== current.pairs) return candidate.pairs > current.pairs;
   if (candidate.explicit !== current.explicit) return candidate.explicit > current.explicit;
   if (candidate.gap !== current.gap) return candidate.gap < current.gap;
-  if (candidate.specificity !== current.specificity) {
-    return candidate.specificity > current.specificity;
-  }
   if (candidate.ownerOrder !== current.ownerOrder) {
     return candidate.ownerOrder < current.ownerOrder;
   }
@@ -620,7 +617,6 @@ function pairCapacityClause(segment, labels, amounts, gpuModels) {
     pairs: 0,
     explicit: 0,
     gap: 0,
-    specificity: 0,
     ownerOrder: 0,
     amountOrder: 0,
     previous: -1,
@@ -658,9 +654,6 @@ function pairCapacityClause(segment, labels, amounts, gpuModels) {
         pairs: previousState.pairs + 1,
         explicit: previousState.explicit + Number(explicit),
         gap: previousState.gap + edge.gapLength,
-        specificity: previousState.specificity + (
-          explicit ? edge.owner.label.pattern.specificity : 0
-        ),
         ownerOrder: previousState.ownerOrder + ownerIndex,
         amountOrder: previousState.amountOrder + edge.amountIndex,
         previous,

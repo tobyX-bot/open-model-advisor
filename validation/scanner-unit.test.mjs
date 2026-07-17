@@ -1038,6 +1038,95 @@ test("pairs mixed-orientation capacity lists into non-crossing field zones", () 
   }
 });
 
+test("covers all 4,272 ordered mixed-orientation capacity permutations", () => {
+  const fields = [
+    { field: "ram", value: 16, label: "RAM", amount: "16GB" },
+    { field: "vram", value: 8, label: "VRAM", amount: "8GB" },
+    { field: "storage", value: 512, label: "SSD", amount: "512GB" },
+    { field: "ram", value: 32, label: "RAM", amount: "32GB" },
+    { field: "storage", value: 1000, label: "HDD", amount: "1TB" }
+  ];
+
+  function permutations(items) {
+    if (items.length < 2) return [items];
+    return items.flatMap((item, index) => (
+      permutations(items.filter((_, itemIndex) => itemIndex !== index))
+        .map((rest) => [item, ...rest])
+    ));
+  }
+
+  let covered = 0;
+  for (let fieldCount = 3; fieldCount <= 5; fieldCount += 1) {
+    for (const ordering of permutations(fields.slice(0, fieldCount))) {
+      for (let orientation = 0; orientation < 2 ** fieldCount; orientation += 1) {
+        const evidence = ordering.map((item, index) => (
+          orientation & (1 << index)
+            ? `${item.amount} ${item.label}`
+            : `${item.label} ${item.amount}`
+        ));
+        const input = evidence.join(" ");
+        const document = normalizeSetupText(input);
+        const candidates = extractCapacityCandidates(document);
+
+        assert.deepEqual(
+          candidates.map((candidate) => [candidate.field, candidate.value, candidate.raw]),
+          ordering.map((item, index) => [item.field, item.value, evidence[index]]),
+          input
+        );
+        candidates.forEach((candidate) => assertCapacityCandidateContract(document, candidate));
+        covered += 1;
+      }
+    }
+  }
+
+  assert.equal(covered, 4272);
+});
+
+test("does not use semantic field specificity to invent incomplete-label ownership", () => {
+  const cases = [
+    [
+      "RAM 16GB VRAM SSD 512GB",
+      [["ram", 16, "RAM 16GB"], ["storage", 512, "SSD 512GB"]]
+    ],
+    [
+      "RAM 16GB VRAM SSD 512GB HDD 1TB",
+      [["ram", 16, "RAM 16GB"], ["storage", 512, "SSD 512GB"], ["storage", 1000, "HDD 1TB"]]
+    ],
+    [
+      "RAM VRAM 8GB SSD 512GB",
+      [["vram", 8, "VRAM 8GB"], ["storage", 512, "SSD 512GB"]]
+    ],
+    [
+      "RAM 16GB VRAM 8GB SSD",
+      [["ram", 16, "RAM 16GB"], ["vram", 8, "VRAM 8GB"]]
+    ],
+    ["RAM 16GB VRAM", []],
+    [
+      "RAM 16GB;VRAM 8GB;SSD 512GB",
+      [["ram", 16, "RAM 16GB"], ["vram", 8, "VRAM 8GB"], ["storage", 512, "SSD 512GB"]]
+    ]
+  ];
+
+  for (const [input, expected] of cases) {
+    const document = normalizeSetupText(input);
+    const candidates = extractCapacityCandidates(document);
+    assert.deepEqual(
+      candidates.map((candidate) => [candidate.field, candidate.value, candidate.raw]),
+      expected,
+      input
+    );
+    assert.deepEqual(
+      candidates.map((candidate) => [candidate.start, candidate.end]),
+      expected.map(([, , raw]) => {
+        const start = document.normalized.indexOf(raw);
+        return [start, start + raw.length];
+      }),
+      `${input} exact spans`
+    );
+    candidates.forEach((candidate) => assertCapacityCandidateContract(document, candidate));
+  }
+});
+
 test("reserves direct GPU-adjacent amounts before pairing explicit field zones", () => {
   const cases = [
     [
