@@ -10,7 +10,12 @@ import {
   extractTaskCandidates
 } from "../src/scanner/extractors.js";
 import { normalizeSetupText } from "../src/scanner/normalize.js";
-import { CPU_MODEL_PATTERNS, GPU_MODEL_PATTERNS } from "../src/scanner/patterns.js";
+import {
+  CPU_MODEL_PATTERNS,
+  GPU_MODEL_PATTERNS,
+  SYSTEM_PATTERNS,
+  TASK_PATTERNS
+} from "../src/scanner/patterns.js";
 
 function segmentTexts(result) {
   return result.segments.map((segment) => segment.text);
@@ -342,6 +347,45 @@ test("defines ordered declarative CPU and GPU model pattern data", () => {
       else assert.equal(sawGenericPattern, false, `${pattern.id} follows a generic pattern`);
     }
   }
+});
+
+test("deep freezes every exported pattern collection", () => {
+  for (const patterns of [
+    SYSTEM_PATTERNS,
+    CPU_MODEL_PATTERNS,
+    GPU_MODEL_PATTERNS,
+    TASK_PATTERNS
+  ]) {
+    assert.equal(Object.isFrozen(patterns), true);
+    for (const pattern of patterns) {
+      assert.equal(Object.isFrozen(pattern), true, pattern.id);
+      assert.equal(Object.isFrozen(pattern.regex), true, `${pattern.id}.regex`);
+    }
+  }
+});
+
+test("attempted GPU pattern mutation cannot alter later extraction", () => {
+  const document = normalizeSetupText("NVIDIA RTX 4090");
+  const before = extractGpuCandidates(document);
+  const pattern = GPU_MODEL_PATTERNS[0];
+  const originalVendor = pattern.vendor;
+  let mutationError;
+  let after;
+
+  try {
+    pattern.vendor = "amd";
+    after = extractGpuCandidates(document);
+  } catch (error) {
+    mutationError = error;
+    after = extractGpuCandidates(document);
+  } finally {
+    if (!Object.isFrozen(pattern)) pattern.vendor = originalVendor;
+  }
+
+  assert.equal(mutationError instanceof TypeError, true);
+  assert.deepEqual(after, before);
+  assert.deepEqual(candidateValues(after, "gpuModel"), ["NVIDIA RTX 4090"]);
+  assert.deepEqual(candidateValues(after, "gpuVendor"), ["nvidia"]);
 });
 
 test("canonicalizes exact CPU models in English, Chinese, and mixed ordering", () => {

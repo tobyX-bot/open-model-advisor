@@ -6,7 +6,15 @@ function uppercase(value) {
   return value.toUpperCase();
 }
 
-export const SYSTEM_PATTERNS = Object.freeze([
+function freezePatterns(patterns) {
+  for (const pattern of patterns) {
+    Object.freeze(pattern.regex);
+    Object.freeze(pattern);
+  }
+  return Object.freeze(patterns);
+}
+
+export const SYSTEM_PATTERNS = freezePatterns([
   {
     id: "system.os.macos",
     field: "os",
@@ -65,7 +73,7 @@ export const SYSTEM_PATTERNS = Object.freeze([
   }
 ]);
 
-export const CPU_MODEL_PATTERNS = Object.freeze([
+export const CPU_MODEL_PATTERNS = freezePatterns([
   {
     id: "cpu.intel-core-ultra",
     field: "cpuModel",
@@ -153,7 +161,7 @@ export const CPU_MODEL_PATTERNS = Object.freeze([
   }
 ]);
 
-export const GPU_MODEL_PATTERNS = Object.freeze([
+export const GPU_MODEL_PATTERNS = freezePatterns([
   {
     id: "gpu.nvidia-rtx",
     field: "gpuModel",
@@ -269,7 +277,7 @@ export const GPU_MODEL_PATTERNS = Object.freeze([
   }
 ]);
 
-export const TASK_PATTERNS = Object.freeze([
+export const TASK_PATTERNS = freezePatterns([
   {
     id: "task.coding-llm",
     field: "task",
