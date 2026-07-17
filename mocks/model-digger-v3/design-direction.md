@@ -51,7 +51,17 @@ Hairlines are structural and are not used as the only carrier of text or state. 
 - Scan stages remain Input, Extract, Verify, and Match, with active tangerine progress and graphite completed progress.
 - Conflict resolution remains blocking; reviewed source history remains visible.
 - Manual hardware correction stays inline and invalidates the applied setup until re-applied.
-- Task, deployment, local recommendation, and hosted fallback behavior are unchanged.
+- Task and deployment choices recalculate the visible guidance locally; opening a source is the only part of the recommendation flow that requires internet access.
+
+## Ranked Guidance Hierarchy
+
+- Each task resolves to exactly three viable options for the reviewed hardware. Rank describes practical fit for this profile, not general quality, benchmark position, or market leadership; the displayed scores are explicitly illustrative.
+- Rank 1 remains the expanded working recommendation with runtime, target artifact, fit rationale, avoid guidance, source actions, and a clearly secondary hosted fallback.
+- Ranks 2 and 3 are compact, unframed rows rather than additional cards. Their rank, model, fit label and score, target, runtime, why-lower explanation, and sources remain visible without disclosure interaction.
+- Unsuitable workload classes live in a separate `Not recommended on this hardware / 不建议在此配置上使用` area and never occupy a ranked slot.
+- Every model exposes a curated creator or official Hugging Face model page labeled `Download and model details / 下载与模型详情`, plus the existing official creator, setup, runtime, or reference link. These are static HTTPS links, not automatic downloads or live model lookups.
+- Official model weights and community or runtime-specific quantizations are described separately. When the target artifact is not directly supplied by the creator, the interface tells users to choose a compatible artifact on the model or runtime page instead of implying official provenance.
+- The foreground stays one suspended recommendation plane: internal hairlines and whitespace establish rank without stacking three elevated cards.
 
 ## Mandarin Language Principles
 
@@ -61,7 +71,7 @@ Hairlines are structural and are not used as the only carrier of text or state. 
 - Preserve explicit distinctions among `已识别`, `待确认`, `已人工确认`, and `已应用此配置`.
 - Validate all visible copy and accessible names at 1440px and 390px.
 
-## Intentional Departures From The Morandi Pass
+## Intentional Departures From V2 And The Morandi Pass
 
 1. Replaces the dark blue raw-input slab with translucent warm-white glass over a solid stone underlay.
 2. Gives all three major workflow sections distinct glass opacity instead of reserving translucency for the middle plane.
@@ -69,6 +79,7 @@ Hairlines are structural and are not used as the only carrier of text or state. 
 4. Moves primary and selected controls to near-black while keeping warnings orange and success green.
 5. Warms borders, shadows, and opaque controls without adding beige monochrome decoration or photographic scenery.
 6. Keeps dense rows and controls crisp, using blur only for the major planes, utility bar, scanner tray, and active inspector.
+7. Replaces the single-output result with a practical-fit top three: one expanded recommendation, two compact viable alternatives, explicit source provenance, and a separate unsuitable-guidance boundary.
 
 ## User Tests Before Production
 
@@ -79,3 +90,5 @@ Hairlines are structural and are not used as the only carrier of text or state. 
 5. At 390px, does the overlap retain depth without hiding controls or creating scroll fatigue?
 6. Is the hosted option still visibly secondary to the local recommendation?
 7. Can keyboard and assistive-technology users follow the same sequence and names in EN and ZH?
+8. Do users understand that the order is specific to their reviewed hardware rather than a universal model ranking?
+9. Do the model-page labels and artifact notes prevent users from mistaking community quantizations for creator-provided weights or automatic downloads?

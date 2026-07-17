@@ -2265,6 +2265,281 @@
       }
     }
 
+    /* Ranked guidance: one resolved recommendation and two compact viable alternatives. */
+    .recommendation {
+      display: block;
+      padding: 0;
+    }
+
+    .rank-context {
+      padding: 14px 22px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(245, 242, 239, 0.58);
+    }
+
+    .rank-context strong,
+    .rank-context span {
+      display: block;
+    }
+
+    .rank-context strong {
+      font-size: 12px;
+    }
+
+    .rank-context span {
+      margin-top: 3px;
+      color: var(--ink-3);
+      font-size: 11px;
+      line-height: 1.4;
+    }
+
+    .primary-rank {
+      padding: 20px 22px 18px;
+    }
+
+    .rank-title-row,
+    .alternative-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .rank-identity {
+      min-width: 0;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .rank-number {
+      width: 26px;
+      height: 26px;
+      flex: 0 0 26px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line-strong);
+      border-radius: 50%;
+      background: var(--white);
+      color: var(--ink-2);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .primary-rank .rank-number {
+      border-color: var(--morandi-900);
+      background: var(--morandi-900);
+      color: var(--white);
+    }
+
+    .rank-heading-copy {
+      min-width: 0;
+    }
+
+    .rank-heading-copy .try-label {
+      display: block;
+    }
+
+    .rank-heading-copy .model-name {
+      margin-top: 4px;
+    }
+
+    .rank-fit {
+      flex: 0 0 auto;
+      color: var(--verified);
+      font-size: 11px;
+      font-weight: 760;
+      line-height: 1.35;
+      text-align: right;
+    }
+
+    .rank-fit strong,
+    .rank-fit span {
+      display: block;
+    }
+
+    .rank-fit span {
+      margin-top: 2px;
+      color: var(--ink-3);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 650;
+    }
+
+    .primary-rank .starter-line {
+      margin-left: 36px;
+    }
+
+    .primary-rank .fit-readout {
+      margin-top: 15px;
+    }
+
+    .artifact-note {
+      margin: 12px 0 0;
+      color: var(--ink-3);
+      font-size: 10.5px;
+      line-height: 1.45;
+    }
+
+    .source-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 14px;
+      margin-top: 12px;
+    }
+
+    .source-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      min-height: 28px;
+      padding: 4px 0 3px;
+      border-bottom: 1px solid currentColor;
+      color: var(--ink-2);
+      font-size: 11px;
+      font-weight: 720;
+      line-height: 1.25;
+      text-decoration: none;
+    }
+
+    .source-link:hover {
+      color: var(--review);
+    }
+
+    .source-link span[aria-hidden="true"] {
+      font-size: 12px;
+      line-height: 1;
+    }
+
+    .primary-rank .hosted-fallback {
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
+    }
+
+    .ranked-alternatives {
+      border-top: 1px solid var(--line);
+    }
+
+    .alternatives-label {
+      padding: 14px 22px 6px;
+      color: var(--ink-2);
+      font-size: 11px;
+      font-weight: 760;
+    }
+
+    .alternative-row {
+      padding: 14px 22px 15px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .alternative-name {
+      margin: 2px 0 0;
+      font-family: var(--font-display);
+      font-size: 17px;
+      font-weight: 680;
+      line-height: 1.2;
+      overflow-wrap: anywhere;
+    }
+
+    .alternative-meta {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr);
+      gap: 7px 12px;
+      margin: 10px 0 0 36px;
+    }
+
+    .alternative-meta div {
+      min-width: 0;
+    }
+
+    .alternative-meta dt {
+      color: var(--ink-3);
+      font-size: 9.5px;
+      font-weight: 740;
+    }
+
+    .alternative-meta dd {
+      min-width: 0;
+      margin: 2px 0 0;
+      color: var(--ink-2);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .lower-reason,
+    .alternative-row .artifact-note,
+    .alternative-row .source-actions {
+      margin-left: 36px;
+    }
+
+    .lower-reason {
+      margin-top: 9px;
+      margin-bottom: 0;
+      color: var(--ink-2);
+      font-size: 10.5px;
+      line-height: 1.45;
+    }
+
+    .lower-reason strong {
+      color: var(--ink);
+    }
+
+    .not-recommended {
+      padding: 15px 22px 18px;
+      background: rgba(255, 240, 231, 0.44);
+    }
+
+    .not-recommended strong {
+      display: block;
+      color: var(--review);
+      font-size: 11px;
+    }
+
+    .not-recommended p {
+      margin: 5px 0 0;
+      color: var(--ink-2);
+      font-size: 10.5px;
+      line-height: 1.45;
+    }
+
+    @media (max-width: 520px) {
+      .rank-context,
+      .primary-rank,
+      .alternative-row,
+      .not-recommended {
+        padding-inline: 16px;
+      }
+
+      .alternatives-label {
+        padding-inline: 16px;
+      }
+
+      .rank-title-row,
+      .alternative-head {
+        gap: 8px;
+      }
+
+      .rank-fit {
+        max-width: 112px;
+      }
+
+      .rank-heading-copy .model-name {
+        font-size: 27px;
+      }
+
+      .alternative-meta {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .source-actions {
+        gap-block: 10px;
+      }
+    }
+
     @media (prefers-reduced-motion: reduce) {
       html {
         scroll-behavior: auto;
@@ -2585,7 +2860,7 @@ GPU：NVIDIA GeForce RTX 4070 SUPER - 12GB 显存
         deviceServer: "Server",
         gpuNone: "No dedicated GPU",
         matchTitle: "Open-model recommendation",
-        matchSubtitle: "One specific local-first starting point, based on the setup you reviewed.",
+        matchSubtitle: "Three viable local options, ordered for the setup you reviewed.",
         applied: "Applied",
         notApplied: "Not applied",
         task: "Task",
@@ -2599,6 +2874,15 @@ GPU：NVIDIA GeForce RTX 4070 SUPER - 12GB 显存
         localFirst: "Local first",
         cloudOk: "Cloud acceptable",
         tryFirst: "TRY FIRST",
+        rankingBasisTitle: "Ranked for practical fit on this profile",
+        rankingBasisBody: "This is not an overall quality or benchmark ranking. Fit scores are illustrative for the reviewed hardware.",
+        sourceInternetNote: "Scanning and ranking stay in this browser. Source links use the internet only when opened.",
+        alternativesLabel: "Other viable options",
+        illustrativeFit: "Illustrative fit {score} / 100",
+        whyLower: "Why lower",
+        modelTarget: "Size / format target",
+        downloadDetails: "Download and model details",
+        notRecommendedHardware: "Not recommended on this hardware",
         strongFit: "Strong local fit",
         fitScore: "88 / 100 hardware fit",
         runtime: "Runtime",
@@ -2684,7 +2968,7 @@ GPU：NVIDIA GeForce RTX 4070 SUPER - 12GB 显存
         deviceServer: "服务器",
         gpuNone: "无独立显卡",
         matchTitle: "开源模型推荐",
-        matchSubtitle: "根据已确认的硬件和用途，推荐一个适合先试的本地方案。",
+        matchSubtitle: "根据已确认的硬件，列出 3 个可行方案并按实际适配度排序。",
         applied: "已应用",
         notApplied: "待应用",
         task: "任务",
@@ -2698,6 +2982,15 @@ GPU：NVIDIA GeForce RTX 4070 SUPER - 12GB 显存
         localFirst: "优先本地运行",
         cloudOk: "可接受云端托管",
         tryFirst: "建议先试",
+        rankingBasisTitle: "按这台电脑的实际适配度排序",
+        rankingBasisBody: "这不是模型综合实力或跑分排名；适配分仅用于说明当前硬件下的相对判断。",
+        sourceInternetNote: "解析与排序始终在本机浏览器中完成；只有打开来源链接时才会联网。",
+        alternativesLabel: "其他可行方案",
+        illustrativeFit: "示意适配分 {score} / 100",
+        whyLower: "排序靠后的原因",
+        modelTarget: "规格 / 格式目标",
+        downloadDetails: "下载与模型详情",
+        notRecommendedHardware: "不建议在此配置上使用",
         strongFit: "适合本地运行",
         fitScore: "配置匹配 88 / 100",
         runtime: "推荐运行工具",
@@ -2717,70 +3010,343 @@ GPU：NVIDIA GeForce RTX 4070 SUPER - 12GB 显存
       }
     };
 
+    const artifactGuidance = {
+      communityQuant: {
+        en: "The model page links creator weights. Choose a compatible quantized artifact on the model/runtime page; community quantizations have separate maintainers.",
+        zh: "模型页提供创作者发布的原始权重。请在模型页或运行工具中选择兼容的量化版本；社区量化由不同维护者提供。"
+      },
+      optimizedWeights: {
+        en: "The model page links creator weights. Memory-optimized or FP8 artifacts may be community-provided; choose a compatible artifact on the model/runtime page.",
+        zh: "模型页提供创作者发布的原始权重。显存优化或 FP8 版本可能由社区提供，请在模型页或运行工具中选择兼容文件。"
+      },
+      runtimeConversion: {
+        en: "The model page links creator weights. CTranslate2 or other runtime conversions may be separately maintained; choose a compatible artifact through the runtime.",
+        zh: "模型页提供创作者发布的权重。CTranslate2 等运行格式可能由其他维护者转换，请通过运行工具选择兼容文件。"
+      },
+      officialRuntime: {
+        en: "The model page links creator weights. Use the linked official runtime or setup source for compatible loading instructions.",
+        zh: "模型页提供创作者发布的权重；请参考所列官方运行工具或配置说明加载模型。"
+      },
+      alternateFormat: {
+        en: "The model page links creator weights. ONNX or other alternate formats may be separately maintained; confirm compatibility on the model/runtime page.",
+        zh: "模型页提供创作者发布的权重。ONNX 等其他格式可能由不同维护者提供，请在模型页或运行工具中确认兼容性。"
+      }
+    };
+
     const recommendations = {
       chat: {
-        name: "Qwen2.5 7B Instruct",
-        runtime: "Ollama or llama.cpp",
-        quantization: "7B / Q4_K_M GGUF",
-        fit: {
-          en: "32GB RAM and 12GB VRAM leave comfortable room for a 4-bit 7B chat model.",
-          zh: "32GB 内存和 12GB 显存运行 4-bit 7B 对话模型较为宽裕。"
-        },
-        avoid: {
-          en: "Avoid treating it as a frontier model or using very long production context without evaluation.",
-          zh: "不建议把它用于超长上下文或未经评估的生产任务。"
+        candidates: [
+          {
+            id: "qwen2-5-7b-instruct",
+            name: "Qwen2.5 7B Instruct",
+            score: 92,
+            fitLabel: { en: "Strong local fit", zh: "适合本地运行" },
+            runtime: "Ollama or llama.cpp",
+            target: "7B / Q4_K_M GGUF",
+            fit: {
+              en: "32GB RAM and 12GB VRAM leave comfortable room for a 4-bit 7B chat model.",
+              zh: "32GB 内存和 12GB 显存运行 4-bit 7B 对话模型较为宽裕。"
+            },
+            avoid: {
+              en: "Avoid treating it as a frontier model or using very long production context without evaluation.",
+              zh: "不建议把它用于超长上下文或未经评估的生产任务。"
+            },
+            artifact: artifactGuidance.communityQuant,
+            sources: [
+              { kind: "model", url: "https://huggingface.co/Qwen/Qwen2.5-7B-Instruct" },
+              { label: { en: "Official setup", zh: "官方配置说明" }, url: "https://qwen.readthedocs.io/" }
+            ]
+          },
+          {
+            id: "llama-3-1-8b-instruct",
+            name: "Llama 3.1 8B Instruct",
+            score: 89,
+            fitLabel: { en: "Strong local fit", zh: "适合本地运行" },
+            runtime: "Ollama, LM Studio, or llama.cpp",
+            target: "8B / 4-bit GGUF",
+            whyLower: {
+              en: "Slightly larger, and its license needs closer review; broad runtime support keeps it practical.",
+              zh: "模型略大，且需要更仔细核对许可条款；但运行工具支持广泛，仍然实用。"
+            },
+            artifact: artifactGuidance.communityQuant,
+            sources: [
+              { kind: "model", url: "https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct" },
+              { label: { en: "Creator site", zh: "创作者官网" }, url: "https://www.llama.com/" }
+            ]
+          },
+          {
+            id: "mistral-7b-instruct-v0-3",
+            name: "Mistral 7B Instruct v0.3",
+            score: 84,
+            fitLabel: { en: "Good local fit", zh: "本地运行较合适" },
+            runtime: "Ollama or LM Studio",
+            target: "7B / 4-bit GGUF",
+            whyLower: {
+              en: "Lightweight and quick to set up, but the quality ceiling is lower than the first two choices.",
+              zh: "模型较轻、配置简单，但综合能力上限低于前两个方案。"
+            },
+            artifact: artifactGuidance.communityQuant,
+            sources: [
+              { kind: "model", url: "https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.3" },
+              { label: { en: "Official setup", zh: "官方配置说明" }, url: "https://docs.mistral.ai/" }
+            ]
+          }
+        ],
+        notRecommended: {
+          en: "70B-class local chat models and full-precision 15B+ variants exceed the practical memory and latency envelope for this profile.",
+          zh: "70B 级本地对话模型和 15B 以上全精度版本超出这台电脑较合理的内存与响应时间范围。"
         }
       },
       coding: {
-        name: "Qwen2.5-Coder 7B Instruct",
-        runtime: "Ollama, LM Studio, or llama.cpp",
-        quantization: "7B / Q4_K_M GGUF",
-        fit: {
-          en: "A strong first coding assistant for this CPU, 32GB RAM, and 12GB NVIDIA GPU.",
-          zh: "当前 CPU、32GB 内存和 12GB NVIDIA 显卡适合运行这款 7B 编程模型。"
-        },
-        avoid: {
-          en: "Avoid expecting autonomous work across a large repository without retrieval and evaluation.",
-          zh: "不建议在没有代码检索和评测的情况下，让它独立处理大型代码库。"
+        candidates: [
+          {
+            id: "qwen2-5-coder-7b-instruct",
+            name: "Qwen2.5-Coder 7B Instruct",
+            score: 91,
+            fitLabel: { en: "Strong local fit", zh: "适合本地运行" },
+            runtime: "Ollama, LM Studio, or llama.cpp",
+            target: "7B / Q4_K_M GGUF",
+            fit: {
+              en: "A strong first coding assistant for this CPU, 32GB RAM, and 12GB NVIDIA GPU.",
+              zh: "当前 CPU、32GB 内存和 12GB NVIDIA 显卡适合运行这款 7B 编程模型。"
+            },
+            avoid: {
+              en: "Avoid expecting autonomous work across a large repository without retrieval and evaluation.",
+              zh: "不建议在没有代码检索和评测的情况下，让它独立处理大型代码库。"
+            },
+            artifact: artifactGuidance.communityQuant,
+            sources: [
+              { kind: "model", url: "https://huggingface.co/Qwen/Qwen2.5-Coder-7B-Instruct" },
+              { label: { en: "Creator guide", zh: "创作者说明" }, url: "https://qwenlm.github.io/blog/qwen2.5-coder/" }
+            ]
+          },
+          {
+            id: "deepseek-coder-v2-lite-instruct",
+            name: "DeepSeek-Coder-V2 Lite Instruct",
+            score: 80,
+            fitLabel: { en: "Viable with tuning", zh: "优化后可运行" },
+            runtime: "Transformers or llama.cpp where supported",
+            target: "Lite MoE / compatible quantized artifact",
+            whyLower: {
+              en: "It fits the 32GB RAM floor, but 12GB VRAM is below the preferred 16GB tier and setup is heavier.",
+              zh: "32GB 内存达到运行条件，但 12GB 显存低于更理想的 16GB 档位，配置也更复杂。"
+            },
+            artifact: artifactGuidance.communityQuant,
+            sources: [
+              { kind: "model", url: "https://huggingface.co/deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct" },
+              { label: { en: "Official setup", zh: "官方配置说明" }, url: "https://github.com/deepseek-ai/DeepSeek-Coder-V2" }
+            ]
+          },
+          {
+            id: "starcoder2-15b",
+            name: "StarCoder2 15B",
+            score: 76,
+            fitLabel: { en: "Viable with tuning", zh: "优化后可运行" },
+            runtime: "Transformers or llama.cpp-compatible builds",
+            target: "15B / compatible quantized build",
+            whyLower: {
+              en: "The 15B footprint is workable with quantization and 32GB RAM, but it will be slower and needs more memory management.",
+              zh: "量化后可利用 32GB 内存运行，但 15B 规模速度更慢，也需要更谨慎地管理显存和内存。"
+            },
+            artifact: artifactGuidance.communityQuant,
+            sources: [
+              { kind: "model", url: "https://huggingface.co/bigcode/starcoder2-15b" },
+              { label: { en: "Official reference", zh: "官方资料" }, url: "https://arxiv.org/abs/2402.19173" }
+            ]
+          }
+        ],
+        notRecommended: {
+          en: "Full-precision 30B+ coding models and large autonomous-agent stacks are not practical within this VRAM and storage headroom.",
+          zh: "30B 以上全精度编程模型和大型自主代理工作流不适合当前显存与可用存储空间。"
         }
       },
       image: {
-        name: "FLUX.1 schnell",
-        runtime: "ComfyUI",
-        quantization: "memory-optimized / FP8 where supported",
-        fit: {
-          en: "The RTX 4070 SUPER's reviewed 12GB VRAM clears the practical starting range with memory optimization.",
-          zh: "经人工确认的 12GB 显存达到本地运行起步要求，建议开启显存优化。"
-        },
-        avoid: {
-          en: "Avoid unoptimized high-resolution batches; use SDXL when predictable 8-12GB workflows matter more.",
-          zh: "不建议直接进行未优化的高分辨率批量出图；如果更看重稳定性，可先试 SDXL。"
+        candidates: [
+          {
+            id: "flux-1-schnell",
+            name: "FLUX.1 schnell",
+            score: 88,
+            fitLabel: { en: "Strong fit with tuning", zh: "优化后适合本地运行" },
+            runtime: "ComfyUI",
+            target: "Memory-optimized / FP8 where supported",
+            fit: {
+              en: "The reviewed 12GB VRAM clears the practical starting range when the workflow uses memory optimization.",
+              zh: "经人工确认的 12GB 显存达到本地运行起步要求，使用显存优化工作流更稳妥。"
+            },
+            avoid: {
+              en: "Avoid unoptimized high-resolution batches; use SDXL when predictable 8-12GB workflows matter more.",
+              zh: "不建议直接进行未优化的高分辨率批量出图；如果更看重稳定性，可先试 SDXL。"
+            },
+            artifact: artifactGuidance.optimizedWeights,
+            sources: [
+              { kind: "model", url: "https://huggingface.co/black-forest-labs/FLUX.1-schnell" },
+              { label: { en: "Creator site", zh: "创作者官网" }, url: "https://blackforestlabs.ai/" }
+            ]
+          },
+          {
+            id: "stable-diffusion-3-5-medium",
+            name: "Stable Diffusion 3.5 Medium",
+            score: 84,
+            fitLabel: { en: "Viable with tuning", zh: "优化后可运行" },
+            runtime: "ComfyUI or Diffusers",
+            target: "Medium / optimized local weights",
+            whyLower: {
+              en: "It is viable at 12GB VRAM with optimization, but the preferred tier is 16GB and setup is less forgiving.",
+              zh: "经过优化可在 12GB 显存上运行，但更理想的档位是 16GB，配置容错也更低。"
+            },
+            artifact: artifactGuidance.optimizedWeights,
+            sources: [
+              { kind: "model", url: "https://huggingface.co/stabilityai/stable-diffusion-3.5-medium" },
+              { label: { en: "Creator site", zh: "创作者官网" }, url: "https://stability.ai/" }
+            ]
+          },
+          {
+            id: "sdxl-base-1-0",
+            name: "SDXL Base 1.0",
+            score: 82,
+            fitLabel: { en: "Strong hardware fit", zh: "硬件适配较好" },
+            runtime: "AUTOMATIC1111, ComfyUI, or Diffusers",
+            target: "SDXL Base / FP16 or optimized checkpoint",
+            whyLower: {
+              en: "It is the most predictable memory fit, but ranks lower for modern prompt following and output quality.",
+              zh: "它对显存最友好、运行更稳定，但在新一代提示词理解和画面质量上排序靠后。"
+            },
+            artifact: artifactGuidance.optimizedWeights,
+            sources: [
+              { kind: "model", url: "https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0" },
+              { label: { en: "Creator guide", zh: "创作者说明" }, url: "https://stability.ai/stable-image" }
+            ]
+          }
+        ],
+        notRecommended: {
+          en: "Unoptimized full-precision workflows, very high-resolution batches, and multi-model pipelines that assume more than 12GB VRAM are not recommended.",
+          zh: "不建议使用未优化的全精度工作流、超高分辨率批量出图，或默认需要超过 12GB 显存的多模型流程。"
         }
       },
       speech: {
-        name: "Whisper Large v3",
-        runtime: "faster-whisper",
-        quantization: "large / CTranslate2 int8_float16",
-        fit: {
-          en: "The 12GB NVIDIA GPU supports quality-focused local transcription with useful throughput.",
-          zh: "12GB NVIDIA 显卡可以较流畅地完成高质量本地转写。"
-        },
-        avoid: {
-          en: "Avoid for strict real-time latency before testing your language, audio domain, and batch size.",
-          zh: "对实时延迟有严格要求时，先用实际语言、音频类型和批量大小测试。"
+        candidates: [
+          {
+            id: "whisper-large-v3",
+            name: "Whisper Large v3",
+            score: 93,
+            fitLabel: { en: "Strong local fit", zh: "适合本地运行" },
+            runtime: "faster-whisper or whisper.cpp",
+            target: "Large / CTranslate2 int8_float16",
+            fit: {
+              en: "The 12GB NVIDIA GPU supports quality-focused local transcription with useful throughput.",
+              zh: "12GB NVIDIA 显卡可以较流畅地完成高质量本地转写。"
+            },
+            avoid: {
+              en: "Avoid strict real-time commitments before testing your language, audio domain, and batch size.",
+              zh: "对实时延迟有严格要求时，先用实际语言、音频类型和批量大小测试。"
+            },
+            artifact: artifactGuidance.runtimeConversion,
+            sources: [
+              { kind: "model", url: "https://huggingface.co/openai/whisper-large-v3" },
+              { label: { en: "Official setup", zh: "官方配置说明" }, url: "https://github.com/openai/whisper" }
+            ]
+          },
+          {
+            id: "distil-whisper-large-v3-5",
+            name: "Distil-Whisper Large v3.5",
+            score: 91,
+            fitLabel: { en: "Strong local fit", zh: "适合本地运行" },
+            runtime: "faster-whisper",
+            target: "Distilled large / CTranslate2 FP16 or int8",
+            whyLower: {
+              en: "It is faster and lighter, but the distilled model can trade some language or edge-case accuracy for throughput.",
+              zh: "速度更快、占用更低，但蒸馏模型可能用部分语言或边缘场景准确率换取吞吐量。"
+            },
+            artifact: artifactGuidance.runtimeConversion,
+            sources: [
+              { kind: "model", url: "https://huggingface.co/distil-whisper/distil-large-v3.5" },
+              { label: { en: "Official setup", zh: "官方配置说明" }, url: "https://github.com/huggingface/distil-whisper" }
+            ]
+          },
+          {
+            id: "nvidia-parakeet-tdt-0-6b-v3",
+            name: "NVIDIA Parakeet TDT 0.6B v3",
+            score: 87,
+            fitLabel: { en: "Efficient local fit", zh: "本地运行效率较高" },
+            runtime: "NVIDIA NeMo",
+            target: "0.6B / NeMo weights",
+            whyLower: {
+              en: "Efficient on this NVIDIA GPU, but the NeMo setup and supported language/task envelope are narrower.",
+              zh: "在当前 NVIDIA 显卡上效率较高，但 NeMo 配置更专业，支持的语言和任务范围也更窄。"
+            },
+            artifact: artifactGuidance.officialRuntime,
+            sources: [
+              { kind: "model", url: "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3" },
+              { label: { en: "Runtime setup", zh: "运行工具说明" }, url: "https://github.com/NVIDIA/NeMo" }
+            ]
+          }
+        ],
+        notRecommended: {
+          en: "Unbenchmarked multi-stream real-time transcription with large ASR models is not recommended for this single-GPU profile.",
+          zh: "不建议在未做实测的情况下，用这张显卡承担多路大型语音模型的实时转写。"
         }
       },
       embeddings: {
-        name: "BGE-M3",
-        runtime: "FlagEmbedding or sentence-transformers",
-        quantization: "multilingual / FP16 or ONNX",
-        fit: {
-          en: "This system has ample memory for multilingual local retrieval and moderate indexing work.",
-          zh: "32GB 内存足够进行多语言本地检索和中等规模索引。"
-        },
-        avoid: {
-          en: "Avoid when a smaller English-only model would reduce latency without hurting retrieval quality.",
-          zh: "如果只处理英文且更重视延迟，可选择更小的英文向量模型。"
+        candidates: [
+          {
+            id: "bge-m3",
+            name: "BGE-M3",
+            score: 94,
+            fitLabel: { en: "Strong local fit", zh: "适合本地运行" },
+            runtime: "FlagEmbedding or sentence-transformers",
+            target: "Multilingual / FP16 or compatible ONNX",
+            fit: {
+              en: "This system has ample memory for multilingual local retrieval and moderate indexing work.",
+              zh: "32GB 内存足够进行多语言本地检索和中等规模索引。"
+            },
+            avoid: {
+              en: "Avoid when a smaller English-only model would reduce latency without hurting retrieval quality.",
+              zh: "如果只处理英文且更重视延迟，可选择更小的英文向量模型。"
+            },
+            artifact: artifactGuidance.alternateFormat,
+            sources: [
+              { kind: "model", url: "https://huggingface.co/BAAI/bge-m3" },
+              { label: { en: "Official reference", zh: "官方资料" }, url: "https://arxiv.org/abs/2402.03216" }
+            ]
+          },
+          {
+            id: "bge-large-en-v1-5",
+            name: "BGE Large EN v1.5",
+            score: 90,
+            fitLabel: { en: "Strong English fit", zh: "适合英文检索" },
+            runtime: "sentence-transformers or ONNX Runtime",
+            target: "Large English / FP16 or compatible ONNX",
+            whyLower: {
+              en: "Excellent for English retrieval, but it ranks below BGE-M3 because it lacks the same multilingual and hybrid range.",
+              zh: "英文检索表现扎实，但多语言和混合检索能力不如 BGE-M3，因此排序靠后。"
+            },
+            artifact: artifactGuidance.alternateFormat,
+            sources: [
+              { kind: "model", url: "https://huggingface.co/BAAI/bge-large-en-v1.5" },
+              { label: { en: "Runtime setup", zh: "运行工具说明" }, url: "https://github.com/FlagOpen/FlagEmbedding" }
+            ]
+          },
+          {
+            id: "nomic-embed-text-v1-5",
+            name: "Nomic Embed Text v1.5",
+            score: 87,
+            fitLabel: { en: "Efficient local fit", zh: "本地运行效率较高" },
+            runtime: "Ollama or sentence-transformers",
+            target: "Local-friendly / compatible quantized runtime",
+            whyLower: {
+              en: "It is easy to run locally, but ranks lower for multilingual and hybrid retrieval breadth.",
+              zh: "本地部署简单，但多语言和混合检索能力范围较窄，因此排序靠后。"
+            },
+            artifact: artifactGuidance.communityQuant,
+            sources: [
+              { kind: "model", url: "https://huggingface.co/nomic-ai/nomic-embed-text-v1.5" },
+              { label: { en: "Creator guide", zh: "创作者说明" }, url: "https://www.nomic.ai/blog/posts/nomic-embed-text-v1" }
+            ]
+          }
+        ],
+        notRecommended: {
+          en: "Production-scale billion-vector indexing and GPU-heavy reranking stacks exceed this profile's practical storage and serving envelope.",
+          zh: "十亿级向量索引和重度 GPU 重排服务超出这台电脑较合理的存储与持续服务范围。"
         }
       }
     };
@@ -2998,6 +3564,47 @@ GPU：NVIDIA GeForce RTX 4070 SUPER - 12GB 显存
       return document.querySelector('input[name="deployment"]:checked').value;
     }
 
+    function localized(value) {
+      return value[state.language] || value.en;
+    }
+
+    function formatFitScore(score) {
+      return t("illustrativeFit").replace("{score}", String(score));
+    }
+
+    function renderSourceLinks(candidate) {
+      return candidate.sources.map((source) => {
+        const label = source.kind === "model" ? t("downloadDetails") : localized(source.label);
+        return `<a class="source-link" href="${escapeHtml(source.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(label)} <span aria-hidden="true">&#8599;</span></a>`;
+      }).join("");
+    }
+
+    function renderAlternative(candidate, rank) {
+      return `
+        <article class="alternative-row" data-rank="${rank}" data-model-id="${escapeHtml(candidate.id)}">
+          <div class="alternative-head">
+            <div class="rank-identity">
+              <span class="rank-number" aria-label="${escapeHtml(String(rank))}">${rank}</span>
+              <div class="rank-heading-copy">
+                <h4 class="alternative-name">${escapeHtml(candidate.name)}</h4>
+                <span>${escapeHtml(candidate.target)}</span>
+              </div>
+            </div>
+            <div class="rank-fit">
+              <strong>${escapeHtml(localized(candidate.fitLabel))}</strong>
+              <span>${escapeHtml(formatFitScore(candidate.score))}</span>
+            </div>
+          </div>
+          <dl class="alternative-meta">
+            <div><dt>${escapeHtml(t("modelTarget"))}</dt><dd class="mono">${escapeHtml(candidate.target)}</dd></div>
+            <div><dt>${escapeHtml(t("runtime"))}</dt><dd class="mono">${escapeHtml(candidate.runtime)}</dd></div>
+          </dl>
+          <p class="lower-reason"><strong>${escapeHtml(t("whyLower"))}</strong>${escapeHtml(localized(candidate.whyLower))}</p>
+          <p class="artifact-note">${escapeHtml(localized(candidate.artifact))}</p>
+          <div class="source-actions">${renderSourceLinks(candidate)}</div>
+        </article>`;
+    }
+
     function renderRecommendation() {
       if (!state.applied) {
         recommendation.classList.add("is-locked");
@@ -3011,31 +3618,59 @@ GPU：NVIDIA GeForce RTX 4070 SUPER - 12GB 显存
       }
 
       recommendation.classList.remove("is-locked");
-      const item = recommendations[selectedTask()];
+      const set = recommendations[selectedTask()];
+      const [primary, second, third] = set.candidates;
       const localOnly = selectedDeployment() === "local-only";
       recommendation.innerHTML = `
-        <div class="recommendation-main">
-          <span class="try-label">${escapeHtml(t("tryFirst"))}</span>
-          <h3 class="model-name">${escapeHtml(item.name)}</h3>
-          <p class="starter-line">${escapeHtml(item.quantization)} -> ${escapeHtml(item.runtime)}</p>
+        <div class="rank-context">
+          <strong>${escapeHtml(t("rankingBasisTitle"))}</strong>
+          <span>${escapeHtml(t("rankingBasisBody"))}</span>
+          <span>${escapeHtml(t("sourceInternetNote"))}</span>
+        </div>
+        <section class="primary-rank" data-rank="1" data-model-id="${escapeHtml(primary.id)}">
+          <div class="rank-title-row">
+            <div class="rank-identity">
+              <span class="rank-number" aria-label="1">1</span>
+              <div class="rank-heading-copy">
+                <span class="try-label">${escapeHtml(t("tryFirst"))}</span>
+                <h3 class="model-name">${escapeHtml(primary.name)}</h3>
+              </div>
+            </div>
+            <div class="rank-fit">
+              <strong>${escapeHtml(localized(primary.fitLabel))}</strong>
+              <span>${escapeHtml(formatFitScore(primary.score))}</span>
+            </div>
+          </div>
+          <p class="starter-line">${escapeHtml(primary.target)} &#8594; ${escapeHtml(primary.runtime)}</p>
           <div class="fit-readout">
-            <span class="fit-gauge">88</span>
+            <span class="fit-gauge">${primary.score}</span>
             <span class="fit-copy">
-              <strong>${escapeHtml(t("strongFit"))}</strong>
-              <span>${escapeHtml(t("fitScore"))}</span>
+              <strong>${escapeHtml(localized(primary.fitLabel))}</strong>
+              <span>${escapeHtml(formatFitScore(primary.score))}</span>
             </span>
           </div>
-        </div>
-        <dl class="guidance-list">
-          <div class="guidance-item"><dt>${escapeHtml(t("runtime"))}</dt><dd class="mono">${escapeHtml(item.runtime)}</dd></div>
-          <div class="guidance-item"><dt>${escapeHtml(t("quantization"))}</dt><dd class="mono">${escapeHtml(item.quantization)}</dd></div>
-          <div class="guidance-item"><dt>${escapeHtml(t("hardwareFit"))}</dt><dd>${escapeHtml(item.fit[state.language])}</dd></div>
-          <div class="guidance-item"><dt>${escapeHtml(t("avoid"))}</dt><dd>${escapeHtml(item.avoid[state.language])}</dd></div>
-        </dl>
-        <aside class="hosted-fallback" ${localOnly ? "hidden" : ""}>
-          <div class="hosted-rule"></div>
-          <strong>${escapeHtml(t("hostedFallback"))}</strong>
-          <p>${escapeHtml(t("hostedCopy"))}</p>
+          <dl class="guidance-list">
+            <div class="guidance-item"><dt>${escapeHtml(t("runtime"))}</dt><dd class="mono">${escapeHtml(primary.runtime)}</dd></div>
+            <div class="guidance-item"><dt>${escapeHtml(t("modelTarget"))}</dt><dd class="mono">${escapeHtml(primary.target)}</dd></div>
+            <div class="guidance-item"><dt>${escapeHtml(t("hardwareFit"))}</dt><dd>${escapeHtml(localized(primary.fit))}</dd></div>
+            <div class="guidance-item"><dt>${escapeHtml(t("avoid"))}</dt><dd>${escapeHtml(localized(primary.avoid))}</dd></div>
+          </dl>
+          <p class="artifact-note">${escapeHtml(localized(primary.artifact))}</p>
+          <div class="source-actions">${renderSourceLinks(primary)}</div>
+          <aside class="hosted-fallback" ${localOnly ? "hidden" : ""}>
+            <div class="hosted-rule"></div>
+            <strong>${escapeHtml(t("hostedFallback"))}</strong>
+            <p>${escapeHtml(t("hostedCopy"))}</p>
+          </aside>
+        </section>
+        <section class="ranked-alternatives" aria-label="${escapeHtml(t("alternativesLabel"))}">
+          <div class="alternatives-label">${escapeHtml(t("alternativesLabel"))}</div>
+          ${renderAlternative(second, 2)}
+          ${renderAlternative(third, 3)}
+        </section>
+        <aside class="not-recommended">
+          <strong>${escapeHtml(t("notRecommendedHardware"))}</strong>
+          <p>${escapeHtml(localized(set.notRecommended))}</p>
         </aside>`;
     }
 
@@ -3205,13 +3840,13 @@ GPU：NVIDIA GeForce RTX 4070 SUPER - 12GB 显存
   2. Kept blur on major materials, the scanner tray, and active inspector while leaving dense rows, fields, segments, and buttons crisp.
   3. Anchored primary actions and selected controls in near-black, with tangerine reserved for scan progress, focus, and unresolved review.
   4. Preserved a distinct semantic green for verified and applied states so warning and success never depend on the same color.
-  5. Retained the protected desktop and mobile overlaps so no evidence, source choice, or action sits beneath another plane.
-  6. Preserved the shovel sweep, exact-source review, manual correction, five tasks, deployment choices, and concrete fit guidance.
-  7. Kept the native Mandarin copy and fixed two-line Chinese headline unchanged while moving all surfaces to WCAG-checked dark-on-light contrast.
+  5. Retained protected desktop and mobile overlaps so no evidence, source choice, source link, or focus ring sits beneath another plane.
+  6. Replaced the single result with three viable practical-fit options per task: Rank 1 expanded, Ranks 2 and 3 compact, and unsuitable guidance separated.
+  7. Added curated creator/model and official setup sources with explicit quantization provenance while preserving native Mandarin and the fixed two-line headline.
   Trade-offs:
   1. Porcelain glass depends on backdrop-filter for full material depth, with deliberately flatter opaque fallbacks on unsupported browsers.
-  2. The mobile flow remains long because exact source review and editing stay inline instead of moving into another screen.
-  3. Parsing and fit scores remain deterministic mock values, not production scanner or recommendation outputs.
+  2. The mobile flow is longer because exact review and all three candidates stay visible without hidden disclosures or another screen.
+  3. Parsing, practical-fit order, and scores remain deterministic illustrative mock values; source links are static and only use the network when opened.
   -->
 </body>
 </html>
