@@ -41,7 +41,7 @@ const TRAILING_CAPACITY_AMOUNT = new RegExp(
 );
 const MAX_CAPACITY_LABEL_GAP = 32;
 const MAX_GPU_PROXIMITY_GAP = 24;
-const APPLE_PLATFORM_CONTEXT = /\b(?:macOS|MacBook|Apple[ \t]+(?:silicon|GPU))\b|苹果电脑|蘋果電腦|苹果系统|蘋果系統/iu;
+const APPLE_PLATFORM_CONTEXT = /\b(?:macOS|MacBook|Mac[ \t]+mini|Mac[ \t]+Studio|iMac|Apple[ \t]+(?:silicon|GPU))\b|苹果电脑|蘋果電腦|苹果系统|蘋果系統/iu;
 const NON_APPLE_M_SERIES_PREFIX = /\b(?:Intel(?:[ \t]+Core)?|Core)[ \t]*$/iu;
 
 function globalRegex(regex) {
@@ -181,6 +181,28 @@ function collectCapacityLabels(segment) {
   return accepted;
 }
 
+function collectLocalPatternMatches(segment, patterns) {
+  const matches = [];
+
+  for (const [patternIndex, pattern] of patterns.entries()) {
+    for (const match of segment.text.matchAll(globalRegex(pattern.regex))) {
+      matches.push({
+        pattern,
+        patternIndex,
+        start: match.index,
+        end: match.index + match[0].length
+      });
+    }
+  }
+
+  matches.sort((left, right) => (
+    left.start - right.start
+    || left.end - right.end
+    || left.patternIndex - right.patternIndex
+  ));
+  return matches;
+}
+
 function capacityNumberStart(match) {
   return match.index + match[0].indexOf(match.groups.amount);
 }
@@ -203,9 +225,10 @@ function hasUnsafeSignPrefix(segment, match, labels) {
   ));
 }
 
-function hasTransferRateSuffix(segment, match) {
-  const followingText = segment.text.slice(match.index + match[0].length);
-  return /^[ \t]+per[ \t]+(?:s(?:ec(?:ond)?)?|second)\b/iu.test(followingText);
+function hasTransferRateSuffix(document, segment, match) {
+  const globalEnd = segment.start + match.index + match[0].length;
+  const followingText = document.normalized.slice(globalEnd, globalEnd + 32);
+  return /^[ \t]+(?:\/[ \t]*(?:s|sec|second)\b|per[ \t]+(?:s|sec|second)\b)/iu.test(followingText);
 }
 
 function hasUnsafeDigitCommaPrefix(segment, match, modelCandidates) {
@@ -250,14 +273,14 @@ function hasUnsafeDigitCommaPrefix(segment, match, modelCandidates) {
   return !endsWithKnownUnparsedModel;
 }
 
-function collectCapacityAmounts(segment, modelCandidates, labels) {
+function collectCapacityAmounts(document, segment, modelCandidates, labels) {
   const amounts = [];
 
   for (const [patternIndex, pattern] of CAPACITY_AMOUNT_PATTERNS.entries()) {
     for (const match of segment.text.matchAll(globalRegex(pattern.regex))) {
       if (
         hasUnsafeSignPrefix(segment, match, labels)
-        || hasTransferRateSuffix(segment, match)
+        || hasTransferRateSuffix(document, segment, match)
         || hasUnsafeDigitCommaPrefix(segment, match, modelCandidates)
       ) continue;
 
@@ -328,9 +351,22 @@ function localSpanIsInClause(start, end, clause) {
   return start >= clause.start && end <= clause.end;
 }
 
-function clauseContainsPattern(segment, clause, patterns) {
-  const text = segment.text.slice(clause.start, clause.end);
-  return patterns.some((pattern) => pattern.regex.test(text));
+function hasAttachedDisqualifier(segment, clause, disqualifiers, amount, ownership) {
+  const localStart = ownership
+    ? Math.min(ownership.label.start, amount.start)
+    : amount.start;
+  const localEnd = ownership
+    ? Math.max(ownership.label.end, amount.end)
+    : amount.end;
+
+  return disqualifiers
+    .filter((match) => localSpanIsInClause(match.start, match.end, clause))
+    .some((match) => {
+      let gap = "";
+      if (match.end <= localStart) gap = segment.text.slice(match.end, localStart);
+      else if (match.start >= localEnd) gap = segment.text.slice(localEnd, match.start);
+      return /^[ \t:]*$/u.test(gap);
+    });
 }
 
 function ownershipOption(segment, amount, label) {
@@ -390,25 +426,7 @@ function findCapacityOwnership(segment, labels, amount) {
 }
 
 function collectStorageQualifiers(segment) {
-  const qualifiers = [];
-
-  for (const [patternIndex, pattern] of STORAGE_KIND_PATTERNS.entries()) {
-    for (const match of segment.text.matchAll(globalRegex(pattern.regex))) {
-      qualifiers.push({
-        pattern,
-        patternIndex,
-        start: match.index,
-        end: match.index + match[0].length
-      });
-    }
-  }
-
-  qualifiers.sort((left, right) => (
-    left.start - right.start
-    || left.end - right.end
-    || left.patternIndex - right.patternIndex
-  ));
-  return qualifiers;
+  return collectLocalPatternMatches(segment, STORAGE_KIND_PATTERNS);
 }
 
 function storageEvidence(segment, clause, qualifiers, localStart, localEnd) {
@@ -595,12 +613,19 @@ export function extractTaskCandidates(document) {
   return collectSimpleCandidates(document, TASK_PATTERNS);
 }
 
+function isDedicatedGpuModel(candidate) {
+  return GPU_MODEL_PATTERNS.some((pattern) => (
+    pattern.id === candidate.source && pattern.dedicated === true
+  ));
+}
+
 export function extractCapacityCandidates(document) {
   const cpuCandidates = extractCpuCandidates(document);
   const gpuCandidates = extractGpuCandidates(document);
   const gpuModels = gpuCandidates.filter((candidate) => (
     candidate.field === "gpuModel" && candidate.value !== "No dedicated GPU"
   ));
+  const dedicatedGpuModels = gpuModels.filter(isDedicatedGpuModel);
   const hasNoGpu = gpuCandidates.some((candidate) => (
     candidate.field === "gpuModel" && candidate.value === "No dedicated GPU"
   ));
@@ -609,19 +634,37 @@ export function extractCapacityCandidates(document) {
     ...gpuCandidates.filter((candidate) => candidate.field === "gpuModel")
   ];
   const entries = [];
+  let hasExplicitVramEvidence = false;
 
   for (const segment of document.segments) {
     const segmentLabels = collectCapacityLabels(segment);
+    const disqualifiers = collectLocalPatternMatches(segment, CAPACITY_DISQUALIFIER_PATTERNS);
     const storageQualifiers = collectStorageQualifiers(segment);
     const clauseBoundaries = collectCapacityClauseBoundaries(segment);
-    for (const amount of collectCapacityAmounts(segment, modelCandidates, segmentLabels)) {
-      const clause = capacityClause(segment, amount, clauseBoundaries);
-      if (clauseContainsPattern(segment, clause, CAPACITY_DISQUALIFIER_PATTERNS)) continue;
+    if (segmentLabels.some((label) => label.pattern.field === "vram")) {
+      hasExplicitVramEvidence = true;
+    }
 
+    for (const amount of collectCapacityAmounts(
+      document,
+      segment,
+      modelCandidates,
+      segmentLabels
+    )) {
+      const clause = capacityClause(segment, amount, clauseBoundaries);
       const labels = segmentLabels.filter((label) => (
         localSpanIsInClause(label.start, label.end, clause)
       ));
       const ownership = findCapacityOwnership(segment, labels, amount);
+      if (ownership.status === "ambiguous") continue;
+      if (hasAttachedDisqualifier(
+        segment,
+        clause,
+        disqualifiers,
+        amount,
+        ownership.ownership
+      )) continue;
+
       let entry = null;
       if (ownership.status === "owned") {
         entry = explicitCapacityEntry(
@@ -633,7 +676,14 @@ export function extractCapacityCandidates(document) {
           ownership.ownership
         );
       } else if (ownership.status === "unowned") {
-        entry = proximityVramEntry(document, segment, clause, amount, gpuModels, hasNoGpu);
+        entry = proximityVramEntry(
+          document,
+          segment,
+          clause,
+          amount,
+          dedicatedGpuModels,
+          hasNoGpu
+        );
       }
       if (entry) entries.push(entry);
     }
@@ -648,8 +698,10 @@ export function extractCapacityCandidates(document) {
   const hasAppleMSeries = cpuCandidates.some((candidate) => (
     candidate.source.startsWith("cpu.apple-m")
   ));
-  const hasExplicitVram = entries.some((entry) => entry.candidate.field === "vram");
-  const hasDedicatedGpuModel = gpuModels.some((candidate) => !/\bApple\b/iu.test(candidate.raw));
+  const hasExplicitVram = hasExplicitVramEvidence || entries.some((entry) => (
+    entry.candidate.field === "vram"
+  ));
+  const hasDedicatedGpuModel = dedicatedGpuModels.length > 0;
   const hasDedicatedGpu = hasDedicatedGpuModel || document.segments.some((segment) => (
     DEDICATED_GPU_EVIDENCE_PATTERNS.some((pattern) => pattern.regex.test(segment.text))
   ));

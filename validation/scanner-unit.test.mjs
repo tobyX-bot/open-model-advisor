@@ -1103,6 +1103,72 @@ test("abstains from negated bounded and required capacity language", () => {
   }
 });
 
+test("abstains from attached preposed and postposed capacity bounds", () => {
+  for (const input of [
+    "RAM 32GB or more",
+    "RAM <32GB",
+    "RAM <=32GB",
+    "RAM >=32GB",
+    "RAM >32GB",
+    "RAM 32GB >",
+    "内存32GB以上",
+    "内存32GB以下",
+    "内存32GB以内",
+    "顯存12GB以內"
+  ]) {
+    assert.deepEqual(extractCapacityCandidates(normalizeSetupText(input)), [], input);
+  }
+
+  assert.deepEqual(
+    extractCapacityCandidates(normalizeSetupText("RAM 32GB or more, VRAM 12GB"))
+      .map((candidate) => [candidate.field, candidate.value, candidate.raw]),
+    [["vram", 12, "VRAM 12GB"]]
+  );
+});
+
+test("keeps non-exact filtering local to its owning amount and field", () => {
+  const cases = [
+    ["RAM 32GB but VRAM not specified", [["ram", 32, "RAM 32GB"]]],
+    ["内存32GB但显存不是12GB", [["ram", 32, "内存32GB"]]],
+    ["32GB RAM spread over 2 DIMMs", [["ram", 32, "32GB RAM"]]]
+  ];
+
+  for (const [input, expected] of cases) {
+    const document = normalizeSetupText(input);
+    const candidates = extractCapacityCandidates(document);
+    assert.deepEqual(
+      candidates.map((candidate) => [candidate.field, candidate.value, candidate.raw]),
+      expected,
+      input
+    );
+    candidates.forEach((candidate) => assertCapacityCandidateContract(document, candidate));
+  }
+});
+
+test("rejects whitespace slash rates while preserving slash field delimiters", () => {
+  for (const input of [
+    "SSD read speed 7GB /s",
+    "SSD read speed 7 GB / second",
+    "VRAM bandwidth 12GiB / sec"
+  ]) {
+    assert.deepEqual(extractCapacityCandidates(normalizeSetupText(input)), [], input);
+  }
+
+  const document = normalizeSetupText("SSD 512GB / RAM 32GB");
+  assert.deepEqual(
+    extractCapacityCandidates(document).map((candidate) => [
+      candidate.field,
+      candidate.value,
+      candidate.raw,
+      candidate.segmentIndex
+    ]),
+    [
+      ["storage", 512, "SSD 512GB", 0],
+      ["ram", 32, "RAM 32GB", 1]
+    ]
+  );
+});
+
 test("capacity offsets use normalized source when Unicode lowercase changes length", () => {
   const document = normalizeSetupText("İ;RAM 64GB, 1TB available storage");
   const candidates = extractCapacityCandidates(document);
@@ -1471,6 +1537,79 @@ test("hardens Apple unified-memory inference against dedicated and false M-serie
   );
   assert.deepEqual(candidateValues(extractCpuCandidates(contextualFalseApple), "cpuModel"), []);
   assert.deepEqual(candidateValues(extractMemoryCandidates(contextualFalseApple), "vram"), []);
+});
+
+test("blocks Apple inference on explicit nonnumeric or invalid VRAM evidence", () => {
+  for (const input of [
+    "Apple M3 Pro;36GB unified memory;VRAM less than 8GB",
+    "Apple M3 Pro;36GB unified memory;VRAM unknown",
+    "Apple M3 Pro;36GB unified memory;VRAM 8.5GB"
+  ]) {
+    const document = normalizeSetupText(input);
+    const candidates = extractMemoryCandidates(document);
+    assert.deepEqual(
+      candidates.map((candidate) => [candidate.field, candidate.value, candidate.inferred, candidate.raw]),
+      [["ram", 36, false, "36GB unified memory"]],
+      input
+    );
+    candidates.forEach((candidate) => assertCapacityCandidateContract(document, candidate));
+  }
+});
+
+test("requires a dedicated GPU model for unlabeled VRAM proximity", () => {
+  const cases = [
+    ["Intel Iris Xe 2GB", []],
+    ["Intel Iris Xe with 2GB VRAM", [["vram", 2, "2GB VRAM"]]],
+    ["Intel Arc A750 8GB", [["vram", 8, "Intel Arc A750 8GB"]]],
+    ["NVIDIA RTX 4070 12GB", [["vram", 12, "NVIDIA RTX 4070 12GB"]]],
+    ["AMD Radeon RX 7900 XT 24GiB", [["vram", 24, "AMD Radeon RX 7900 XT 24GiB"]]]
+  ];
+
+  for (const [input, expected] of cases) {
+    const document = normalizeSetupText(input);
+    const candidates = extractMemoryCandidates(document);
+    assert.deepEqual(
+      candidates.map((candidate) => [candidate.field, candidate.value, candidate.raw]),
+      expected,
+      input
+    );
+    candidates.forEach((candidate) => assertCapacityCandidateContract(document, candidate));
+  }
+});
+
+test("recognizes safe Apple desktop context without accepting Intel Core m3", () => {
+  const cases = [
+    ["Mac mini M3 Pro;36GB unified memory", 36, 27],
+    ["Mac Studio M2 Max;32GB unified memory", 32, 24],
+    ["iMac M1;16GB unified memory", 16, 12]
+  ];
+
+  for (const [input, ram, vram] of cases) {
+    const document = normalizeSetupText(input);
+    assert.deepEqual(candidateValues(extractCpuCandidates(document), "cpuModel").length, 1, input);
+    assert.deepEqual(
+      extractMemoryCandidates(document).map((candidate) => [
+        candidate.field,
+        candidate.value,
+        candidate.inferred,
+        candidate.confidence
+      ]),
+      [["ram", ram, false, "high"], ["vram", vram, true, "medium"]],
+      input
+    );
+  }
+
+  const dedicated = extractMemoryCandidates(normalizeSetupText(
+    "Mac mini M3 Pro;NVIDIA GPU;36GB unified memory"
+  ));
+  assert.deepEqual(dedicated.map((candidate) => [candidate.field, candidate.value]), [["ram", 36]]);
+
+  const falseApple = normalizeSetupText("iMac;Intel Core m3-8100Y;8GB unified memory");
+  assert.deepEqual(candidateValues(extractCpuCandidates(falseApple), "cpuModel"), []);
+  assert.deepEqual(
+    extractMemoryCandidates(falseApple).map((candidate) => [candidate.field, candidate.value]),
+    [["ram", 8]]
+  );
 });
 
 test("extends storage evidence to adjacent clause-local qualifiers", () => {

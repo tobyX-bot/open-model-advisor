@@ -181,6 +181,7 @@ export const GPU_MODEL_PATTERNS = freezePatterns([
     id: "gpu.nvidia-rtx",
     field: "gpuModel",
     vendor: "nvidia",
+    dedicated: true,
     regex: /\b(?:NVIDIA[ \t]+)?(?:GeForce[ \t]+)?RTX[ \t]*(?<model>[0-9]{3,4})(?<ti>[ \t]+Ti)?(?<super>[ \t]+SUPER)?(?<laptop>[ \t]+Laptop[ \t]+GPU)?(?![A-Z0-9-])/iu,
     confidence: "high",
     specificity: 100,
@@ -192,6 +193,7 @@ export const GPU_MODEL_PATTERNS = freezePatterns([
     id: "gpu.amd-radeon-rx",
     field: "gpuModel",
     vendor: "amd",
+    dedicated: true,
     regex: /\b(?:AMD[ \t]+)?(?:Radeon[ \t]+)?RX[ \t]*(?<model>[0-9]{3,4})(?<xt>[ \t]+XT)?(?![A-Z0-9-])/iu,
     confidence: "high",
     specificity: 100,
@@ -203,6 +205,7 @@ export const GPU_MODEL_PATTERNS = freezePatterns([
     id: "gpu.intel-arc",
     field: "gpuModel",
     vendor: "intel",
+    dedicated: true,
     regex: /\bIntel[ \t]+Arc[ \t]+(?<model>[A-Z][0-9]{3,4})(?![A-Z0-9-])/iu,
     confidence: "high",
     specificity: 100,
@@ -214,6 +217,7 @@ export const GPU_MODEL_PATTERNS = freezePatterns([
     id: "gpu.intel-iris-xe",
     field: "gpuModel",
     vendor: "intel",
+    dedicated: false,
     regex: /\bIntel[ \t]+Iris[ \t]+Xe\b/iu,
     confidence: "high",
     specificity: 100,
@@ -225,6 +229,7 @@ export const GPU_MODEL_PATTERNS = freezePatterns([
     id: "gpu.no-dedicated",
     field: "gpuModel",
     vendor: "none",
+    dedicated: false,
     regex: /no[ \t]+dedicated[ \t]+gpu|no[ \t]+gpu|cpu[ \t]*-?[ \t]*only|integrated[ \t]+graphics[ \t]+only|无独立显卡|無獨立顯卡|没有独显|沒有獨顯|仅[ \t]*cpu|僅[ \t]*cpu|只有[ \t]*cpu|核显|核顯|集成显卡|集成顯卡/iu,
     confidence: "high",
     specificity: 100,
@@ -236,6 +241,7 @@ export const GPU_MODEL_PATTERNS = freezePatterns([
     id: "gpu.nvidia-labeled-unknown",
     field: "gpuModel",
     vendor: "nvidia",
+    dedicated: true,
     regex: /\b(?<evidence>NVIDIA[ \t]+(?!RTX\b|GTX\b)[A-Z][A-Z0-9-]{1,23}[ \t]+(?=[A-Z0-9-]*[0-9])[A-Z0-9][A-Z0-9-]{0,23})(?![A-Z0-9-])/iu,
     evidenceGroup: "evidence",
     generic: true,
@@ -251,6 +257,7 @@ export const GPU_MODEL_PATTERNS = freezePatterns([
     id: "gpu.amd-labeled-unknown",
     field: "gpuModel",
     vendor: "amd",
+    dedicated: true,
     regex: /\b(?<evidence>AMD[ \t]+(?!Radeon\b|RX\b|Ryzen\b|EPYC\b|Threadripper\b)[A-Z][A-Z0-9-]{1,23}[ \t]+(?=[A-Z0-9-]*[0-9])[A-Z0-9][A-Z0-9-]{0,23})(?![A-Z0-9-])/iu,
     evidenceGroup: "evidence",
     generic: true,
@@ -266,6 +273,7 @@ export const GPU_MODEL_PATTERNS = freezePatterns([
     id: "gpu.intel-labeled-unknown",
     field: "gpuModel",
     vendor: "intel",
+    dedicated: false,
     regex: /\b(?<evidence>Intel[ \t]+(?!Core\b|Xeon\b)[A-Z][A-Z0-9-]{1,23}[ \t]+(?=[A-Z0-9-]*[0-9])[A-Z0-9][A-Z0-9-]{0,23})(?![A-Z0-9-])/iu,
     evidenceGroup: "evidence",
     generic: true,
@@ -281,6 +289,7 @@ export const GPU_MODEL_PATTERNS = freezePatterns([
     id: "gpu.labeled-unknown",
     field: "gpuModel",
     vendor: null,
+    dedicated: false,
     regex: /(?:\bGPU\b|\bgraphics[ \t]+card\b|\bvideo[ \t]+card\b|显卡|顯卡|图形卡|圖形卡)[ \t]*(?:model[ \t]*)?:?[ \t]*(?<evidence>[A-Z][A-Z0-9-]{1,23}(?:[ \t]+[A-Z][A-Z0-9-]{1,23})?[ \t]+(?=[A-Z0-9-]*[0-9])[A-Z0-9][A-Z0-9-]{0,23})(?![A-Z0-9-])/iu,
     evidenceGroup: "evidence",
     generic: true,
@@ -398,6 +407,18 @@ export const CAPACITY_DISQUALIFIER_PATTERNS = freezePatterns([
   {
     id: "capacity.disqualifier.chinese",
     regex: /不是|并非|並非|不等于|不等於|小于|小於|少于|少於|低于|低於|大于|大於|高于|高於|至少|至多|最多|不少于|不少於|不超过|不超過|需要|要求/u
+  },
+  {
+    id: "capacity.disqualifier.english-postposed",
+    regex: /\bor[ \t]+(?:more|less)\b/iu
+  },
+  {
+    id: "capacity.disqualifier.symbolic-bound",
+    regex: /(?:<=|>=|[<>≤≥])/u
+  },
+  {
+    id: "capacity.disqualifier.chinese-postposed",
+    regex: /以上|以下|以内|以內/u
   }
 ]);
 
