@@ -1,8 +1,10 @@
 import {
   CAPACITY_AMOUNT_PATTERNS,
   CAPACITY_CLAUSE_PATTERNS,
+  CAPACITY_DISQUALIFIER_PATTERNS,
   CAPACITY_LABEL_PATTERNS,
   CPU_MODEL_PATTERNS,
+  DEDICATED_GPU_EVIDENCE_PATTERNS,
   GPU_MODEL_PATTERNS,
   STORAGE_KIND_PATTERNS,
   SYSTEM_PATTERNS,
@@ -33,8 +35,14 @@ const ADJACENT_CAPACITY_CONTEXT = new RegExp(
   String.raw`^${CAPACITY_SEPARATOR_SOURCE}(?:${CAPACITY_UNIT_SOURCE}\b|${CAPACITY_FIELD_SOURCE})`,
   "iu"
 );
+const TRAILING_CAPACITY_AMOUNT = new RegExp(
+  String.raw`(?<![A-Z0-9.])${CAPACITY_INTEGER_SOURCE}[ \t-]*${CAPACITY_UNIT_SOURCE}[ \t]*$`,
+  "iu"
+);
 const MAX_CAPACITY_LABEL_GAP = 32;
 const MAX_GPU_PROXIMITY_GAP = 24;
+const APPLE_PLATFORM_CONTEXT = /\b(?:macOS|MacBook|Apple[ \t]+(?:silicon|GPU))\b|苹果电脑|蘋果電腦|苹果系统|蘋果系統/iu;
+const NON_APPLE_M_SERIES_PREFIX = /\b(?:Intel(?:[ \t]+Core)?|Core)[ \t]*$/iu;
 
 function globalRegex(regex) {
   const flags = `${regex.flags.replace(/[gy]/g, "")}g`;
@@ -56,6 +64,14 @@ function isValidEvidence(pattern, evidence, followingText) {
 }
 
 function candidateFromMatch(document, segment, pattern, match) {
+  if (pattern.requiresAppleContext) {
+    const precedingText = segment.text.slice(Math.max(0, match.index - 32), match.index);
+    if (
+      !APPLE_PLATFORM_CONTEXT.test(document.normalized)
+      || NON_APPLE_M_SERIES_PREFIX.test(precedingText)
+    ) return null;
+  }
+
   const evidence = pattern.evidenceGroup ? match.groups?.[pattern.evidenceGroup] : match[0];
   if (!evidence) return null;
 
@@ -165,9 +181,35 @@ function collectCapacityLabels(segment) {
   return accepted;
 }
 
+function capacityNumberStart(match) {
+  return match.index + match[0].indexOf(match.groups.amount);
+}
+
+function hasUnsafeSignPrefix(segment, match, labels) {
+  const numberStart = capacityNumberStart(match);
+  let signIndex = numberStart - 1;
+  while (signIndex >= 0 && /[ \t]/u.test(segment.text[signIndex])) signIndex -= 1;
+
+  const sign = segment.text[signIndex];
+  if (!/[+\-−±]/u.test(sign ?? "")) return false;
+  if (sign === "+") {
+    return !TRAILING_CAPACITY_AMOUNT.test(segment.text.slice(0, signIndex));
+  }
+  if (sign !== "-") return true;
+
+  return !labels.some((label) => (
+    label.end <= signIndex
+    && /^[ \t]*-[ \t]*$/u.test(segment.text.slice(label.end, numberStart))
+  ));
+}
+
+function hasTransferRateSuffix(segment, match) {
+  const followingText = segment.text.slice(match.index + match[0].length);
+  return /^[ \t]+per[ \t]+(?:s(?:ec(?:ond)?)?|second)\b/iu.test(followingText);
+}
+
 function hasUnsafeDigitCommaPrefix(segment, match, modelCandidates) {
-  const amountText = match.groups.amount;
-  const numberStart = match.index + match[0].indexOf(amountText);
+  const numberStart = capacityNumberStart(match);
   let separatorStart = numberStart;
   let sawComma = false;
 
@@ -208,12 +250,16 @@ function hasUnsafeDigitCommaPrefix(segment, match, modelCandidates) {
   return !endsWithKnownUnparsedModel;
 }
 
-function collectCapacityAmounts(segment, modelCandidates) {
+function collectCapacityAmounts(segment, modelCandidates, labels) {
   const amounts = [];
 
   for (const [patternIndex, pattern] of CAPACITY_AMOUNT_PATTERNS.entries()) {
     for (const match of segment.text.matchAll(globalRegex(pattern.regex))) {
-      if (hasUnsafeDigitCommaPrefix(segment, match, modelCandidates)) continue;
+      if (
+        hasUnsafeSignPrefix(segment, match, labels)
+        || hasTransferRateSuffix(segment, match)
+        || hasUnsafeDigitCommaPrefix(segment, match, modelCandidates)
+      ) continue;
 
       amounts.push({
         pattern,
@@ -282,6 +328,11 @@ function localSpanIsInClause(start, end, clause) {
   return start >= clause.start && end <= clause.end;
 }
 
+function clauseContainsPattern(segment, clause, patterns) {
+  const text = segment.text.slice(clause.start, clause.end);
+  return patterns.some((pattern) => pattern.regex.test(text));
+}
+
 function ownershipOption(segment, amount, label) {
   if (!supportsCapacityField(amount, label.pattern.field)) return null;
 
@@ -301,7 +352,7 @@ function ownershipOption(segment, amount, label) {
   };
 }
 
-function findOwningLabel(segment, labels, amount) {
+function findCapacityOwnership(segment, labels, amount) {
   let precedingLabel = null;
   let followingLabel = null;
 
@@ -331,20 +382,72 @@ function findOwningLabel(segment, labels, amount) {
     && options[0].gapLength === options[1].gapLength
     && options[0].label.pattern.field !== options[1].label.pattern.field
   ) {
-    return null;
+    return { status: "ambiguous", ownership: null };
   }
-  return options[0] ?? null;
+  return options[0]
+    ? { status: "owned", ownership: options[0] }
+    : { status: "unowned", ownership: null };
 }
 
-function storageKind(raw) {
-  const match = STORAGE_KIND_PATTERNS.find((pattern) => pattern.regex.test(raw));
-  return match?.kind ?? "unknown";
+function collectStorageQualifiers(segment) {
+  const qualifiers = [];
+
+  for (const [patternIndex, pattern] of STORAGE_KIND_PATTERNS.entries()) {
+    for (const match of segment.text.matchAll(globalRegex(pattern.regex))) {
+      qualifiers.push({
+        pattern,
+        patternIndex,
+        start: match.index,
+        end: match.index + match[0].length
+      });
+    }
+  }
+
+  qualifiers.sort((left, right) => (
+    left.start - right.start
+    || left.end - right.end
+    || left.patternIndex - right.patternIndex
+  ));
+  return qualifiers;
 }
 
-function explicitCapacityEntry(document, segment, amount, ownership) {
+function storageEvidence(segment, clause, qualifiers, localStart, localEnd) {
+  const options = qualifiers
+    .filter((qualifier) => localSpanIsInClause(qualifier.start, qualifier.end, clause))
+    .map((qualifier) => {
+      let gap = "";
+      if (qualifier.end <= localStart) gap = segment.text.slice(qualifier.end, localStart);
+      else if (qualifier.start >= localEnd) gap = segment.text.slice(localEnd, qualifier.start);
+      if (!/^[ \t:]*$/u.test(gap)) return null;
+
+      return { qualifier, distance: gap.length };
+    })
+    .filter(Boolean)
+    .sort((left, right) => (
+      left.distance - right.distance
+      || left.qualifier.patternIndex - right.qualifier.patternIndex
+      || left.qualifier.start - right.qualifier.start
+    ));
+  const qualifier = options[0]?.qualifier;
+
+  return {
+    localStart: qualifier ? Math.min(localStart, qualifier.start) : localStart,
+    localEnd: qualifier ? Math.max(localEnd, qualifier.end) : localEnd,
+    kind: qualifier?.pattern.kind ?? "unknown"
+  };
+}
+
+function explicitCapacityEntry(document, segment, clause, qualifiers, amount, ownership) {
   const { label, amountPosition } = ownership;
-  const localStart = Math.min(label.start, amount.start);
-  const localEnd = Math.max(label.end, amount.end);
+  let localStart = Math.min(label.start, amount.start);
+  let localEnd = Math.max(label.end, amount.end);
+  let kind = "unknown";
+  if (label.pattern.field === "storage") {
+    const evidence = storageEvidence(segment, clause, qualifiers, localStart, localEnd);
+    localStart = evidence.localStart;
+    localEnd = evidence.localEnd;
+    kind = evidence.kind;
+  }
   const start = segment.start + localStart;
   const end = segment.start + localEnd;
   const raw = document.normalized.slice(start, end);
@@ -364,7 +467,7 @@ function explicitCapacityEntry(document, segment, amount, ownership) {
     amountPosition,
     sourceUnit: amount.pattern.sourceUnit
   };
-  if (label.pattern.field === "storage") candidate.storageKind = storageKind(raw);
+  if (label.pattern.field === "storage") candidate.storageKind = kind;
 
   return {
     candidate,
@@ -391,10 +494,9 @@ function proximityOption(segment, amount, gpuModel) {
   };
 }
 
-function proximityVramEntry(document, segment, clause, labels, amount, gpuModels, hasNoGpu) {
+function proximityVramEntry(document, segment, clause, amount, gpuModels, hasNoGpu) {
   if (
     hasNoGpu
-    || labels.length > 0
     || !["GB", "GiB"].includes(amount.pattern.sourceUnit)
   ) {
     return null;
@@ -510,16 +612,29 @@ export function extractCapacityCandidates(document) {
 
   for (const segment of document.segments) {
     const segmentLabels = collectCapacityLabels(segment);
+    const storageQualifiers = collectStorageQualifiers(segment);
     const clauseBoundaries = collectCapacityClauseBoundaries(segment);
-    for (const amount of collectCapacityAmounts(segment, modelCandidates)) {
+    for (const amount of collectCapacityAmounts(segment, modelCandidates, segmentLabels)) {
       const clause = capacityClause(segment, amount, clauseBoundaries);
+      if (clauseContainsPattern(segment, clause, CAPACITY_DISQUALIFIER_PATTERNS)) continue;
+
       const labels = segmentLabels.filter((label) => (
         localSpanIsInClause(label.start, label.end, clause)
       ));
-      const ownership = findOwningLabel(segment, labels, amount);
-      const entry = ownership
-        ? explicitCapacityEntry(document, segment, amount, ownership)
-        : proximityVramEntry(document, segment, clause, labels, amount, gpuModels, hasNoGpu);
+      const ownership = findCapacityOwnership(segment, labels, amount);
+      let entry = null;
+      if (ownership.status === "owned") {
+        entry = explicitCapacityEntry(
+          document,
+          segment,
+          clause,
+          storageQualifiers,
+          amount,
+          ownership.ownership
+        );
+      } else if (ownership.status === "unowned") {
+        entry = proximityVramEntry(document, segment, clause, amount, gpuModels, hasNoGpu);
+      }
       if (entry) entries.push(entry);
     }
   }
@@ -531,10 +646,19 @@ export function extractCapacityCandidates(document) {
   ));
 
   const hasAppleMSeries = cpuCandidates.some((candidate) => (
-    candidate.source === "cpu.apple-m"
+    candidate.source.startsWith("cpu.apple-m")
   ));
   const hasExplicitVram = entries.some((entry) => entry.candidate.field === "vram");
-  const allowAppleInference = hasAppleMSeries && gpuCandidates.length === 0 && !hasExplicitVram;
+  const hasDedicatedGpuModel = gpuModels.some((candidate) => !/\bApple\b/iu.test(candidate.raw));
+  const hasDedicatedGpu = hasDedicatedGpuModel || document.segments.some((segment) => (
+    DEDICATED_GPU_EVIDENCE_PATTERNS.some((pattern) => pattern.regex.test(segment.text))
+  ));
+  const allowAppleInference = (
+    hasAppleMSeries
+    && !hasNoGpu
+    && !hasDedicatedGpu
+    && !hasExplicitVram
+  );
   const candidates = [];
 
   for (const entry of entries) {

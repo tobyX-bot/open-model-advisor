@@ -14,6 +14,7 @@ import {
   extractTaskCandidates
 } from "../src/scanner/extractors.js";
 import { normalizeSetupText } from "../src/scanner/normalize.js";
+import * as scannerPatterns from "../src/scanner/patterns.js";
 import {
   CAPACITY_AMOUNT_PATTERNS,
   CAPACITY_CLAUSE_PATTERNS,
@@ -391,6 +392,8 @@ test("deep freezes every exported pattern collection", () => {
     CAPACITY_LABEL_PATTERNS,
     CAPACITY_AMOUNT_PATTERNS,
     CAPACITY_CLAUSE_PATTERNS,
+    scannerPatterns.CAPACITY_DISQUALIFIER_PATTERNS,
+    scannerPatterns.DEDICATED_GPU_EVIDENCE_PATTERNS,
     STORAGE_KIND_PATTERNS,
     TASK_PATTERNS
   ]) {
@@ -1045,6 +1048,61 @@ test("abstains from omitted capacities and unsupported complete numeric tokens",
   assert.deepEqual(extractCapacityCandidates(document), []);
 });
 
+test("rejects signed prefixed and transfer-rate capacity tokens without truncating evidence", () => {
+  for (const input of [
+    "SSD read speed 7GB/s",
+    "SSD read speed 7GBps",
+    "SSD read speed 7GB/sec",
+    "SSD read speed 7GB per second",
+    "VRAM bandwidth 12GiB/s",
+    "storage throughput 1TB/s",
+    "RAM speed 7000MB/s",
+    "-8GB RAM",
+    "+8GB RAM",
+    "−8GB RAM",
+    "±8GB RAM",
+    "RAM +8GB",
+    "0x128GB RAM",
+    "x128GB RAM",
+    "abc8GB RAM"
+  ]) {
+    assert.deepEqual(extractCapacityCandidates(normalizeSetupText(input)), [], input);
+  }
+
+  const valid = normalizeSetupText("RAM-8GB;RAM - 16GB;RAM 24-GB;VRAM:12GiB;SSD:512GB.");
+  assert.deepEqual(
+    extractCapacityCandidates(valid).map((candidate) => [candidate.field, candidate.value, candidate.raw]),
+    [
+      ["ram", 8, "RAM-8GB"],
+      ["ram", 16, "RAM - 16GB"],
+      ["ram", 24, "RAM 24-GB"],
+      ["vram", 12, "VRAM:12GiB"],
+      ["storage", 512, "SSD:512GB"]
+    ]
+  );
+});
+
+test("abstains from negated bounded and required capacity language", () => {
+  for (const input of [
+    "RAM is not 32GB",
+    "not 32GB RAM",
+    "VRAM less than 12GB",
+    "storage requires at least 1TB",
+    "RAM 不是 32GB",
+    "RAM 不等于 32GB",
+    "RAM 不等於 32GB",
+    "不是 32GB 内存",
+    "显存小于 12GB",
+    "顯存少於 12GB",
+    "存储至少 1TB",
+    "存儲不超過 1TB",
+    "硬盘需要至少 1TB",
+    "内存不超过 32GB"
+  ]) {
+    assert.deepEqual(extractCapacityCandidates(normalizeSetupText(input)), [], input);
+  }
+});
+
 test("capacity offsets use normalized source when Unicode lowercase changes length", () => {
   const document = normalizeSetupText("İ;RAM 64GB, 1TB available storage");
   const candidates = extractCapacityCandidates(document);
@@ -1328,6 +1386,115 @@ test("keeps conjunction and sentence-delimited ownership local to GPU and RAM cl
     );
     candidates.forEach((candidate) => assertCapacityCandidateContract(document, candidate));
   }
+});
+
+test("keeps fully spaced Chinese capacity clauses local without a preceding B", () => {
+  const cases = [
+    ["16G 和 RAM 32GB", [["ram", 32, "RAM 32GB"]]],
+    ["32GB RAM 与 12GB", [["ram", 32, "32GB RAM"]]],
+    [
+      "32GB RAM 和 NVIDIA RTX 4070 12GB",
+      [["ram", 32, "32GB RAM"], ["vram", 12, "NVIDIA RTX 4070 12GB"]]
+    ]
+  ];
+
+  for (const [input, expected] of cases) {
+    const document = normalizeSetupText(input);
+    const candidates = extractCapacityCandidates(document);
+    assert.deepEqual(
+      candidates.map((candidate) => [candidate.field, candidate.value, candidate.raw]),
+      expected,
+      input
+    );
+    candidates.forEach((candidate) => assertCapacityCandidateContract(document, candidate));
+  }
+});
+
+test("allows GPU proximity when unrelated labels own other amounts", () => {
+  const cases = [
+    "NVIDIA RTX 4070 12GB with 32GB RAM",
+    "NVIDIA RTX 4070 12GB + 32GB RAM",
+    "NVIDIA RTX 4070 12GB & 32GB RAM",
+    "NVIDIA RTX 4070 12GB with RAM 32GB"
+  ];
+
+  for (const input of cases) {
+    const document = normalizeSetupText(input);
+    const candidates = extractCapacityCandidates(document);
+    assert.deepEqual(
+      candidates.map((candidate) => [candidate.field, candidate.value, candidate.raw]),
+      [["vram", 12, "NVIDIA RTX 4070 12GB"], ["ram", 32, /RAM 32GB/u.test(input) ? "RAM 32GB" : "32GB RAM"]],
+      input
+    );
+    candidates.forEach((candidate) => assertCapacityCandidateContract(document, candidate));
+  }
+
+  assert.deepEqual(
+    extractCapacityCandidates(normalizeSetupText("NVIDIA RTX 4070 RAM 12GB VRAM")),
+    [],
+    "ambiguous field ownership must abstain instead of falling back to GPU proximity"
+  );
+});
+
+test("hardens Apple unified-memory inference against dedicated and false M-series evidence", () => {
+  for (const input of [
+    "Apple M3 Pro;NVIDIA GPU;16GB unified memory",
+    "Apple M3 Pro;dedicated GPU unknown;16GB unified memory"
+  ]) {
+    const candidates = extractMemoryCandidates(normalizeSetupText(input));
+    assert.deepEqual(candidateValues(candidates, "ram"), [16], input);
+    assert.deepEqual(candidateValues(candidates, "vram"), [], input);
+    assert.equal(candidates[0].inferred, false, input);
+  }
+
+  const falseApple = normalizeSetupText("Windows laptop;Intel Core m3-8100Y;8GB unified memory");
+  assert.deepEqual(candidateValues(extractCpuCandidates(falseApple), "cpuModel"), []);
+  assert.deepEqual(
+    extractMemoryCandidates(falseApple).map((candidate) => [candidate.field, candidate.value, candidate.inferred]),
+    [["ram", 8, false]]
+  );
+
+  for (const input of [
+    "apple m3 pro;16GB unified memory",
+    "macOS;M1;8GB unified memory",
+    "M2;Apple GPU;16GB unified memory",
+    "GPU Apple M2;16GB unified memory"
+  ]) {
+    const candidates = extractMemoryCandidates(normalizeSetupText(input));
+    assert.deepEqual(candidateValues(candidates, "ram").length, 1, input);
+    assert.deepEqual(candidateValues(candidates, "vram").length, 1, input);
+    assert.equal(candidates.find((candidate) => candidate.field === "vram").inferred, true, input);
+  }
+
+  const contextualFalseApple = normalizeSetupText(
+    "Windows laptop;Intel Core m3-8100Y;Apple GPU;8GB unified memory"
+  );
+  assert.deepEqual(candidateValues(extractCpuCandidates(contextualFalseApple), "cpuModel"), []);
+  assert.deepEqual(candidateValues(extractMemoryCandidates(contextualFalseApple), "vram"), []);
+});
+
+test("extends storage evidence to adjacent clause-local qualifiers", () => {
+  const document = normalizeSetupText([
+    "Storage: 512GB available",
+    "storage has 512GB free",
+    "total 512GB storage",
+    "剩余 512GB 硬盘",
+    "storage 256GB, storage 512GB available"
+  ].join(";"));
+  const candidates = extractStorageCandidates(document);
+
+  assert.deepEqual(
+    candidates.map((candidate) => [candidate.value, candidate.storageKind, candidate.raw]),
+    [
+      [512, "free", "Storage: 512GB available"],
+      [512, "free", "storage has 512GB free"],
+      [512, "total", "total 512GB storage"],
+      [512, "free", "剩余 512GB 硬盘"],
+      [256, "unknown", "storage 256GB"],
+      [512, "free", "storage 512GB available"]
+    ]
+  );
+  candidates.forEach((candidate) => assertCapacityCandidateContract(document, candidate));
 });
 
 test("keeps one-sided Chinese conjunction spacing local to hardware clauses", () => {
