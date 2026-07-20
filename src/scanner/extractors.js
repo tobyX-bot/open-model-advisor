@@ -52,8 +52,17 @@ const TRANSFER_RATE_SUFFIX = /^(?:[ \t]+(?:(?:\/[ \t]*|per[ \t]+)(?:(?:ms|msecs?
 const TRANSFER_RATE_INVENTORY = /^[ \t]+(?:drive|SSD|HDD|disk|storage)\b/iu;
 const TRANSFER_RATE_PREFIX = /(?:\b(?:speed|throughput|bandwidth|rate)\b|带宽|帶寬|速度|吞吐量)[ \t:,-]*$/iu;
 const CAPACITY_RANGE_CONNECTOR = /^[ \t]*(?:-|–|—|~|～|to|or|或(?:者)?|至)[ \t]*$/iu;
-const INTEGRATED_GPU_PREFIX = /(?:\b(?:the[ \t]+)?(?:(?:integrated|onboard)(?:[ \t]+(?:GPU|graphics(?:[ \t]+card)?))?|shared[ \t]+(?:GPU|graphics(?:[ \t]+card)?))(?:[ \t]+(?:(?:is|was|uses?|using)(?:[ \t]+(?:a|an|the))?|with))?|(?:集成|共享)(?:显卡|顯卡|图形|圖形)(?:[ \t]*(?:是|为|為|使用|采用|採用))?|(?:核显|核顯)(?:[ \t]*(?:是|为|為|使用|采用|採用))?)[ \t:,-]*$/iu;
-const INTEGRATED_GPU_SUFFIX = /^[ \t:,-]*(?:(?:(?:is|was)(?:[ \t]+(?:a|an|the))?[ \t]+)?\b(?:(?:integrated|onboard)(?:[ \t]+(?:GPU|graphics(?:[ \t]+card)?))?|shared[ \t]+(?:GPU|graphics(?:[ \t]+card)?))\b|(?:是|为|為)?[ \t]*(?:(?:集成|共享)(?:显卡|顯卡|图形|圖形)|核显|核顯))/iu;
+const ENGLISH_INTEGRATED_GPU_CONTEXT_SOURCE = String.raw`(?:(?:integrated|onboard)(?:[ \t]+(?:GPU|graphics(?:[ \t]+card)?))?|shared[ \t]+(?:GPU|graphics(?:[ \t]+card)?))`;
+const CHINESE_INTEGRATED_GPU_CONTEXT_SOURCE = String.raw`(?:(?:集成|共享|整合(?:式)?|内置|內建)(?:的)?(?:显卡|顯卡|图形|圖形)?|核显|核顯)`;
+const CHINESE_COPULAR_INTEGRATED_GPU_CONTEXT_SOURCE = String.raw`(?:显卡|顯卡|图形|圖形)[ \t]*(?:是|为|為)[ \t]*(?:集成|共享|整合(?:式)?|内置|內建)(?:的)?`;
+const INTEGRATED_GPU_PREFIX = new RegExp(
+  String.raw`(?:\b(?:the[ \t]+)?${ENGLISH_INTEGRATED_GPU_CONTEXT_SOURCE}(?:[ \t]+(?:(?:is|was|uses?|using)(?:[ \t]+(?:a|an|the))?|with))?|${CHINESE_INTEGRATED_GPU_CONTEXT_SOURCE}(?:[ \t]*(?:是|为|為|使用|采用|採用))?|${CHINESE_COPULAR_INTEGRATED_GPU_CONTEXT_SOURCE})[ \t:,()（）-]*$`,
+  "iu"
+);
+const INTEGRATED_GPU_SUFFIX = new RegExp(
+  String.raw`^[ \t:,()（）-]*(?:(?:(?:is|was)(?:[ \t]+(?:a|an|the))?[ \t]+)?\b${ENGLISH_INTEGRATED_GPU_CONTEXT_SOURCE}\b|(?:是|为|為)?[ \t]*(?:${CHINESE_INTEGRATED_GPU_CONTEXT_SOURCE}|${CHINESE_COPULAR_INTEGRATED_GPU_CONTEXT_SOURCE}))`,
+  "iu"
+);
 
 function globalRegex(regex) {
   const flags = `${regex.flags.replace(/[gy]/g, "")}g`;
@@ -503,6 +512,9 @@ function hasAttachedDisqualifier(segment, clause, disqualifiers, amount, ownersh
       }
       if (match.end <= amount.start) {
         return /^[ \t:()（）-]*$/u.test(segment.text.slice(match.end, amount.start));
+      }
+      if (match.start >= localEnd && match.pattern.allowAfterCapacity) {
+        return /^[ \t:()（）-]*$/u.test(segment.text.slice(localEnd, match.start));
       }
       return false;
     }

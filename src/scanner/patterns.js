@@ -448,13 +448,14 @@ export const CAPACITY_DISQUALIFIER_PATTERNS = freezePatterns([
   },
   {
     id: "capacity.disqualifier.english-exact-negation",
-    regex: /\bnot\b/iu,
-    requireAmountAdjacency: true
+    regex: /\b(?:(?:do|does|did)[ \t]+not[ \t]+(?:have|include|contain|come[ \t]+with)|not)\b/iu,
+    requireCapacityAdjacency: true
   },
   {
     id: "capacity.disqualifier.english-capability",
-    regex: /\b(?:(?:can[ \t]+)?support(?:s|ed|ing)?(?:[ \t]+for)?|capable[ \t]+of)\b/iu,
-    requireCapacityAdjacency: true
+    regex: /\b(?:(?:(?:is|are|was|were)[ \t]+)?(?:not[ \t]+)?supported|(?:can[ \t]+)?support(?:s|ed|ing)?(?:[ \t]+for)?|capable[ \t]+of)\b/iu,
+    requireCapacityAdjacency: true,
+    allowAfterCapacity: true
   },
   {
     id: "capacity.disqualifier.chinese",
@@ -463,12 +464,19 @@ export const CAPACITY_DISQUALIFIER_PATTERNS = freezePatterns([
   {
     id: "capacity.disqualifier.chinese-capability",
     regex: /可支持|可支援|支持|支援/u,
-    requireCapacityAdjacency: true
+    requireCapacityAdjacency: true,
+    allowAfterCapacity: true
   },
   {
     id: "capacity.disqualifier.chinese-negation",
     regex: /没有|沒有|不含|无|無/u,
     requireCapacityAdjacency: true
+  },
+  {
+    id: "capacity.disqualifier.chinese-hardware-absence",
+    regex: /(?:没有|沒有|未)[ \t]*(?:配备|配備|装有|裝有|安装|安裝|包含|配有)/u,
+    requireCapacityAdjacency: true,
+    allowAfterCapacity: true
   },
   {
     id: "capacity.disqualifier.english-postposed",
@@ -523,13 +531,13 @@ export const CAPACITY_DISQUALIFIER_PATTERNS = freezePatterns([
   },
   {
     id: "capacity.disqualifier.storage-used-english",
-    regex: /\b(?:(?:is|are|was|were)[ \t]+)?(?:used|occupied)\b/iu,
+    regex: /\b(?:(?:(?:is|are|was|were)[ \t]+)?(?:used|occupied)(?:[ \t]+(?:disk[ \t]+)?(?:space|capacity)(?:[ \t]+on)?)?|(?:space|capacity)[ \t]+(?:(?:is|are|was|were)[ \t]+)?(?:used|occupied))\b/iu,
     allowAfterCapacity: true,
     storageOnly: true
   },
   {
     id: "capacity.disqualifier.storage-used-chinese",
-    regex: /已使用|已用|使用了|用了|已占用|已佔用|占用|佔用/u,
+    regex: /(?:(?:已使用|已用|使用了|用了|已占用|已佔用|占用|佔用)[ \t]*(?:空间|空間|容量)?|(?:空间|空間|容量)[ \t]*(?:已使用|已用|使用了|用了|已占用|已佔用|占用|佔用))/u,
     allowAfterCapacity: true,
     storageOnly: true
   }

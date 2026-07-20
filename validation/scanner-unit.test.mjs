@@ -3398,3 +3398,369 @@ test("limits retained approximations to the frozen natural-memory contract famil
     assertCapacityCandidateContract(document, candidate);
   }
 });
+
+test("attaches negation and capability to bounded owned capacity windows", () => {
+  const locales = [
+    {
+      fields: [
+        { label: "RAM", amount: "64GB" },
+        { label: "VRAM", amount: "12GiB" },
+        { label: "SSD", amount: "2TB" }
+      ],
+      inputs: ({ label, amount }) => [
+        `not ${label} ${amount}`,
+        `not ${amount} ${label}`,
+        `does not have ${label} ${amount}`,
+        `does not have ${amount} ${label}`,
+        `${label} ${amount} supported`,
+        `${amount} ${label} supported`,
+        `${label} ${amount} not supported`,
+        `${amount} ${label} not supported`
+      ]
+    },
+    {
+      fields: [
+        { label: "内存", amount: "32GB" },
+        { label: "显存", amount: "12GiB" },
+        { label: "固态硬盘", amount: "1TB" }
+      ],
+      inputs: ({ label, amount }) => [
+        `没有配备 ${label} ${amount}`,
+        `没有配备 ${amount} ${label}`,
+        `未配备 ${label} ${amount}`,
+        `未配备 ${amount} ${label}`,
+        `支持 ${label} ${amount}`,
+        `支持 ${amount} ${label}`,
+        `${label} ${amount} 未配备`,
+        `${amount} ${label} 未配备`
+      ]
+    },
+    {
+      fields: [
+        { label: "記憶體", amount: "16GB" },
+        { label: "顯存", amount: "8GiB" },
+        { label: "固態硬碟", amount: "1TB" }
+      ],
+      inputs: ({ label, amount }) => [
+        `沒有配備 ${label} ${amount}`,
+        `沒有配備 ${amount} ${label}`,
+        `未配備 ${label} ${amount}`,
+        `未配備 ${amount} ${label}`,
+        `支援 ${label} ${amount}`,
+        `支援 ${amount} ${label}`,
+        `${label} ${amount} 未配備`,
+        `${amount} ${label} 未配備`
+      ]
+    }
+  ];
+
+  for (const locale of locales) {
+    for (const field of locale.fields) {
+      for (const input of locale.inputs(field)) {
+        assert.deepEqual(extractCapacityCandidates(normalizeSetupText(input)), [], input);
+      }
+    }
+  }
+
+  for (const [input, expected] of [
+    ["not RAM 64GB SSD 512GB", [["storage", 512, "SSD 512GB"]]],
+    ["does not have 64GB RAM SSD 512GB", [["storage", 512, "SSD 512GB"]]],
+    ["没有配备 32GB 内存 固态硬盘 512GB", [["storage", 512, "固态硬盘 512GB"]]],
+    ["沒有配備 16GB 記憶體 固態硬碟 1TB", [["storage", 1000, "固態硬碟 1TB"]]],
+    ["has 64GB RAM", [["ram", 64, "64GB RAM"]]],
+    ["RAM 64GB installed", [["ram", 64, "RAM 64GB"]]],
+    ["equipped with 12GiB VRAM", [["vram", 12, "12GiB VRAM"]]],
+    ["配备 32GB 内存", [["ram", 32, "32GB 内存"]]],
+    ["已配備 16GB 記憶體", [["ram", 16, "16GB 記憶體"]]],
+    ["RAM 64GB without overclocking", [["ram", 64, "RAM 64GB"]]]
+  ]) {
+    assert.deepEqual(
+      extractCapacityCandidates(normalizeSetupText(input)).map((candidate) => [
+        candidate.field,
+        candidate.value,
+        candidate.raw
+      ]),
+      expected,
+      input
+    );
+  }
+});
+
+test("keeps repeated-label alternatives as complete Task 3 conflict evidence", () => {
+  const connectors = ["or", "至", "~", "～"];
+  for (const connector of connectors) {
+    for (const input of [
+      `RAM 16GB ${connector} RAM 64GB`,
+      `16GB RAM ${connector} 64GB RAM`
+    ]) {
+      assert.deepEqual(
+        extractCapacityCandidates(normalizeSetupText(input)).map((candidate) => [
+          candidate.field,
+          candidate.value,
+          candidate.raw
+        ]),
+        input.startsWith("RAM")
+          ? [["ram", 16, "RAM 16GB"], ["ram", 64, "RAM 64GB"]]
+          : [["ram", 16, "16GB RAM"], ["ram", 64, "64GB RAM"]],
+        input
+      );
+    }
+  }
+
+  assert.deepEqual(
+    extractCapacityCandidates(normalizeSetupText("RAM 16GB;RAM 64GB"))
+      .map((candidate) => [candidate.field, candidate.value, candidate.raw]),
+    [["ram", 16, "RAM 16GB"], ["ram", 64, "RAM 64GB"]]
+  );
+});
+
+test("suppresses Vega proximity VRAM for copular and parenthetical integrated context", () => {
+  const integratedCases = [
+    "显卡是集成的 AMD Radeon Vega 64 8GB",
+    "顯卡是集成的 AMD Radeon Vega 56 8GB",
+    "顯卡是整合式 AMD Radeon Vega 64 8GB",
+    "AMD Radeon Vega 64 (integrated GPU) 8GB",
+    "AMD Radeon Vega 56 (onboard graphics) 8GB",
+    "AMD Radeon Vega 64（集成显卡）8GB",
+    "AMD Radeon Vega 56（共享顯卡）8GB"
+  ];
+  for (const input of integratedCases) {
+    const document = normalizeSetupText(input);
+    assert.equal(
+      candidateValues(extractGpuCandidates(document), "gpuModel").includes(
+        input.includes("56") ? "AMD Radeon Vega 56" : "AMD Radeon Vega 64"
+      ),
+      true,
+      input
+    );
+    assert.deepEqual(candidateValues(extractCapacityCandidates(document), "vram"), [], input);
+  }
+
+  for (const input of [
+    "显卡是集成的，AMD Radeon Vega 64 8GB",
+    "integrated GPU;AMD Radeon Vega 56 8GB",
+    "dedicated AMD Radeon Vega 64 8GB",
+    "AMD Radeon Vega 56 (discrete GPU) 8GB",
+    "AMD Radeon Vega 64 8GB"
+  ]) {
+    assert.deepEqual(candidateValues(extractCapacityCandidates(normalizeSetupText(input)), "vram"), [8], input);
+  }
+
+  assert.deepEqual(
+    extractCapacityCandidates(normalizeSetupText(
+      "AMD Radeon Vega 64 (integrated GPU) with 8GB VRAM"
+    )).map((candidate) => [candidate.field, candidate.value, candidate.raw]),
+    [["vram", 8, "8GB VRAM"]]
+  );
+});
+
+test("rejects bounded used-space grammar while retaining valid storage evidence", () => {
+  const usedCases = [
+    "used space on SSD: 900GB",
+    "occupied space: 900GB SSD",
+    "SSD used space: 900GB",
+    "900GB SSD space used",
+    "SSD: 900GB occupied space",
+    "已占用空间: 900GB 固态硬盘",
+    "固态硬盘 已用空间: 900GB",
+    "900GB 固态硬盘 空间已占用",
+    "已佔用空間: 900GB 固態硬碟",
+    "固態硬碟 已用空間: 900GB",
+    "900GB 固態硬碟 空間已佔用"
+  ];
+  for (const input of usedCases) {
+    assert.deepEqual(extractStorageCandidates(normalizeSetupText(input)), [], input);
+  }
+
+  for (const [input, expected] of [
+    ["used space on SSD: 900GB;SSD 100GB free", [[100, "SSD 100GB free", "free"]]],
+    ["occupied space: 900GB SSD,SSD total 1TB", [[1000, "SSD total 1TB", "total"]]],
+    ["已占用空间: 900GB 固态硬盘,固态硬盘剩余 100GB", [[100, "固态硬盘剩余 100GB", "free"]]],
+    ["已佔用空間: 900GB 固態硬碟,固態硬碟可用 100GB", [[100, "固態硬碟可用 100GB", "free"]]],
+    ["SSD capacity 1TB;SSD 100GB remaining", [[1000, "SSD capacity 1TB", "total"], [100, "SSD 100GB remaining", "free"]]]
+  ]) {
+    assert.deepEqual(
+      extractStorageCandidates(normalizeSetupText(input)).map((candidate) => [
+        candidate.value,
+        candidate.raw,
+        candidate.storageKind
+      ]),
+      expected,
+      input
+    );
+  }
+});
+
+test("covers reconstructed 168 rejection and 99 preservation review variants", () => {
+  let rejectionCount = 0;
+  let preservationCount = 0;
+
+  const qualifierLocales = [
+    {
+      fields: [["RAM", "64GB"], ["VRAM", "12GiB"], ["SSD", "2TB"]],
+      reject: (label, amount) => [
+        `not ${label} ${amount}`,
+        `not ${amount} ${label}`,
+        `does not have ${label} ${amount}`,
+        `does not have ${amount} ${label}`,
+        `${label} ${amount} supported`,
+        `${amount} ${label} supported`,
+        `${label} ${amount} not supported`,
+        `${amount} ${label} not supported`
+      ],
+      preserve: (label, amount) => [
+        `has ${amount} ${label}`,
+        `${label} ${amount} installed`,
+        `equipped with ${amount} ${label}`
+      ]
+    },
+    {
+      fields: [["内存", "32GB"], ["显存", "12GiB"], ["固态硬盘", "1TB"]],
+      reject: (label, amount) => [
+        `没有配备 ${label} ${amount}`,
+        `没有配备 ${amount} ${label}`,
+        `未配备 ${label} ${amount}`,
+        `未配备 ${amount} ${label}`,
+        `支持 ${label} ${amount}`,
+        `支持 ${amount} ${label}`,
+        `${label} ${amount} 未配备`,
+        `${amount} ${label} 未配备`
+      ],
+      preserve: (label, amount) => [
+        `配备 ${amount} ${label}`,
+        `${label} ${amount} 已安装`,
+        `已配备 ${label} ${amount}`
+      ]
+    },
+    {
+      fields: [["記憶體", "16GB"], ["顯存", "8GiB"], ["固態硬碟", "1TB"]],
+      reject: (label, amount) => [
+        `沒有配備 ${label} ${amount}`,
+        `沒有配備 ${amount} ${label}`,
+        `未配備 ${label} ${amount}`,
+        `未配備 ${amount} ${label}`,
+        `支援 ${label} ${amount}`,
+        `支援 ${amount} ${label}`,
+        `${label} ${amount} 未配備`,
+        `${amount} ${label} 未配備`
+      ],
+      preserve: (label, amount) => [
+        `配備 ${amount} ${label}`,
+        `${label} ${amount} 已安裝`,
+        `已配備 ${label} ${amount}`
+      ]
+    }
+  ];
+
+  for (const locale of qualifierLocales) {
+    for (const [label, amount] of locale.fields) {
+      for (const input of locale.reject(label, amount)) {
+        rejectionCount += 1;
+        assert.deepEqual(extractCapacityCandidates(normalizeSetupText(input)), [], input);
+      }
+      for (const input of locale.preserve(label, amount)) {
+        preservationCount += 1;
+        assert.equal(extractCapacityCandidates(normalizeSetupText(input)).length, 1, input);
+      }
+    }
+  }
+
+  const rangeFields = [
+    { label: "RAM", left: "16", right: "64", unit: "GB" },
+    { label: "VRAM", left: "8", right: "12", unit: "GiB" },
+    { label: "storage", left: "1", right: "2", unit: "TB" }
+  ];
+  const rangeConnectors = ["or", "至", "~", "～"];
+  for (const field of rangeFields) {
+    for (const connector of rangeConnectors) {
+      for (const range of [
+        `${field.left}${field.unit}${connector}${field.right}${field.unit}`,
+        `${field.left}${connector}${field.right}${field.unit}`,
+        `${field.left}${field.unit}${connector}${field.right}`
+      ]) {
+        for (const input of [`${field.label} ${range}`, `${range} ${field.label}`]) {
+          rejectionCount += 1;
+          assert.deepEqual(extractCapacityCandidates(normalizeSetupText(input)), [], input);
+        }
+      }
+    }
+  }
+
+  const usedFamilies = [
+    (gap, expanded) => [
+      `used space on SSD:${gap}900GB`,
+      `occupied space:${gap}900GB SSD`,
+      `SSD used space:${gap}900GB`,
+      expanded ? "900GB SSD space is used" : "900GB SSD space used"
+    ],
+    (gap, expanded) => [
+      `已占用空间:${gap}900GB 固态硬盘`,
+      `已用空间:${gap}900GB 固态硬盘`,
+      `固态硬盘 已用空间:${gap}900GB`,
+      expanded ? "900GB 固态硬盘 空间占用" : "900GB 固态硬盘 空间已占用"
+    ],
+    (gap, expanded) => [
+      `已佔用空間:${gap}900GB 固態硬碟`,
+      `已用空間:${gap}900GB 固態硬碟`,
+      `固態硬碟 已用空間:${gap}900GB`,
+      expanded ? "900GB 固態硬碟 空間佔用" : "900GB 固態硬碟 空間已佔用"
+    ]
+  ];
+  for (const family of usedFamilies) {
+    for (const [gap, expanded] of [["", false], [" ", true]]) {
+      for (const input of family(gap, expanded)) {
+        rejectionCount += 1;
+        assert.deepEqual(extractStorageCandidates(normalizeSetupText(input)), [], input);
+      }
+    }
+  }
+
+  for (const field of rangeFields) {
+    for (const connector of rangeConnectors) {
+      for (const input of [
+        `${field.label} ${field.left}${field.unit} ${connector} ${field.label} ${field.right}${field.unit}`,
+        `${field.left}${field.unit} ${field.label} ${connector} ${field.right}${field.unit} ${field.label}`
+      ]) {
+        preservationCount += 1;
+        assert.equal(extractCapacityCandidates(normalizeSetupText(input)).length, 2, input);
+      }
+    }
+  }
+
+  for (const model of ["AMD Radeon Vega 56", "AMD Radeon Vega 64"]) {
+    for (const prefix of ["", "dedicated ", "discrete "]) {
+      for (const separator of [" ", " with ", ": ", " has "]) {
+        const input = `${prefix}${model}${separator}8GB`;
+        preservationCount += 1;
+        assert.deepEqual(candidateValues(
+          extractCapacityCandidates(normalizeSetupText(input)),
+          "vram"
+        ), [8], input);
+      }
+    }
+  }
+
+  const storageLocales = [
+    { label: "SSD", qualifiers: [["total", "total"], ["capacity", "total"], ["free", "free"], ["remaining", "free"]] },
+    { label: "固态硬盘", qualifiers: [["总容量", "total"], ["总计", "total"], ["可用", "free"], ["剩余", "free"]] },
+    { label: "固態硬碟", qualifiers: [["總容量", "total"], ["總計", "total"], ["可用", "free"], ["剩餘", "free"]] }
+  ];
+  for (const locale of storageLocales) {
+    for (const [qualifier, kind] of locale.qualifiers) {
+      for (const input of [
+        `${locale.label} ${qualifier} 1TB`,
+        `1TB ${locale.label} ${qualifier}`
+      ]) {
+        preservationCount += 1;
+        const candidates = extractStorageCandidates(normalizeSetupText(input));
+        assert.deepEqual(candidates.map((candidate) => [
+          candidate.value,
+          candidate.storageKind
+        ]), [[1000, kind]], input);
+      }
+    }
+  }
+
+  assert.equal(rejectionCount, 168);
+  assert.equal(preservationCount, 99);
+});
