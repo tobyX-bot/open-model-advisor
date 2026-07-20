@@ -65,6 +65,7 @@ const context = await browser.newContext({
   reducedMotion: "reduce"
 });
 const page = await context.newPage();
+page.setDefaultTimeout(5000);
 const failures = [];
 const recordResults = [];
 const invalidFieldChecked = new Set();
@@ -117,8 +118,6 @@ async function setExactProfile(record) {
   await page.locator("#gpuModel").fill(profile.gpuModel);
   if (profile.gpuVendor !== "none") await page.locator("#vram").fill(String(profile.vram));
   await page.locator("#storage").fill(String(profile.storage));
-  await page.locator("#internet").selectOption(profile.internet);
-  await page.locator("#deployment").selectOption(profile.deployment);
 }
 
 async function setJob(record) {
@@ -126,6 +125,7 @@ async function setJob(record) {
   await page.locator("#task").selectOption(profile.task);
   await page.locator("#workload").selectOption(profile.workload);
   await page.locator("#deployment").selectOption(profile.deployment);
+  await page.locator("#internet").selectOption(profile.internet);
   const priorityInputs = page.locator('input[name="priority"]');
   const count = await priorityInputs.count();
   for (let index = 0; index < count; index += 1) {
