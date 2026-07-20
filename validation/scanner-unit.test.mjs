@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { performance } from "node:perf_hooks";
 import test from "node:test";
 
+import { deriveCpuProfile, deriveGpuProfile } from "../src/hardware.js";
 import {
   extractCapacityCandidates,
   extractCandidates,
@@ -28,6 +29,130 @@ import {
   SYSTEM_PATTERNS,
   TASK_PATTERNS
 } from "../src/scanner/patterns.js";
+
+test("derives bounded CPU family tiers without throwing on empty input", () => {
+  const cases = [
+    ["Intel Core Ultra 9 285K", "high", "high"],
+    ["Intel Core Ultra 7 258V", "high", "high"],
+    ["Intel Core Ultra 5 125H", "mid", "high"],
+    ["Intel Core i9-14900K", "high", "high"],
+    ["Intel Core i7-13700H", "high", "high"],
+    ["AMD Ryzen 9 7950X", "high", "high"],
+    ["AMD Ryzen 7 7840U", "high", "high"],
+    ["Intel Core i5-13500H", "mid", "high"],
+    ["AMD Ryzen 5 7600", "mid", "high"],
+    ["Intel Core i3-12100", "low", "high"],
+    ["AMD Ryzen 3 7320U", "low", "high"],
+    ["Intel Xeon W-2295", "server", "high"],
+    ["AMD EPYC 9654", "server", "high"],
+    ["AMD Ryzen Threadripper PRO 7995WX", "server", "high"],
+    ["Apple M4 Ultra", "server", "high"],
+    ["Apple M3 Pro", "high", "high"],
+    ["Apple M2", "mid", "medium"]
+  ];
+
+  for (const [model, level, confidence] of cases) {
+    assert.deepEqual(deriveCpuProfile(model), { level, label: model, confidence }, model);
+  }
+
+  for (const model of [null, undefined, "", "Unknown CPU", "Intel Core i90", "Ryzen 95 prototype"]) {
+    const profile = deriveCpuProfile(model);
+    assert.equal(profile.level, "unknown", String(model));
+    assert.equal(profile.confidence, "low", String(model));
+  }
+});
+
+test("derives stable GPU tiers for exact selected vendor and model pairs", () => {
+  const cases = [
+    ["NVIDIA GeForce RTX 5090", "nvidia", "high"],
+    ["NVIDIA GeForce RTX 5080", "nvidia", "high"],
+    ["NVIDIA GeForce RTX 5070", "nvidia", "mid"],
+    ["NVIDIA GeForce RTX 5060", "nvidia", "mid"],
+    ["NVIDIA GeForce RTX 5050", "nvidia", "entry"],
+    ["NVIDIA GeForce RTX 4090", "nvidia", "high"],
+    ["NVIDIA GeForce GTX 1660", "nvidia", "entry"],
+    ["NVIDIA RTX A6000", "nvidia", "high"],
+    ["AMD Radeon RX 9070 XT", "amd", "high"],
+    ["AMD Radeon RX 9060 XT", "amd", "mid"],
+    ["AMD Radeon RX 7900 XTX", "amd", "high"],
+    ["Intel Arc A770", "intel", "mid"],
+    ["Arc A770", "intel", "mid"],
+    ["Intel Arc B580", "intel", "mid"],
+    ["Intel Arc B570", "intel", "mid"],
+    ["Intel Iris Xe Graphics", "intel", "integrated"],
+    ["Apple M4 Max", "apple", "high"],
+    ["Apple M3 Pro", "apple", "mid"]
+  ];
+
+  for (const [model, vendor, level] of cases) {
+    const profile = deriveGpuProfile(model, vendor);
+    assert.equal(profile.vendor, vendor, model);
+    assert.equal(profile.detectedVendor, vendor, model);
+    assert.equal(profile.level, level, model);
+    assert.equal(profile.confidence, "high", model);
+    assert.equal(profile.conflict, false, model);
+    assert.equal(profile.reason, null, model);
+  }
+
+  for (const [model, level] of [["A4000", "mid"], ["A5000", "high"], ["A6000", "high"]]) {
+    const profile = deriveGpuProfile(model, "nvidia");
+    assert.equal(profile.vendor, "nvidia", model);
+    assert.equal(profile.detectedVendor, null, model);
+    assert.equal(profile.level, level, model);
+    assert.equal(profile.confidence, "high", model);
+    assert.equal(profile.conflict, false, model);
+  }
+
+  assert.deepEqual(deriveGpuProfile("No dedicated GPU", "none"), {
+    vendor: "none",
+    detectedVendor: "none",
+    level: "none",
+    label: "No dedicated GPU",
+    confidence: "high",
+    conflict: false,
+    reason: null
+  });
+});
+
+test("reports GPU vendor conflicts without rewriting the selected vendor", () => {
+  const cases = [
+    ["Intel Arc B580", "nvidia", "intel", "vendor-mismatch"],
+    ["NVIDIA GeForce RTX 5070", "amd", "nvidia", "vendor-mismatch"],
+    ["AMD Radeon RX 9070", "none", "amd", "vendor-mismatch"],
+    ["No dedicated GPU", "nvidia", "none", "no-gpu-mismatch"]
+  ];
+
+  for (const [model, selectedVendor, detectedVendor, reason] of cases) {
+    const profile = deriveGpuProfile(model, selectedVendor);
+    assert.equal(profile.vendor, selectedVendor, model);
+    assert.equal(profile.detectedVendor, detectedVendor, model);
+    assert.equal(profile.level, "unknown", model);
+    assert.equal(profile.confidence, "low", model);
+    assert.equal(profile.conflict, true, model);
+    assert.equal(profile.reason, reason, model);
+  }
+});
+
+test("handles empty GPU values deterministically", () => {
+  assert.deepEqual(deriveGpuProfile(null, "none"), {
+    vendor: "none",
+    detectedVendor: null,
+    level: "none",
+    label: "CPU only",
+    confidence: "high",
+    conflict: false,
+    reason: null
+  });
+  assert.deepEqual(deriveGpuProfile(undefined, undefined), {
+    vendor: undefined,
+    detectedVendor: null,
+    level: "unknown",
+    label: "Unknown GPU",
+    confidence: "low",
+    conflict: false,
+    reason: null
+  });
+});
 
 function segmentTexts(result) {
   return result.segments.map((segment) => segment.text);
