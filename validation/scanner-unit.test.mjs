@@ -63,6 +63,20 @@ test("derives bounded CPU family tiers without throwing on empty input", () => {
   }
 });
 
+test("extracts current Intel and AMD workstation CPU families exactly", () => {
+  for (const model of [
+    "Intel Core i3-1115G4",
+    "Xeon W-3375",
+    "Xeon E-2374G",
+    "Xeon W-2265",
+    "Xeon E-2324G",
+    "Threadripper 7970X"
+  ]) {
+    const document = normalizeSetupText(`CPU: ${model}; RAM: 64GB`);
+    assert.deepEqual(candidateValues(extractCpuCandidates(document), "cpuModel"), [model], model);
+  }
+});
+
 test("derives stable GPU tiers for exact selected vendor and model pairs", () => {
   const cases = [
     ["NVIDIA GeForce RTX 5090", "nvidia", "high"],

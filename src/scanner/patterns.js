@@ -89,7 +89,7 @@ export const CPU_MODEL_PATTERNS = freezePatterns([
     id: "cpu.intel-core",
     field: "cpuModel",
     vendor: "intel",
-    regex: /\b(?:Intel[ \t]+)?(?:Core[ \t]+)?i(?<tier>[3579])(?:[ \t]*-[ \t]*|[ \t]+)?(?<model>[0-9]{3,5}[A-Z]{0,3})\b/iu,
+    regex: /\b(?:Intel[ \t]+)?(?:Core[ \t]+)?i(?<tier>[3579])(?:[ \t]*-[ \t]*|[ \t]+)?(?<model>[0-9]{3,5}(?:[A-Z]{0,3}|[A-Z][0-9]))\b/iu,
     confidence: "high",
     specificity: 100,
     normalize(match) {
@@ -111,14 +111,28 @@ export const CPU_MODEL_PATTERNS = freezePatterns([
     id: "cpu.intel-xeon",
     field: "cpuModel",
     vendor: "intel",
-    regex: /\b(?:Intel[ \t]+)?Xeon(?:[ \t]+(?<class>Platinum|Gold|Silver|Bronze))?[ \t]+(?<model>[0-9]{4}[A-Z]{0,3})\b/iu,
+    regex: /\b(?:Intel[ \t]+)?Xeon[ \t]+(?:(?<series>[WE])[ \t]*-[ \t]*|(?<class>Platinum|Gold|Silver|Bronze)[ \t]+)?(?<model>[0-9]{4}[A-Z0-9]{0,3})\b/iu,
     confidence: "high",
     specificity: 100,
     normalize(match) {
+      if (match.groups.series) {
+        return `Xeon ${uppercase(match.groups.series)}-${uppercase(match.groups.model)}`;
+      }
       const processorClass = match.groups.class
         ? `${match.groups.class[0].toUpperCase()}${match.groups.class.slice(1).toLowerCase()} `
         : "";
       return `Xeon ${processorClass}${uppercase(match.groups.model)}`;
+    }
+  },
+  {
+    id: "cpu.amd-threadripper",
+    field: "cpuModel",
+    vendor: "amd",
+    regex: /\b(?:AMD[ \t]+)?(?:Ryzen[ \t]+)?Threadripper[ \t]+(?<model>[0-9]{4}[A-Z]{0,3})\b/iu,
+    confidence: "high",
+    specificity: 100,
+    normalize(match) {
+      return `Threadripper ${uppercase(match.groups.model)}`;
     }
   },
   {

@@ -180,7 +180,7 @@ test("unsupported Intel GPUs use CPU only for explicitly CPU-capable routes", ()
   expectCode(noCpuRoute, intelState, "unsupported-gpu-vendor");
 });
 
-test("compatibility rejects offline, task, language, stale, commercial, and production mismatches", () => {
+test("compatibility rejects offline, task, language, stale, and commercial mismatches", () => {
   expectCode(model({ internetRequired: true }), state({ internet: "offline" }), "internet-required");
   expectCode(model(), state({ task: "coding-llm" }), "task-mismatch");
   expectCode(model({ supportedLanguages: ["en"] }), state({ taskLanguage: "zh" }), "language-mismatch");
@@ -188,7 +188,18 @@ test("compatibility rejects offline, task, language, stale, commercial, and prod
   expectCode(model(), state({ taskLanguage: "fr" }), "unsupported-language-request");
   expectCode(model({ lastReviewed: "2025-01-01" }), state(), "stale-evidence");
   expectCode(model({ commercialUse: "check-license" }), state({ requireCommercialClearance: true }), "commercial-clearance");
-  expectCode(model({ workloadFit: ["daily"] }), state({ workload: "production" }), "production-fit");
+});
+
+test("production workload remains eligible and receives partial workload scoring", () => {
+  const candidate = model({ workloadFit: ["daily"] });
+  const productionState = state({ workload: "production" });
+  assert.equal(compatible(candidate, productionState, { now: NOW }).ok, true);
+
+  const scored = scoreModel(candidate, productionState, context);
+  const workload = scored.breakdown.find(({ name }) => name === "workloadLegend");
+  assert.ok(workload);
+  assert.ok(workload.value > 0);
+  assert.ok(workload.value < workload.max);
 });
 
 test("curated Qwen supports Mandarin while curated Llama does not", async () => {

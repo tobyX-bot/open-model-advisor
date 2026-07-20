@@ -48,9 +48,6 @@ export function compatible(model, state, options = {}) {
       return rejected("language-mismatch", "Requested task language is unsupported by this route");
     }
   }
-  if (state.workload === "production" && !model.workloadFit.includes("production")) {
-    return rejected("production-fit", "Catalog does not mark this route for production workload");
-  }
   if (state.requireCommercialClearance === true && model.commercialUse !== "likely-allowed") {
     return rejected("commercial-clearance", "Commercial clearance is not likely allowed");
   }
