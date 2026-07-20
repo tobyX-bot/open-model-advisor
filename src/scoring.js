@@ -1,13 +1,66 @@
 import { weights } from "./config.js";
 
-export function compatible(model, state) {
-  if (!model.taskCategories.includes(state.task)) return { ok: false, reason: "Task mismatch" };
-  if (model.internetRequired && state.internet !== "available") return { ok: false, reason: "Requires internet" };
-  if (!model.deploymentModes.includes("local") && state.deployment !== "cloud-ok") return { ok: false, reason: "Deployment mismatch" };
-  if (model.gpuImportance === "required" && !model.supportedGpuVendors.includes(state.gpuVendor)) {
-    return { ok: false, reason: "Unsupported GPU for required-GPU model" };
+const DAY_MS = 24 * 60 * 60 * 1000;
+const EVIDENCE_RANK = { low: 1, medium: 2, high: 3 };
+const SETUP_RANK = { easy: 1, moderate: 2, advanced: 3 };
+
+function rejected(code, reason) {
+  return { ok: false, reason, code };
+}
+
+function currentTime(options = {}) {
+  const value = options.now ?? Date.now();
+  const timestamp = value instanceof Date ? value.getTime() : new Date(value).getTime();
+  return Number.isFinite(timestamp) ? timestamp : Date.now();
+}
+
+export function compatible(model, state, options = {}) {
+  if (!model.taskCategories.includes(state.task)) return rejected("task-mismatch", "Task mismatch");
+  if (!model.deploymentModes.includes("local")) return rejected("local-unsupported", "No local deployment route");
+  if (model.internetRequired && state.internet === "offline") return rejected("internet-required", "Requires internet while offline");
+  if (state.gpuProfile?.conflict) return rejected("gpu-conflict", "GPU profile has an unresolved conflict");
+  if (![state.ram, state.vram, state.storage].every(Number.isFinite)) {
+    return rejected("unresolved-hardware", "Critical hardware capacity is unresolved");
   }
-  return { ok: true };
+  if (state.ram < model.minRamGb) return rejected("insufficient-ram", "RAM is below the local minimum");
+  if (state.vram < model.minVramGb) return rejected("insufficient-vram", "VRAM is below the local minimum");
+  if (state.storage < model.estimatedStorageGb) return rejected("insufficient-storage", "Storage is below the estimated model footprint");
+
+  const selectedGpuVendor = state.selectedGpuVendor ?? state.gpuVendor;
+  if (model.gpuImportance === "required" && selectedGpuVendor === "none") {
+    return rejected("gpu-required", "A GPU is required for this local route");
+  }
+  let executionVendor = selectedGpuVendor;
+  if (!model.supportedGpuVendors.includes(selectedGpuVendor)) {
+    const canUseCpuFallback = model.supportedGpuVendors.includes("none")
+      && model.minVramGb === 0
+      && model.gpuImportance !== "required";
+    if (!canUseCpuFallback) return rejected("unsupported-gpu-vendor", "Selected GPU vendor is unsupported");
+    executionVendor = "none";
+  }
+
+  const requestedLanguage = state.taskLanguage;
+  if (requestedLanguage && requestedLanguage !== "auto") {
+    if (!["en", "zh"].includes(requestedLanguage)) {
+      return rejected("unsupported-language-request", "Requested task language code is unsupported");
+    }
+    if (!model.supportedLanguages.includes(requestedLanguage)) {
+      return rejected("language-mismatch", "Requested task language is unsupported by this route");
+    }
+  }
+  if (state.workload === "production" && !model.workloadFit.includes("production")) {
+    return rejected("production-fit", "Catalog does not mark this route for production workload");
+  }
+  if (state.requireCommercialClearance === true && model.commercialUse !== "likely-allowed") {
+    return rejected("commercial-clearance", "Commercial clearance is not likely allowed");
+  }
+  if (stale(model, { now: options.now })) return rejected("stale-evidence", "Catalog evidence is older than 180 days");
+  return {
+    ok: true,
+    reason: executionVendor === selectedGpuVendor ? "Eligible local route" : "Eligible local route via CPU fallback",
+    code: "eligible",
+    executionVendor
+  };
 }
 
 export function scoreModel(model, state, context) {
@@ -15,10 +68,13 @@ export function scoreModel(model, state, context) {
   const breakdown = [];
   const caps = [];
   let total = 0;
+  let rawTotal = 0;
   const add = (name, max, points, reason) => {
-    const value = Math.max(0, Math.min(max, Math.round(points)));
+    const rawValue = Math.max(0, Math.min(max, points));
+    const value = Math.round(rawValue);
     breakdown.push({ name, max, value, reason });
     total += value;
+    rawTotal += rawValue;
   };
 
   add(
@@ -130,10 +186,74 @@ export function scoreModel(model, state, context) {
           : `Pre-cap score ${Math.round(total)}/100 was capped because: ${caps.join(" ")}`
       });
       total = capValue;
+      rawTotal = Math.min(rawTotal, capValue);
     }
   }
 
-  return { total: Math.max(0, Math.min(100, Math.round(total))), breakdown, caps };
+  return {
+    total: Math.max(0, Math.min(100, Math.round(total))),
+    rawTotal: Math.max(0, Math.min(100, rawTotal)),
+    breakdown,
+    caps
+  };
+}
+
+function normalizedHeadroom(model, state) {
+  const requirements = [
+    [state.ram, model.minRamGb],
+    [state.vram, model.minVramGb],
+    [state.storage, model.estimatedStorageGb]
+  ].filter(([, required]) => required > 0);
+  return Math.min(...requirements.map(([available, required]) => (available - required) / required));
+}
+
+function compareSemantic(a, b) {
+  return b.score.rawTotal - a.score.rawTotal
+    || (EVIDENCE_RANK[b.model.evidenceConfidence] || 0) - (EVIDENCE_RANK[a.model.evidenceConfidence] || 0)
+    || b.minimumNormalizedHeadroom - a.minimumNormalizedHeadroom
+    || (SETUP_RANK[a.model.setupDifficulty] || 99) - (SETUP_RANK[b.model.setupDifficulty] || 99);
+}
+
+function hostedFallback(state, ranked) {
+  if (state.deployment === "local-only") return null;
+  if (ranked.length && state.deployment !== "cloud-ok") return null;
+  return {
+    privacy: "Hosted processing can send prompts, files, or outputs beyond this device; review provider retention and training terms.",
+    access: "Requires network access and a separately chosen provider account or API.",
+    license: "Verify model, provider, output, and commercial-use terms before deployment."
+  };
+}
+
+export function rankModels(models, state, context, options = {}) {
+  const eligible = [];
+  const excluded = [];
+
+  models.forEach((model) => {
+    const compatibility = compatible(model, state, options);
+    if (!compatibility.ok) {
+      excluded.push({ model, compatibility });
+      return;
+    }
+    eligible.push({
+      model,
+      compatibility,
+      score: scoreModel(model, state, context),
+      minimumNormalizedHeadroom: normalizedHeadroom(model, state)
+    });
+  });
+
+  eligible.sort((a, b) => compareSemantic(a, b) || a.model.id.localeCompare(b.model.id));
+  const byFamily = new Map();
+  eligible.forEach((entry) => {
+    if (!byFamily.has(entry.model.familyId)) byFamily.set(entry.model.familyId, entry);
+  });
+  const deduplicated = [...byFamily.values()];
+  deduplicated.forEach((entry, index) => {
+    entry.semanticTie = deduplicated.some((other, otherIndex) => otherIndex !== index && compareSemantic(entry, other) === 0);
+  });
+  const ranked = deduplicated.slice(0, Math.min(options.limit ?? 3, 3));
+
+  return { ranked, excluded, hostedFallback: hostedFallback(state, ranked) };
 }
 
 export function capScore(model, state) {
@@ -200,7 +320,7 @@ export function performanceLabel(model, state, score) {
   return score >= 60 ? "acceptable" : "slow";
 }
 
-export function stale(model) {
+export function stale(model, options = {}) {
   const reviewed = new Date(`${model.lastReviewed}T00:00:00Z`);
-  return Date.now() - reviewed.getTime() > 180 * 24 * 60 * 60 * 1000;
+  return currentTime(options) - reviewed.getTime() > 180 * DAY_MS;
 }

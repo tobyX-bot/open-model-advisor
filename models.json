@@ -66,12 +66,18 @@
       "licenseNotes": "License terms can vary by distribution and quantization. Verify the current Qwen license and any hosting terms before commercial use.",
       "sourceLinks": [
         {
-          "label": "Hugging Face model card",
-          "url": "https://huggingface.co/Qwen/Qwen2.5-7B-Instruct"
+          "label": "Model page",
+          "url": "https://huggingface.co/Qwen/Qwen2.5-7B-Instruct",
+          "publisher": "Qwen",
+          "kind": "official-model-card",
+          "verifiedAt": "2026-07-20"
         },
         {
           "label": "Qwen documentation",
-          "url": "https://qwen.readthedocs.io/"
+          "url": "https://qwen.readthedocs.io/",
+          "publisher": "Qwen",
+          "kind": "official-documentation",
+          "verifiedAt": "2026-07-20"
         }
       ],
       "lastReviewed": "2026-07-08",
@@ -86,7 +92,22 @@
         "preferredRuntime": "Ollama or llama.cpp",
         "hardwareFitNote": "Start here for general chat on 16GB RAM, Apple unified memory, or an 8GB VRAM desktop.",
         "avoidNote": "Avoid on very low-RAM CPU-only laptops; use a 3B class model instead."
-      }
+      },
+      "familyId": "qwen2-5-7b-instruct",
+      "supportedLanguages": [
+        "en",
+        "zh"
+      ],
+      "evidenceConfidence": "high",
+      "runtimeGuides": [
+        {
+          "runtime": "llama.cpp",
+          "label": "llama.cpp guide",
+          "url": "https://github.com/ggml-org/llama.cpp",
+          "publisher": "ggml-org",
+          "official": true
+        }
+      ]
     },
     {
       "id": "llama-3-1-8b-instruct",
@@ -145,12 +166,18 @@
       "licenseNotes": "Meta Llama license has specific acceptable-use and distribution terms. Verify before commercial deployment.",
       "sourceLinks": [
         {
-          "label": "Hugging Face model card",
-          "url": "https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct"
+          "label": "Model page",
+          "url": "https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct",
+          "publisher": "Meta",
+          "kind": "official-model-card",
+          "verifiedAt": "2026-07-20"
         },
         {
           "label": "Meta Llama",
-          "url": "https://www.llama.com/"
+          "url": "https://www.llama.com/",
+          "publisher": "Meta",
+          "kind": "official-site",
+          "verifiedAt": "2026-07-20"
         }
       ],
       "lastReviewed": "2026-07-08",
@@ -165,7 +192,21 @@
         "preferredRuntime": "Ollama, LM Studio, or llama.cpp",
         "hardwareFitNote": "Good first pick when you want broad tutorials and runtime support on 16GB+ machines.",
         "avoidNote": "Avoid if Llama license terms do not fit your use case or if RAM is below 8GB."
-      }
+      },
+      "familyId": "llama-3-1-8b-instruct",
+      "supportedLanguages": [
+        "en"
+      ],
+      "evidenceConfidence": "high",
+      "runtimeGuides": [
+        {
+          "runtime": "llama.cpp",
+          "label": "llama.cpp guide",
+          "url": "https://github.com/ggml-org/llama.cpp",
+          "publisher": "ggml-org",
+          "official": true
+        }
+      ]
     },
     {
       "id": "mistral-7b-instruct-v0-3",
@@ -224,12 +265,18 @@
       "licenseNotes": "Verify the current Mistral model license and downstream package terms.",
       "sourceLinks": [
         {
-          "label": "Hugging Face model card",
-          "url": "https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.3"
+          "label": "Model page",
+          "url": "https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.3",
+          "publisher": "Mistral AI",
+          "kind": "official-model-card",
+          "verifiedAt": "2026-07-20"
         },
         {
           "label": "Mistral AI docs",
-          "url": "https://docs.mistral.ai/"
+          "url": "https://docs.mistral.ai/",
+          "publisher": "Mistral AI",
+          "kind": "official-documentation",
+          "verifiedAt": "2026-07-20"
         }
       ],
       "lastReviewed": "2026-07-08",
@@ -244,7 +291,21 @@
         "preferredRuntime": "Ollama or LM Studio",
         "hardwareFitNote": "A lightweight first try for chat where speed matters more than maximum reasoning quality.",
         "avoidNote": "Avoid for long-context or highest-quality reasoning workloads."
-      }
+      },
+      "familyId": "mistral-7b-instruct-v0-3",
+      "supportedLanguages": [
+        "en"
+      ],
+      "evidenceConfidence": "high",
+      "runtimeGuides": [
+        {
+          "runtime": "llama.cpp",
+          "label": "llama.cpp guide",
+          "url": "https://github.com/ggml-org/llama.cpp",
+          "publisher": "ggml-org",
+          "official": true
+        }
+      ]
     },
     {
       "id": "qwen2-5-coder-7b-instruct",
@@ -304,12 +365,18 @@
       "licenseNotes": "Verify Qwen license terms, especially for commercial coding assistants and redistribution.",
       "sourceLinks": [
         {
-          "label": "Hugging Face model card",
-          "url": "https://huggingface.co/Qwen/Qwen2.5-Coder-7B-Instruct"
+          "label": "Model page",
+          "url": "https://huggingface.co/Qwen/Qwen2.5-Coder-7B-Instruct",
+          "publisher": "Qwen",
+          "kind": "official-model-card",
+          "verifiedAt": "2026-07-20"
         },
         {
           "label": "Qwen Coder blog",
-          "url": "https://qwenlm.github.io/blog/qwen2.5-coder/"
+          "url": "https://qwenlm.github.io/blog/qwen2.5-coder/",
+          "publisher": "Qwen",
+          "kind": "official-announcement",
+          "verifiedAt": "2026-07-20"
         }
       ],
       "lastReviewed": "2026-07-08",
@@ -324,7 +391,22 @@
         "preferredRuntime": "Ollama, LM Studio, or llama.cpp",
         "hardwareFitNote": "A concrete first coding model for 16GB laptops, Apple Silicon, or 8GB VRAM PCs.",
         "avoidNote": "Avoid expecting large-repository autonomous coding without retrieval or a larger hosted model."
-      }
+      },
+      "familyId": "qwen2-5-coder-7b-instruct",
+      "supportedLanguages": [
+        "en",
+        "zh"
+      ],
+      "evidenceConfidence": "high",
+      "runtimeGuides": [
+        {
+          "runtime": "llama.cpp",
+          "label": "llama.cpp guide",
+          "url": "https://github.com/ggml-org/llama.cpp",
+          "publisher": "ggml-org",
+          "official": true
+        }
+      ]
     },
     {
       "id": "deepseek-coder-v2-lite-instruct",
@@ -382,12 +464,18 @@
       "licenseNotes": "Verify DeepSeek license terms and any deployment restrictions before production use.",
       "sourceLinks": [
         {
-          "label": "Hugging Face model card",
-          "url": "https://huggingface.co/deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct"
+          "label": "Model page",
+          "url": "https://huggingface.co/deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct",
+          "publisher": "DeepSeek",
+          "kind": "official-model-card",
+          "verifiedAt": "2026-07-20"
         },
         {
           "label": "DeepSeek Coder V2 GitHub",
-          "url": "https://github.com/deepseek-ai/DeepSeek-Coder-V2"
+          "url": "https://github.com/deepseek-ai/DeepSeek-Coder-V2",
+          "publisher": "DeepSeek",
+          "kind": "official-repository",
+          "verifiedAt": "2026-07-20"
         }
       ],
       "lastReviewed": "2026-07-08",
@@ -402,7 +490,22 @@
         "preferredRuntime": "Transformers or vLLM on stronger GPU systems",
         "hardwareFitNote": "Try after 7B coder models when you have 32GB RAM or 16GB VRAM and need stronger code reasoning.",
         "avoidNote": "Avoid as a first local model on basic laptops or CPU-only machines."
-      }
+      },
+      "familyId": "deepseek-coder-v2-lite-instruct",
+      "supportedLanguages": [
+        "en",
+        "zh"
+      ],
+      "evidenceConfidence": "high",
+      "runtimeGuides": [
+        {
+          "runtime": "llama.cpp",
+          "label": "llama.cpp guide",
+          "url": "https://github.com/ggml-org/llama.cpp",
+          "publisher": "ggml-org",
+          "official": true
+        }
+      ]
     },
     {
       "id": "starcoder2-15b",
@@ -460,12 +563,18 @@
       "licenseNotes": "StarCoder2 uses BigCode OpenRAIL-style terms. Verify commercial and use restrictions.",
       "sourceLinks": [
         {
-          "label": "Hugging Face model card",
-          "url": "https://huggingface.co/bigcode/starcoder2-15b"
+          "label": "Model page",
+          "url": "https://huggingface.co/bigcode/starcoder2-15b",
+          "publisher": "BigCode",
+          "kind": "official-model-card",
+          "verifiedAt": "2026-07-20"
         },
         {
           "label": "StarCoder2 paper",
-          "url": "https://arxiv.org/abs/2402.19173"
+          "url": "https://arxiv.org/abs/2402.19173",
+          "publisher": "BigCode",
+          "kind": "research-paper",
+          "verifiedAt": "2026-07-20"
         }
       ],
       "lastReviewed": "2026-07-08",
@@ -480,7 +589,21 @@
         "preferredRuntime": "Transformers or llama.cpp-compatible builds",
         "hardwareFitNote": "Best treated as a workstation/server starter for code completion with 16GB+ VRAM.",
         "avoidNote": "Avoid for easy setup or low-latency chat-style coding on consumer laptops."
-      }
+      },
+      "familyId": "starcoder2-15b",
+      "supportedLanguages": [
+        "en"
+      ],
+      "evidenceConfidence": "high",
+      "runtimeGuides": [
+        {
+          "runtime": "llama.cpp",
+          "label": "llama.cpp guide",
+          "url": "https://github.com/ggml-org/llama.cpp",
+          "publisher": "ggml-org",
+          "official": true
+        }
+      ]
     },
     {
       "id": "flux-1-schnell",
@@ -538,12 +661,18 @@
       "licenseNotes": "Verify the current Black Forest Labs license for generated outputs and commercial use.",
       "sourceLinks": [
         {
-          "label": "Hugging Face model card",
-          "url": "https://huggingface.co/black-forest-labs/FLUX.1-schnell"
+          "label": "Model page",
+          "url": "https://huggingface.co/black-forest-labs/FLUX.1-schnell",
+          "publisher": "Black Forest Labs",
+          "kind": "official-model-card",
+          "verifiedAt": "2026-07-20"
         },
         {
           "label": "Black Forest Labs",
-          "url": "https://blackforestlabs.ai/"
+          "url": "https://blackforestlabs.ai/",
+          "publisher": "Black Forest Labs",
+          "kind": "official-site",
+          "verifiedAt": "2026-07-20"
         }
       ],
       "lastReviewed": "2026-07-08",
@@ -558,7 +687,21 @@
         "preferredRuntime": "ComfyUI",
         "hardwareFitNote": "Try first on 12-16GB+ VRAM or high unified-memory workstations for modern image quality.",
         "avoidNote": "Avoid on 8GB VRAM if you need reliable high-resolution generation without tuning."
-      }
+      },
+      "familyId": "flux-1-schnell",
+      "supportedLanguages": [
+        "en"
+      ],
+      "evidenceConfidence": "high",
+      "runtimeGuides": [
+        {
+          "runtime": "Diffusers",
+          "label": "Diffusers guide",
+          "url": "https://huggingface.co/docs/diffusers/index",
+          "publisher": "Hugging Face",
+          "official": true
+        }
+      ]
     },
     {
       "id": "stable-diffusion-3-5-medium",
@@ -614,12 +757,18 @@
       "licenseNotes": "Verify Stability AI community or commercial license terms before commercial use.",
       "sourceLinks": [
         {
-          "label": "Hugging Face model card",
-          "url": "https://huggingface.co/stabilityai/stable-diffusion-3.5-medium"
+          "label": "Model page",
+          "url": "https://huggingface.co/stabilityai/stable-diffusion-3.5-medium",
+          "publisher": "Stability AI",
+          "kind": "official-model-card",
+          "verifiedAt": "2026-07-20"
         },
         {
           "label": "Stability AI announcement",
-          "url": "https://stability.ai/"
+          "url": "https://stability.ai/",
+          "publisher": "Stability AI",
+          "kind": "official-site",
+          "verifiedAt": "2026-07-20"
         }
       ],
       "lastReviewed": "2026-07-08",
@@ -634,7 +783,21 @@
         "preferredRuntime": "ComfyUI or Diffusers",
         "hardwareFitNote": "A practical image starter for 8-12GB+ VRAM users who can tune resolution and settings.",
         "avoidNote": "Avoid assuming it will be comfortable on CPU-only or low-VRAM laptops."
-      }
+      },
+      "familyId": "stable-diffusion-3-5-medium",
+      "supportedLanguages": [
+        "en"
+      ],
+      "evidenceConfidence": "high",
+      "runtimeGuides": [
+        {
+          "runtime": "Diffusers",
+          "label": "Diffusers guide",
+          "url": "https://huggingface.co/docs/diffusers/index",
+          "publisher": "Hugging Face",
+          "official": true
+        }
+      ]
     },
     {
       "id": "sdxl-base-1-0",
@@ -691,12 +854,18 @@
       "licenseNotes": "Verify SDXL license and any UI extension or checkpoint license before commercial use.",
       "sourceLinks": [
         {
-          "label": "Hugging Face model card",
-          "url": "https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0"
+          "label": "Model page",
+          "url": "https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0",
+          "publisher": "Stability AI",
+          "kind": "official-model-card",
+          "verifiedAt": "2026-07-20"
         },
         {
           "label": "Stability AI SDXL",
-          "url": "https://stability.ai/stable-image"
+          "url": "https://stability.ai/stable-image",
+          "publisher": "Stability AI",
+          "kind": "official-site",
+          "verifiedAt": "2026-07-20"
         }
       ],
       "lastReviewed": "2026-07-08",
@@ -711,7 +880,21 @@
         "preferredRuntime": "AUTOMATIC1111, ComfyUI, or Diffusers",
         "hardwareFitNote": "The safest first image model for an 8GB NVIDIA gaming PC because tooling is mature.",
         "avoidNote": "Avoid if you need the newest image quality without trying newer heavier models."
-      }
+      },
+      "familyId": "sdxl-base-1-0",
+      "supportedLanguages": [
+        "en"
+      ],
+      "evidenceConfidence": "high",
+      "runtimeGuides": [
+        {
+          "runtime": "Diffusers",
+          "label": "Diffusers guide",
+          "url": "https://huggingface.co/docs/diffusers/index",
+          "publisher": "Hugging Face",
+          "official": true
+        }
+      ]
     },
     {
       "id": "whisper-large-v3",
@@ -770,12 +953,18 @@
       "licenseNotes": "Verify model license and transcription data compliance requirements before production use.",
       "sourceLinks": [
         {
-          "label": "Hugging Face model card",
-          "url": "https://huggingface.co/openai/whisper-large-v3"
+          "label": "Model page",
+          "url": "https://huggingface.co/openai/whisper-large-v3",
+          "publisher": "OpenAI",
+          "kind": "official-model-card",
+          "verifiedAt": "2026-07-20"
         },
         {
           "label": "Whisper GitHub",
-          "url": "https://github.com/openai/whisper"
+          "url": "https://github.com/openai/whisper",
+          "publisher": "OpenAI",
+          "kind": "official-repository",
+          "verifiedAt": "2026-07-20"
         }
       ],
       "lastReviewed": "2026-07-08",
@@ -790,7 +979,22 @@
         "preferredRuntime": "faster-whisper or whisper.cpp",
         "hardwareFitNote": "Try for quality-focused transcription on 16GB+ systems or GPU-equipped workstations.",
         "avoidNote": "Avoid for low-latency batch work on weak CPU-only laptops."
-      }
+      },
+      "familyId": "whisper-large-v3",
+      "supportedLanguages": [
+        "en",
+        "zh"
+      ],
+      "evidenceConfidence": "high",
+      "runtimeGuides": [
+        {
+          "runtime": "Whisper",
+          "label": "Whisper guide",
+          "url": "https://github.com/openai/whisper",
+          "publisher": "OpenAI",
+          "official": true
+        }
+      ]
     },
     {
       "id": "distil-whisper-large-v3-5",
@@ -848,12 +1052,18 @@
       "licenseNotes": "Verify Distil-Whisper model card terms and any inherited Whisper license obligations.",
       "sourceLinks": [
         {
-          "label": "Hugging Face model card",
-          "url": "https://huggingface.co/distil-whisper/distil-large-v3.5"
+          "label": "Model page",
+          "url": "https://huggingface.co/distil-whisper/distil-large-v3.5",
+          "publisher": "Hugging Face",
+          "kind": "official-model-card",
+          "verifiedAt": "2026-07-20"
         },
         {
           "label": "Distil-Whisper GitHub",
-          "url": "https://github.com/huggingface/distil-whisper"
+          "url": "https://github.com/huggingface/distil-whisper",
+          "publisher": "Hugging Face",
+          "kind": "official-repository",
+          "verifiedAt": "2026-07-20"
         }
       ],
       "lastReviewed": "2026-07-08",
@@ -868,7 +1078,22 @@
         "preferredRuntime": "faster-whisper",
         "hardwareFitNote": "Good first speech-to-text choice when speed matters but you still want strong accuracy.",
         "avoidNote": "Avoid if your language/audio domain needs validation against full Whisper quality first."
-      }
+      },
+      "familyId": "distil-whisper-large-v3-5",
+      "supportedLanguages": [
+        "en",
+        "zh"
+      ],
+      "evidenceConfidence": "high",
+      "runtimeGuides": [
+        {
+          "runtime": "Distil-Whisper",
+          "label": "Distil-Whisper guide",
+          "url": "https://github.com/huggingface/distil-whisper",
+          "publisher": "Hugging Face",
+          "official": true
+        }
+      ]
     },
     {
       "id": "nvidia-parakeet-tdt-0-6b-v3",
@@ -924,12 +1149,18 @@
       "licenseNotes": "Verify NVIDIA model license and NeMo dependency terms before commercial use.",
       "sourceLinks": [
         {
-          "label": "Hugging Face model card",
-          "url": "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3"
+          "label": "Model page",
+          "url": "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3",
+          "publisher": "NVIDIA",
+          "kind": "official-model-card",
+          "verifiedAt": "2026-07-20"
         },
         {
           "label": "NVIDIA NeMo",
-          "url": "https://github.com/NVIDIA/NeMo"
+          "url": "https://github.com/NVIDIA/NeMo",
+          "publisher": "NVIDIA",
+          "kind": "official-repository",
+          "verifiedAt": "2026-07-20"
         }
       ],
       "lastReviewed": "2026-07-08",
@@ -944,7 +1175,21 @@
         "preferredRuntime": "NVIDIA NeMo",
         "hardwareFitNote": "Try on NVIDIA-friendly workstations when you want a compact ASR pipeline.",
         "avoidNote": "Avoid if you need the easiest cross-platform setup or non-NVIDIA runtime support."
-      }
+      },
+      "familyId": "nvidia-parakeet-tdt-0-6b-v3",
+      "supportedLanguages": [
+        "en"
+      ],
+      "evidenceConfidence": "high",
+      "runtimeGuides": [
+        {
+          "runtime": "NVIDIA NeMo",
+          "label": "NVIDIA NeMo ASR guide",
+          "url": "https://docs.nvidia.com/nemo-framework/user-guide/latest/nemotoolkit/asr/intro.html",
+          "publisher": "NVIDIA",
+          "official": true
+        }
+      ]
     },
     {
       "id": "bge-large-en-v1-5",
@@ -1001,12 +1246,18 @@
       "licenseNotes": "Verify BAAI model license and downstream vector database terms before commercial use.",
       "sourceLinks": [
         {
-          "label": "Hugging Face model card",
-          "url": "https://huggingface.co/BAAI/bge-large-en-v1.5"
+          "label": "Model page",
+          "url": "https://huggingface.co/BAAI/bge-large-en-v1.5",
+          "publisher": "BAAI",
+          "kind": "official-model-card",
+          "verifiedAt": "2026-07-20"
         },
         {
           "label": "FlagEmbedding GitHub",
-          "url": "https://github.com/FlagOpen/FlagEmbedding"
+          "url": "https://github.com/FlagOpen/FlagEmbedding",
+          "publisher": "BAAI/FlagOpen",
+          "kind": "official-repository",
+          "verifiedAt": "2026-07-20"
         }
       ],
       "lastReviewed": "2026-07-08",
@@ -1021,7 +1272,21 @@
         "preferredRuntime": "sentence-transformers or ONNX Runtime",
         "hardwareFitNote": "A concrete first RAG/search embedding model for English corpora on ordinary laptops.",
         "avoidNote": "Avoid for multilingual retrieval; choose BGE-M3 instead."
-      }
+      },
+      "familyId": "bge-large-en-v1-5",
+      "supportedLanguages": [
+        "en"
+      ],
+      "evidenceConfidence": "high",
+      "runtimeGuides": [
+        {
+          "runtime": "FlagEmbedding",
+          "label": "FlagEmbedding guide",
+          "url": "https://github.com/FlagOpen/FlagEmbedding",
+          "publisher": "BAAI/FlagOpen",
+          "official": true
+        }
+      ]
     },
     {
       "id": "bge-m3",
@@ -1079,12 +1344,18 @@
       "licenseNotes": "Verify BGE-M3 license terms before commercial or hosted retrieval use.",
       "sourceLinks": [
         {
-          "label": "Hugging Face model card",
-          "url": "https://huggingface.co/BAAI/bge-m3"
+          "label": "Model page",
+          "url": "https://huggingface.co/BAAI/bge-m3",
+          "publisher": "BAAI",
+          "kind": "official-model-card",
+          "verifiedAt": "2026-07-20"
         },
         {
           "label": "BGE-M3 paper",
-          "url": "https://arxiv.org/abs/2402.03216"
+          "url": "https://arxiv.org/abs/2402.03216",
+          "publisher": "BAAI",
+          "kind": "research-paper",
+          "verifiedAt": "2026-07-20"
         }
       ],
       "lastReviewed": "2026-07-08",
@@ -1099,7 +1370,22 @@
         "preferredRuntime": "FlagEmbedding or sentence-transformers",
         "hardwareFitNote": "Try first for multilingual RAG/search when 16GB+ RAM is available.",
         "avoidNote": "Avoid if you only need a very small English-only embedding model."
-      }
+      },
+      "familyId": "bge-m3",
+      "supportedLanguages": [
+        "en",
+        "zh"
+      ],
+      "evidenceConfidence": "high",
+      "runtimeGuides": [
+        {
+          "runtime": "FlagEmbedding",
+          "label": "FlagEmbedding guide",
+          "url": "https://github.com/FlagOpen/FlagEmbedding",
+          "publisher": "BAAI/FlagOpen",
+          "official": true
+        }
+      ]
     },
     {
       "id": "nomic-embed-text-v1-5",
@@ -1156,12 +1442,18 @@
       "licenseNotes": "Verify Nomic license terms and attribution requirements before commercial use.",
       "sourceLinks": [
         {
-          "label": "Hugging Face model card",
-          "url": "https://huggingface.co/nomic-ai/nomic-embed-text-v1.5"
+          "label": "Model page",
+          "url": "https://huggingface.co/nomic-ai/nomic-embed-text-v1.5",
+          "publisher": "Nomic AI",
+          "kind": "official-model-card",
+          "verifiedAt": "2026-07-20"
         },
         {
           "label": "Nomic blog",
-          "url": "https://www.nomic.ai/blog/posts/nomic-embed-text-v1"
+          "url": "https://www.nomic.ai/blog/posts/nomic-embed-text-v1",
+          "publisher": "Nomic AI",
+          "kind": "official-announcement",
+          "verifiedAt": "2026-07-20"
         }
       ],
       "lastReviewed": "2026-07-08",
@@ -1176,7 +1468,21 @@
         "preferredRuntime": "Ollama or sentence-transformers",
         "hardwareFitNote": "Good first embedding option on CPU-only or modest laptops for small local indexes.",
         "avoidNote": "Avoid for multilingual or highly specialized retrieval without evaluation."
-      }
+      },
+      "familyId": "nomic-embed-text-v1-5",
+      "supportedLanguages": [
+        "en"
+      ],
+      "evidenceConfidence": "high",
+      "runtimeGuides": [
+        {
+          "runtime": "Sentence Transformers",
+          "label": "Sentence Transformers guide",
+          "url": "https://www.sbert.net/docs/sentence_transformer/usage/usage.html",
+          "publisher": "Sentence Transformers",
+          "official": true
+        }
+      ]
     }
   ]
 }

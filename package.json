@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "test:recommendations": "node --test validation/recommendation-ranking.test.mjs",
     "test:scanner": "node --test validation/scanner-unit.test.mjs validation/profile-state.test.mjs",
     "test:fixture": "node validation/check-dataset.mjs && node validation/check-fixture-semantics.mjs",
     "test:module": "node validation/run-validation.mjs"
