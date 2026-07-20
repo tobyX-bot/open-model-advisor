@@ -4,287 +4,171 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Model Digger matches open model starting points to your hardware using transparent, local browser rules.">
-  <meta name="theme-color" content="#233b49">
+  <meta name="theme-color" content="#f4f3f0">
   <title>Model Digger — Local-first open model advisor</title>
   <link rel="icon" href="assets/shovel.svg" type="image/svg+xml">
   <link rel="stylesheet" href="styles.css">
-  <script>
-    if (window.location.protocol === "file:") document.documentElement.classList.add("file-protocol");
-  </script>
+  <script>if (window.location.protocol === "file:") document.documentElement.classList.add("file-protocol");</script>
 </head>
 <body>
-  <a class="skip-link" href="#mainContent">Skip to the advisor</a>
-
+  <a class="skip-link" href="#mainContent" data-i18n="skipAdvisor">Skip to the advisor</a>
   <div class="protocol-notice" id="protocolNotice" role="alert">
     <strong data-i18n="fileProtocolTitle">Run Model Digger from a local server</strong>
-    <span data-i18n="fileProtocolBody">This modular app cannot load its catalog reliably from file://. In this folder, run python3 -m http.server 8000 and open http://localhost:8000/.</span>
+    <span data-i18n="fileProtocolBody">This modular app requires a local static server.</span>
   </div>
-
-  <noscript>
-    <div class="noscript-notice">
-      <strong>JavaScript is required</strong>
-      <span>Model Digger performs scanning and recommendations locally in your browser, so JavaScript must be enabled.</span>
-    </div>
-  </noscript>
+  <noscript><div class="noscript-notice"><strong>JavaScript is required</strong><span>Model Digger runs locally in your browser.</span></div></noscript>
 
   <header class="topbar">
-    <div class="brand-lockup">
-      <span class="brand-mark" aria-hidden="true"><img src="assets/shovel.svg" alt=""></span>
-      <div>
-        <strong class="brand-name">Model Digger</strong>
-        <span class="brand-tagline" data-i18n="tagline">Dig through open models. Find what fits your machine.</span>
-      </div>
-    </div>
+    <a class="brand-lockup" href="#mainContent" aria-label="Model Digger">
+      <span class="brand-mark"><img src="assets/shovel.svg" alt=""></span>
+      <span><strong>Model Digger</strong><small data-i18n="tagline">Open-model fit for your machine</small></span>
+    </a>
     <div class="header-tools">
-      <span class="header-status privacy-status">
-        <svg aria-hidden="true" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-        <span data-i18n="privacyPill">Your inputs stay in this browser</span>
-      </span>
-      <span class="header-status" id="catalogFreshness">Catalog loading</span>
+      <span class="privacy-status" data-i18n="privacyPill">Processed only in this browser</span>
+      <span class="catalog-status" id="catalogFreshness">Catalog loading</span>
       <div class="language-toggle" role="group" data-i18n-aria-label="languageLabel" aria-label="Language">
-        <button type="button" class="is-active" data-language="en" aria-pressed="true">EN</button>
+        <button type="button" data-language="en" aria-pressed="true">EN</button>
         <button type="button" data-language="zh" aria-pressed="false">中文</button>
       </div>
     </div>
   </header>
 
   <main id="mainContent">
-    <form id="advisorForm">
-      <div class="excavation-layout">
-        <section class="scan-chamber" id="scanChamber" aria-labelledby="scannerTitle">
-          <div class="scan-beam" aria-hidden="true"></div>
-          <img class="instrument-mark" src="assets/shovel.svg" alt="" aria-hidden="true">
-          <div class="section-heading on-dark">
-            <span class="eyebrow" data-i18n="scannerEyebrow">01 / Raw setup</span>
-            <h1 id="scannerTitle" data-i18n="scannerTitle">Start with your machine</h1>
-            <p data-i18n="scannerBody">Paste a setup list or choose an editable example. The scan is deterministic and never leaves this browser.</p>
-          </div>
+    <nav class="progress-ribbon" id="digRail" data-stage="raw" data-i18n-aria-label="digLineLabel" aria-label="Recommendation progress">
+      <strong data-i18n="workflowLabel">Local analysis workflow</strong>
+      <ol>
+        <li data-stage-id="raw" class="is-active"><span>01</span><b data-i18n="digRaw">Input</b></li>
+        <li data-stage-id="scan"><span>02</span><b data-i18n="digScan">Scan</b></li>
+        <li data-stage-id="extract"><span>03</span><b data-i18n="digExtract">Review</b></li>
+        <li data-stage-id="match"><span>04</span><b data-i18n="digMatch">Confirm</b></li>
+        <li data-stage-id="recommendation"><span>05</span><b data-i18n="digRecommendation">Recommend</b></li>
+      </ol>
+    </nav>
 
-          <div class="scanner-glass">
-            <label for="setupPaste" data-i18n="setupPasteLabel">Paste computer setup</label>
-            <textarea id="setupPaste" name="setupPaste" data-i18n-placeholder="setupPastePlaceholder" placeholder="MacBook Pro M3 Pro, 36GB unified memory, coding assistant"></textarea>
+    <form id="advisorForm" class="workflow-board">
+      <section class="workflow-panel input-panel" id="scanChamber" aria-labelledby="scannerTitle">
+        <header class="panel-heading">
+          <span class="eyebrow" data-i18n="scannerEyebrow">01 / Raw setup</span>
+          <h1 id="scannerTitle" data-i18n="scannerTitle">Start with your machine</h1>
+          <p data-i18n="scannerBody">Paste a setup list or choose an editable example.</p>
+        </header>
 
-            <div class="helper-group" data-i18n-aria-label="helperExamplesLabel" aria-label="Example setup text">
-              <button type="button" class="helper-chip" data-helper="m3-pro-36" data-i18n="helperM3">M3 Pro · 36GB</button>
-              <button type="button" class="helper-chip" data-helper="rtx-4070" data-i18n="helperRtx">RTX 4070 · 12GB</button>
-              <button type="button" class="helper-chip" data-helper="intel-cpu-only" data-i18n="helperCpu">Intel i5 · CPU only</button>
-            </div>
-
-            <div class="button-row scanner-actions">
-              <button type="button" class="button primary-on-dark" id="scanSetup">
-                <img class="button-icon" src="assets/shovel.svg" alt="" aria-hidden="true">
-                <span data-i18n="scanSetup">Scan setup</span>
-              </button>
-              <button type="button" class="button glass-button" id="applyDetected" disabled>
-                <svg class="button-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"></path></svg>
-                <span data-i18n="applyDetected">Apply detected setup</span>
-              </button>
-              <button type="button" class="icon-button glass-button" id="clearDetected" title="Clear" aria-label="Clear">
-                <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
-              </button>
-            </div>
-
-            <p class="scan-summary" id="scanSummary">Paste specs, scan locally, then review the extracted fields before applying.</p>
-            <ul id="detectedFields" class="detected-list"></ul>
-          </div>
-        </section>
-
-        <aside class="dig-rail" id="digRail" data-stage="raw" data-i18n-aria-label="digLineLabel" aria-label="Recommendation progress">
-          <div class="dig-glass">
-            <span class="dig-tool" aria-hidden="true"><img src="assets/shovel.svg" alt=""></span>
-            <ol>
-              <li data-stage-id="raw" class="is-active"><span>01</span><b data-i18n="digRaw">Raw input</b></li>
-              <li data-stage-id="scan"><span>02</span><b data-i18n="digScan">Scan</b></li>
-              <li data-stage-id="extract"><span>03</span><b data-i18n="digExtract">Extract</b></li>
-              <li data-stage-id="match"><span>04</span><b data-i18n="digMatch">Match</b></li>
-              <li data-stage-id="recommendation"><span>05</span><b data-i18n="digRecommendation">Result</b></li>
-            </ol>
-          </div>
-        </aside>
-
-        <section class="findings-field" aria-labelledby="reviewTitle">
-          <div class="section-heading">
-            <span class="eyebrow copper" data-i18n="reviewEyebrow">02 / Confirm findings</span>
-            <h2 id="reviewTitle" data-i18n="reviewTitle">Review the hardware profile</h2>
-            <p data-i18n="reviewBody">These facts drive every score. Confirm them before choosing a task.</p>
-          </div>
-
-          <div class="profile-provenance">
-            <div>
-              <span class="micro-label" data-i18n="detectedHardware">Hardware used for scoring</span>
-              <strong id="provenanceLabel">Editable example · not detected</strong>
-            </div>
-            <span class="profile-pill" id="selectedPreset">Profile: Basic laptop example</span>
-          </div>
-
-          <div class="hardware-facts" id="hardwareFacts"></div>
-
-          <p class="profile-note" id="profileNote">Confirm this profile to unlock task selection.</p>
-          <div class="button-row review-actions">
-            <button type="button" class="button primary" id="confirmSpecs">
-              <svg class="button-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"></path></svg>
-              <span data-i18n="confirmSpecs">Confirm these specs</span>
-            </button>
-            <button type="button" class="button secondary" id="reviewDetails">
-              <svg class="button-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 21v-7"></path><path d="M4 10V3"></path><path d="M12 21v-9"></path><path d="M12 8V3"></path><path d="M20 21v-5"></path><path d="M20 12V3"></path><path d="M2 14h4"></path><path d="M10 8h4"></path><path d="M18 16h4"></path></svg>
-              <span data-i18n="reviewExactDetails">Review exact hardware details</span>
-            </button>
-          </div>
-
-          <div class="task-zone">
-            <div class="section-heading compact">
-              <span class="eyebrow copper" data-i18n="taskEyebrow">03 / Define the job</span>
-              <h2 data-i18n="taskTitle">What should the model do?</h2>
-              <p data-i18n="taskBody">Choose the workload and deployment boundary. Local options remain first.</p>
-            </div>
-
-            <p class="task-lock" id="taskLockHint" data-i18n="taskLocked">Confirm the hardware profile first.</p>
-            <div class="context-grid">
-              <label for="task"><span data-i18n="taskLabel">Primary task</span>
-                <select id="task" name="task" disabled>
-                  <option value="" data-i18n="taskPlaceholder">Select a task...</option>
-                  <option value="chat-llm" data-i18n="taskChat">Chat / writing</option>
-                  <option value="coding-llm" data-i18n="taskCoding">Coding assistant</option>
-                  <option value="image-generation" data-i18n="taskImage">Image generation</option>
-                  <option value="speech-to-text" data-i18n="taskSpeech">Speech to text</option>
-                  <option value="embeddings" data-i18n="taskEmbeddings">Embeddings / search</option>
-                </select>
-              </label>
-              <label for="workload"><span data-i18n="workloadLabel">Expected use</span>
-                <select id="workload" name="workload">
-                  <option value="casual" data-i18n="workloadCasual">Casual</option>
-                  <option value="daily" data-i18n="workloadDaily">Daily</option>
-                  <option value="batch" data-i18n="workloadBatch">Batch</option>
-                  <option value="production" data-i18n="workloadProduction">Production / team</option>
-                  <option value="latency" data-i18n="workloadLatency">Latency-sensitive</option>
-                  <option value="quality" data-i18n="workloadQuality">Quality-sensitive</option>
-                </select>
-              </label>
-              <label for="deployment"><span data-i18n="deploymentLabel">Deployment preference</span>
-                <select id="deployment" name="deployment">
-                  <option value="local-only" data-i18n="deploymentLocalOnly">Local only</option>
-                  <option value="local-first" data-i18n="deploymentLocalFirst">Local first, cloud acceptable</option>
-                  <option value="cloud-ok" data-i18n="deploymentCloudOk">Cloud acceptable</option>
-                </select>
-              </label>
-            </div>
-
-            <fieldset class="priorities-fieldset">
-              <legend data-i18n="prioritiesLegend">Priorities</legend>
-              <div class="priority-grid">
-                <label><input type="checkbox" name="priority" value="privacy" checked><span data-i18n="priorityPrivacy">Privacy</span></label>
-                <label><input type="checkbox" name="priority" value="quality"><span data-i18n="priorityQuality">Quality</span></label>
-                <label><input type="checkbox" name="priority" value="speed"><span data-i18n="prioritySpeed">Speed</span></label>
-                <label><input type="checkbox" name="priority" value="ease"><span data-i18n="priorityEase">Ease</span></label>
-                <label><input type="checkbox" name="priority" value="commercial"><span data-i18n="priorityCommercial">Commercial</span></label>
-                <label><input type="checkbox" name="priority" value="low-cost"><span data-i18n="priorityLowCost">Low cost</span></label>
-                <label><input type="checkbox" name="priority" value="low-hardware"><span data-i18n="priorityLowHardware">Low hardware</span></label>
-              </div>
-            </fieldset>
-
-            <div class="button-row recommendation-actions">
-              <button type="submit" class="button primary">
-                <img class="button-icon" src="assets/shovel.svg" alt="" aria-hidden="true">
-                <span data-i18n="updateRecommendations">Excavate recommendations</span>
-              </button>
-              <button type="button" class="button secondary" id="clearTask" data-i18n="clearTask">Clear task</button>
-            </div>
-          </div>
-        </section>
-      </div>
-
-      <details class="manual-band" id="manualDetails">
-        <summary>
-          <span>
-            <b data-i18n="manualTitle">Exact hardware details</b>
-            <small data-i18n="manualBody">Use these fields when the scan is uncertain or your setup differs from the example.</small>
-          </span>
-          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"></path></svg>
-        </summary>
-        <div class="manual-content">
-          <div class="preset-row">
-            <label for="preset"><span data-i18n="presetLabel">Editable example / preset</span>
-              <select id="preset" name="preset">
-                <option value="basic-laptop" data-i18n="presetBasic">Basic laptop example</option>
-                <option value="cpu-only" data-i18n="presetCpuOnly">CPU-only machine</option>
-                <option value="apple-16" data-i18n="presetApple">16GB Apple Silicon MacBook</option>
-                <option value="gaming-8" data-i18n="presetGaming">Gaming PC with 8GB VRAM</option>
-                <option value="creator-16" data-i18n="presetCreator">Creator workstation with 16GB VRAM</option>
-                <option value="server-24" data-i18n="presetServer">Server / workstation with 24GB+ VRAM</option>
-                <option value="custom" data-i18n="presetCustom">Custom</option>
-              </select>
-            </label>
-            <button type="button" class="button secondary" id="resetPreset" data-i18n="reset">Reset fields</button>
-          </div>
-
-          <div class="hardware-form-grid">
-            <label for="os"><span data-i18n="osLabel">Operating system</span>
-              <select id="os" name="os">
-                <option value="macos">macOS</option>
-                <option value="windows">Windows</option>
-                <option value="linux">Linux</option>
-              </select>
-            </label>
-            <label for="deviceType"><span data-i18n="deviceLabel">Device type</span>
-              <select id="deviceType" name="deviceType">
-                <option value="laptop" data-i18n="deviceLaptop">Laptop</option>
-                <option value="desktop" data-i18n="deviceDesktop">Desktop</option>
-                <option value="workstation" data-i18n="deviceWorkstation">Workstation</option>
-                <option value="server" data-i18n="deviceServer">Server</option>
-              </select>
-            </label>
-            <label class="wide-field" for="cpuModel"><span data-i18n="cpuModelLabel">CPU model</span>
-              <input id="cpuModel" name="cpuModel" type="text" placeholder="Apple M3 Pro, Ryzen 7 7800X3D, Intel i7-12700H">
-            </label>
-            <label for="ram"><span data-i18n="ramLabel">RAM / unified memory (GB)</span>
-              <input id="ram" name="ram" type="number" min="2" max="512" step="1" required>
-            </label>
-            <label for="gpuVendor"><span data-i18n="gpuVendorLabel">GPU vendor</span>
-              <select id="gpuVendor" name="gpuVendor">
-                <option value="none" data-i18n="gpuNone">None / CPU only</option>
-                <option value="apple" data-i18n="gpuApple">Apple unified GPU</option>
-                <option value="nvidia">NVIDIA</option>
-                <option value="amd">AMD</option>
-                <option value="intel">Intel</option>
-              </select>
-            </label>
-            <label class="wide-field" for="gpuModel"><span data-i18n="gpuModelLabel">GPU model</span>
-              <input id="gpuModel" name="gpuModel" type="text" placeholder="RTX 4070, Radeon RX 7800 XT, Apple M3 Pro GPU">
-            </label>
-            <label for="vram"><span data-i18n="vramLabel">VRAM / usable unified memory (GB)</span>
-              <input id="vram" name="vram" type="number" min="0" max="128" step="1" required>
-            </label>
-            <label for="storage"><span data-i18n="storageLabel">Free storage (GB)</span>
-              <input id="storage" name="storage" type="number" min="1" max="4096" step="1" required>
-            </label>
-            <label for="internet"><span data-i18n="internetLabel">Internet availability</span>
-              <select id="internet" name="internet">
-                <option value="available" data-i18n="internetAvailable">Available for setup and fallback</option>
-                <option value="setup-only" data-i18n="internetSetup">Setup only, then offline</option>
-                <option value="offline" data-i18n="internetOffline">Offline / air-gapped</option>
-              </select>
-            </label>
-          </div>
+        <div class="input-label-row">
+          <label for="setupPaste" data-i18n="setupPasteLabel">Computer setup text</label>
+          <output id="setupCount" for="setupPaste">0 / 20,000</output>
         </div>
-      </details>
+        <div class="textarea-wrap">
+          <textarea id="setupPaste" name="setupPaste" maxlength="20000" data-i18n-placeholder="setupPastePlaceholder" placeholder="MacBook Pro M3 Pro, 36GB unified memory, coding assistant"></textarea>
+          <button type="button" class="scan-icon-button" id="scanSetup" data-i18n-title="scanSetup" title="Scan setup">
+            <img src="assets/shovel.svg" alt=""><span class="sr-only" data-i18n="scanSetup">Scan setup</span>
+          </button>
+        </div>
+
+        <div class="helper-group" data-i18n-aria-label="helperExamplesLabel" aria-label="Example setup text">
+          <button type="button" data-helper="m3-pro-36" data-i18n="helperM3">M3 Pro · 36GB</button>
+          <button type="button" data-helper="rtx-4070" data-i18n="helperRtx">RTX 4070 · 12GB</button>
+          <button type="button" data-helper="intel-cpu-only" data-i18n="helperCpu">Intel i5 · CPU only</button>
+        </div>
+
+        <div class="scan-progress" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+        <p class="scan-summary" id="scanSummary">Paste specs, scan locally, then review the extracted fields before applying.</p>
+
+        <div class="local-note"><img src="assets/shovel.svg" alt=""><p data-i18n="localProcessingNote">Rules run locally. No account, API key, upload, or automatic model download.</p></div>
+      </section>
+
+      <section class="workflow-panel review-panel" aria-labelledby="reviewTitle">
+        <header class="panel-heading split-heading">
+          <div><span class="eyebrow" data-i18n="reviewEyebrow">02 / Recognized profile</span><h2 id="reviewTitle" data-i18n="reviewTitle">Recognized setup</h2></div>
+          <strong id="provenanceLabel">Editable example · not detected</strong>
+        </header>
+        <p class="panel-intro" data-i18n="reviewBody">Inspect every field state before applying it to the profile.</p>
+
+        <ul id="detectedFields" class="detected-list" aria-live="polite"></ul>
+        <section class="issue-region" aria-labelledby="issueTitle">
+          <h3 id="issueTitle" data-i18n="scanIssuesTitle">Needs manual confirmation</h3>
+          <ul id="scanIssues" class="scan-issue-list" data-i18n-aria-label="scanIssueListLabel" aria-label="Scan issues"></ul>
+        </section>
+
+        <div class="review-apply-row">
+          <button type="button" class="button primary" id="applyDetected" disabled><span data-i18n="applyDetected">Apply recognized setup</span></button>
+          <button type="button" class="icon-button" id="clearDetected" data-i18n-title="clear" data-i18n-aria-label="clear" title="Clear" aria-label="Clear">×</button>
+        </div>
+
+        <div class="profile-divider"><span data-i18n="activeProfile">Active profile</span><strong id="selectedPreset">Profile: Basic laptop example</strong></div>
+        <div class="hardware-facts" id="hardwareFacts"></div>
+        <p class="profile-note" id="profileNote">Confirm this profile to unlock task selection.</p>
+
+        <div class="review-actions">
+          <button type="button" class="button primary" id="confirmSpecs"><span data-i18n="confirmSpecs">Confirm these specs</span></button>
+          <button type="button" class="button secondary" id="reviewDetails" data-i18n="reviewExactDetails">Edit hardware details</button>
+        </div>
+
+        <details class="manual-details" id="manualDetails">
+          <summary><span><b data-i18n="manualTitle">Exact hardware details</b><small data-i18n="manualBody">Correct uncertain or missing fields.</small></span><span aria-hidden="true">⌄</span></summary>
+          <div class="manual-content">
+            <div class="preset-row">
+              <label for="preset"><span data-i18n="presetLabel">Example / preset</span>
+                <select id="preset" name="preset">
+                  <option value="basic-laptop" data-i18n="presetBasic">Basic laptop example</option>
+                  <option value="cpu-only" data-i18n="presetCpuOnly">CPU-only machine</option>
+                  <option value="apple-16" data-i18n="presetApple">16GB Apple Silicon MacBook</option>
+                  <option value="gaming-8" data-i18n="presetGaming">Gaming PC with 8GB VRAM</option>
+                  <option value="creator-16" data-i18n="presetCreator">Creator workstation with 16GB VRAM</option>
+                  <option value="server-24" data-i18n="presetServer">Server / workstation with 24GB+ VRAM</option>
+                  <option value="custom" data-i18n="presetCustom">Custom</option>
+                </select>
+              </label>
+              <button type="button" class="button secondary" id="resetPreset" data-i18n="reset">Reset</button>
+            </div>
+            <div class="hardware-form-grid">
+              <label for="os"><span data-i18n="osLabel">Operating system</span><select id="os" name="os"><option value="" data-i18n="reviewEmptyOption">Needs review</option><option value="macos">macOS</option><option value="windows">Windows</option><option value="linux">Linux</option></select></label>
+              <label for="deviceType"><span data-i18n="deviceLabel">Device type</span><select id="deviceType" name="deviceType"><option value="" data-i18n="reviewEmptyOption">Needs review</option><option value="laptop" data-i18n="deviceLaptop">Laptop</option><option value="desktop" data-i18n="deviceDesktop">Desktop</option><option value="workstation" data-i18n="deviceWorkstation">Workstation</option><option value="server" data-i18n="deviceServer">Server</option></select></label>
+              <label class="wide-field" for="cpuModel"><span data-i18n="cpuModelLabel">CPU model</span><input id="cpuModel" name="cpuModel" type="text" required></label>
+              <label for="ram"><span data-i18n="ramLabel">Memory (GB)</span><input id="ram" name="ram" type="number" min="2" max="512" step="1" required></label>
+              <label for="gpuVendor"><span data-i18n="gpuVendorLabel">GPU vendor</span><select id="gpuVendor" name="gpuVendor"><option value="" data-i18n="reviewEmptyOption">Needs review</option><option value="none" data-i18n="gpuNone">None / CPU only</option><option value="apple" data-i18n="gpuApple">Apple unified GPU</option><option value="nvidia">NVIDIA</option><option value="amd">AMD</option><option value="intel">Intel</option></select></label>
+              <label class="wide-field" for="gpuModel"><span data-i18n="gpuModelLabel">GPU model</span><input id="gpuModel" name="gpuModel" type="text" required></label>
+              <label for="vram"><span data-i18n="vramLabel">VRAM (GB)</span><input id="vram" name="vram" type="number" min="0" max="128" step="1" required></label>
+              <label for="storage"><span data-i18n="storageLabel">Free storage (GB)</span><input id="storage" name="storage" type="number" min="1" max="4096" step="1" required></label>
+              <label class="wide-field" for="internet"><span data-i18n="internetLabel">Internet availability</span><select id="internet" name="internet"><option value="available" data-i18n="internetAvailable">Available</option><option value="setup-only" data-i18n="internetSetup">Setup only</option><option value="offline" data-i18n="internetOffline">Offline</option></select></label>
+            </div>
+          </div>
+        </details>
+      </section>
+
+      <section class="workflow-panel recommendation-panel" aria-labelledby="resultsTitle">
+        <header class="panel-heading split-heading">
+          <div><span class="eyebrow" data-i18n="recommendationsEyebrow">03 / Ranked routes</span><h2 id="resultsTitle" data-i18n="recommendationsTitle">Open-model recommendations</h2></div>
+          <span class="confirmed-mark" data-i18n="localFirstBadge">Local first</span>
+        </header>
+        <p class="panel-intro" data-i18n="recommendationsBody">Up to three viable families, ranked by practical fit.</p>
+
+        <p class="task-lock" id="taskLockHint" data-i18n="taskLocked">Confirm the hardware profile first.</p>
+        <div class="job-controls">
+          <label for="task"><span data-i18n="taskLabel">Primary task</span><select id="task" name="task" disabled><option value="" data-i18n="taskPlaceholder">Select a task...</option><option value="chat-llm" data-i18n="taskChat">Chat / writing</option><option value="coding-llm" data-i18n="taskCoding">Coding assistant</option><option value="image-generation" data-i18n="taskImage">Image generation</option><option value="speech-to-text" data-i18n="taskSpeech">Speech to text</option><option value="embeddings" data-i18n="taskEmbeddings">Embeddings / search</option></select></label>
+          <label for="taskLanguage"><span data-i18n="taskLanguageLabel">Task language</span><select id="taskLanguage" name="taskLanguage" disabled><option value="auto" data-i18n="taskLanguageAuto">Auto</option><option value="en" data-i18n="taskLanguageEnglish">English</option><option value="zh" data-i18n="taskLanguageChinese">Mandarin Chinese</option></select></label>
+          <label for="workload"><span data-i18n="workloadLabel">Expected use</span><select id="workload" name="workload" disabled><option value="casual" data-i18n="workloadCasual">Casual</option><option value="daily" data-i18n="workloadDaily" selected>Daily</option><option value="batch" data-i18n="workloadBatch">Batch</option><option value="production" data-i18n="workloadProduction">Production / team</option><option value="latency" data-i18n="workloadLatency">Latency-sensitive</option><option value="quality" data-i18n="workloadQuality">Quality-sensitive</option></select></label>
+          <label for="deployment"><span data-i18n="deploymentLabel">Deployment preference</span><select id="deployment" name="deployment" disabled><option value="local-only" data-i18n="deploymentLocalOnly">Local only</option><option value="local-first" data-i18n="deploymentLocalFirst" selected>Local first</option><option value="cloud-ok" data-i18n="deploymentCloudOk">Cloud acceptable</option></select></label>
+        </div>
+
+        <fieldset class="priorities-fieldset"><legend data-i18n="prioritiesLegend">Priorities</legend><div class="priority-grid">
+          <label><input type="checkbox" name="priority" value="privacy" checked><span data-i18n="priorityPrivacy">Privacy</span></label>
+          <label><input type="checkbox" name="priority" value="quality"><span data-i18n="priorityQuality">Quality</span></label>
+          <label><input type="checkbox" name="priority" value="speed"><span data-i18n="prioritySpeed">Speed</span></label>
+          <label><input type="checkbox" name="priority" value="ease"><span data-i18n="priorityEase">Ease</span></label>
+          <label><input type="checkbox" name="priority" value="commercial"><span data-i18n="priorityCommercial">Commercial</span></label>
+        </div></fieldset>
+
+        <div class="recommendation-actions"><button type="submit" class="button primary" id="updateRecommendations" disabled><img src="assets/shovel.svg" alt=""><span data-i18n="updateRecommendations">Rank viable models</span></button><button type="button" class="button secondary" id="clearTask" data-i18n="clearTask">Clear task</button></div>
+        <p class="results-summary" id="summaryText">Confirm the hardware profile and choose a task.</p>
+        <div id="messageArea" class="message-area"></div>
+        <div id="results" class="results-list"></div>
+        <div id="hostedFallback"></div>
+      </section>
     </form>
 
-    <section class="recommendations-section" aria-labelledby="resultsTitle">
-      <div class="recommendations-heading">
-        <div>
-          <span class="eyebrow copper" data-i18n="recommendationsEyebrow">04 / Surface the fit</span>
-          <h2 id="resultsTitle" data-i18n="recommendationsTitle">Recommendations</h2>
-          <p data-i18n="recommendationsBody">Concrete starting points, ordered by transparent local rules.</p>
-        </div>
-        <p class="results-summary" id="summaryText">Confirm the hardware profile and choose a task to generate local-first recommendations.</p>
-      </div>
-      <div id="messageArea" class="message-area"></div>
-      <div id="results" class="results-grid"></div>
-    </section>
-
-    <div id="statusRegion" class="sr-only" role="status" aria-live="polite" aria-atomic="true">Ready for a setup</div>
+    <footer><span data-i18n="footerDisclaimer">Practical-fit estimates only. No benchmark, download, or legal claim.</span><span data-i18n="footerPrivacy">Configuration is processed locally.</span></footer>
+    <div id="statusRegion" class="sr-only" role="status" aria-live="polite" aria-atomic="true" data-i18n="statusReady">Ready</div>
   </main>
-
   <script type="module" src="src/app.js"></script>
 </body>
 </html>

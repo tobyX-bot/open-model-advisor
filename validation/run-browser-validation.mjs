@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import http from "node:http";
 import path from "node:path";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
@@ -7,6 +8,7 @@ import { translate } from "../src/i18n.js";
 const require = createRequire(import.meta.url);
 const { chromium } = require("playwright");
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
+const REPOSITORY_ROOT = path.dirname(ROOT);
 const outputDirectory = process.env.VALIDATION_OUTPUT_DIR
   ? path.resolve(process.env.VALIDATION_OUTPUT_DIR)
   : path.join(ROOT, "results", "current");
@@ -14,10 +16,50 @@ const dataset = JSON.parse(fs.readFileSync(path.join(ROOT, "fixtures", "computer
 const moduleResults = JSON.parse(fs.readFileSync(path.join(outputDirectory, "module-results.json"), "utf8"));
 const moduleById = new Map(moduleResults.recordResults.map((result) => [result.id, result]));
 const outputPath = path.join(outputDirectory, "browser-results.json");
-const baseUrl = process.env.MODEL_DIGGER_URL || "http://127.0.0.1:8000/";
 const executablePath = process.env.CHROME_PATH || "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 
-const browser = await chromium.launch({ headless: true, executablePath });
+const contentTypes = {
+  ".css": "text/css; charset=utf-8",
+  ".html": "text/html; charset=utf-8",
+  ".js": "text/javascript; charset=utf-8",
+  ".json": "application/json; charset=utf-8",
+  ".svg": "image/svg+xml"
+};
+
+function startServer() {
+  const server = http.createServer((request, response) => {
+    const pathname = decodeURIComponent(new URL(request.url, "http://127.0.0.1").pathname);
+    const requested = pathname === "/" ? "/index.html" : pathname;
+    const filePath = path.resolve(REPOSITORY_ROOT, `.${requested}`);
+    if (!filePath.startsWith(`${REPOSITORY_ROOT}${path.sep}`) || !fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
+      response.writeHead(404).end("Not found");
+      return;
+    }
+    response.writeHead(200, { "content-type": contentTypes[path.extname(filePath)] || "application/octet-stream" });
+    fs.createReadStream(filePath).pipe(response);
+  });
+  return new Promise((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", () => {
+      const address = server.address();
+      resolve({ server, baseUrl: `http://127.0.0.1:${address.port}/` });
+    });
+  });
+}
+
+const owned = process.env.MODEL_DIGGER_URL ? null : await startServer();
+const baseUrl = process.env.MODEL_DIGGER_URL || owned.baseUrl;
+if (!process.env.MODEL_DIGGER_URL) {
+  const sentinel = await fetch(baseUrl).then((response) => response.text());
+  if (!sentinel.includes('id="advisorForm"') || !sentinel.includes("Model Digger")) {
+    await new Promise((resolve) => owned.server.close(resolve));
+    throw new Error("Owned server did not return the Model Digger app sentinel");
+  }
+}
+
+let browser;
+try {
+browser = await chromium.launch({ headless: true, executablePath });
 const context = await browser.newContext({
   viewport: { width: 1280, height: 900 },
   reducedMotion: "reduce"
@@ -27,6 +69,9 @@ const failures = [];
 const recordResults = [];
 const invalidFieldChecked = new Set();
 const taskPreservationChecked = new Set();
+const revisionInvalidationChecked = new Set();
+const staleScanChecked = new Set();
+const mobileLayoutChecked = new Set();
 let currentRecord = null;
 let runtimeErrors = [];
 
@@ -149,10 +194,10 @@ for (const record of dataset.records) {
     const uiLanguage = language === "zh" ? "zh" : "en";
     const hostedTitle = translate(uiLanguage, "hostedFallbackTitle");
     const noticeTitles = await page.locator("#messageArea .notice strong").allTextContents();
-    const hostedNoticePresent = noticeTitles.includes(hostedTitle);
+    const hostedNoticePresent = await page.locator("#hostedFallback .hosted-fallback").count() > 0;
     const expectedHosted = moduleResult.recommendation.hostedFallbackShown;
     const hostedNoticeIsSecondary = hostedNoticePresent
-      ? await page.locator("#messageArea .notice.info").filter({ hasText: hostedTitle }).count() > 0
+      ? await page.locator("#hostedFallback .hosted-fallback").filter({ hasText: hostedTitle }).count() > 0
       : true;
     if (hostedNoticePresent !== expectedHosted || !hostedNoticeIsSecondary || (record.profile.deployment === "local-only" && hostedNoticePresent)) {
       gates.G7.passed = false;
@@ -166,10 +211,11 @@ for (const record of dataset.records) {
     const expectedCards = moduleResult.recommendation.top.length;
     const contentChecks = expectedCards ? {
       modelName: await page.locator(".result-primary .model-name").count() > 0,
-      starterSpec: await page.locator(".result-primary .starter-spec").count() > 0,
+      starterSpec: await page.locator(".result-primary .starter-grid").count() > 0,
       avoidNote: await page.locator(".result-primary .avoid-line").count() > 0,
       sourceLink: await page.locator(".result-primary .sources-fact a").count() > 0,
-      primaryFacts: await page.locator(".result-primary .primary-facts").count() > 0
+      modelPage: await page.locator(".result-primary .result-action.primary-action").count() > 0,
+      runtimeGuide: await page.locator(".result-primary .result-actions a").count() > 1
     } : {};
     const noFitNotice = await page.locator("#messageArea .notice.bad").count() > 0;
     if (resultCards !== expectedCards
@@ -202,6 +248,38 @@ for (const record of dataset.records) {
       } else {
         journeyIssues.push("Task-preservation scan could not be applied");
       }
+    }
+
+    if (!revisionInvalidationChecked.has(record.fold)) {
+      revisionInvalidationChecked.add(record.fold);
+      await page.locator("#ram").fill(String(record.profile.ram + 1));
+      if (await page.locator(".result-card").count()) journeyIssues.push("Hardware edit retained stale recommendations");
+      if (!(await page.locator("#task").isDisabled())) journeyIssues.push("Hardware edit did not lock ranking controls");
+      await page.locator("#ram").fill(String(record.profile.ram));
+      await page.locator("#confirmSpecs").click();
+    }
+
+    if (!staleScanChecked.has(record.fold)) {
+      staleScanChecked.add(record.fold);
+      await page.evaluate(() => {
+        const input = document.querySelector("#setupPaste");
+        input.value = "Windows laptop; CPU Intel i5; RAM 16GB; no dedicated GPU; SSD free 100GB";
+        document.querySelector("#scanSetup").click();
+        input.value = "macOS MacBook; Apple M3 Pro; 36GB unified memory; SSD free 200GB";
+        document.querySelector("#scanSetup").click();
+      });
+      await page.waitForTimeout(20);
+      const reviewText = await page.locator("#detectedFields").innerText();
+      if (!reviewText.includes("M3 Pro") || reviewText.includes("Intel i5")) journeyIssues.push("Second scan did not replace the first pending result");
+    }
+
+    if (!mobileLayoutChecked.has(record.fold)) {
+      mobileLayoutChecked.add(record.fold);
+      await page.setViewportSize({ width: 360, height: 780 });
+      const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
+      const issueReachable = await page.locator("#scanIssues").evaluate((node) => node.getBoundingClientRect().width <= document.documentElement.clientWidth);
+      if (overflow || !issueReachable) journeyIssues.push("Scanner review overflows the 360px viewport");
+      await page.setViewportSize({ width: 1280, height: 900 });
     }
 
     if (journeyIssues.length) {
@@ -259,10 +337,13 @@ const result = {
 
 fs.mkdirSync(outputDirectory, { recursive: true });
 fs.writeFileSync(outputPath, `${JSON.stringify(result, null, 2)}\n`);
-await browser.close();
 
 console.log(JSON.stringify({
   outputPath,
   failureCount: result.failureCount,
   gates: Object.fromEntries(Object.entries(gates).map(([gate, summary]) => [gate, summary.passed]))
 }, null, 2));
+} finally {
+  if (browser) await browser.close();
+  if (owned) await new Promise((resolve) => owned.server.close(resolve));
+}

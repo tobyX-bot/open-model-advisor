@@ -17,6 +17,7 @@ import {
 } from "../src/scanner/extractors.js";
 import { normalizeSetupText } from "../src/scanner/normalize.js";
 import { resolveCandidates } from "../src/scanner/resolve.js";
+import { scanSetupText } from "../src/scanner.js";
 import * as scannerPatterns from "../src/scanner/patterns.js";
 import {
   CAPACITY_AMOUNT_PATTERNS,
@@ -6044,4 +6045,41 @@ test("keeps representative capped candidate resolution under 500ms", () => {
 
   assert.deepEqual(Object.keys(result.fields), RESOLVER_FIELD_ORDER);
   assert.ok(durationMs < 500, `resolver ${durationMs.toFixed(3)}ms`);
+});
+
+test("public scanner facade returns the complete normalized resolver contract", () => {
+  const result = scanSetupText([
+    "Windows 11 desktop",
+    "CPU AMD Ryzen 7 7800X3D",
+    "GPU NVIDIA RTX 4070 SUPER",
+    "VRAM 12GB",
+    "RAM 32GB",
+    "SSD free 184GB",
+    "image generation"
+  ].join(";"));
+
+  assert.equal(result.fieldStates.os.status, "resolved");
+  assert.equal(result.fieldStates.gpuModel.resolved.value, "NVIDIA RTX 4070 SUPER");
+  assert.equal(result.fields.vram.value, 12);
+  assert.equal(result.fields.task.value, "image-generation");
+  assert.ok(Array.isArray(result.issues));
+  assert.ok(Array.isArray(result.blockedFields));
+  assert.equal("reasonKey" in result.fields.os, true);
+});
+
+test("public scanner facade preserves conflicts instead of selecting a legacy winner", () => {
+  const result = scanSetupText("Windows desktop; RAM 16GB; RAM 32GB; CPU Ryzen 7 7800X3D; no dedicated GPU; SSD free 100GB");
+
+  assert.equal(result.fieldStates.ram.status, "conflict");
+  assert.equal(result.fieldStates.ram.resolved, null);
+  assert.equal("ram" in result.fields, false);
+  assert.ok(result.blockedFields.includes("ram"));
+  assert.ok(result.issues.some(({ code, severity }) => code === "conflict.ram" && severity === "blocking"));
+});
+
+test("public scanner facade exposes input truncation as a review issue", () => {
+  const result = scanSetupText(`${"x".repeat(20_000)} extra`);
+
+  assert.ok(result.issues.some(({ code, severity }) => code === "input.truncated" && severity === "review"));
+  assert.ok(result.warnings.includes("input.truncated"));
 });

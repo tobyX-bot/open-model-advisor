@@ -6,7 +6,8 @@ import {
   confirmProfile,
   editProfileField,
   isCurrentProfileConfirmed,
-  operationsFromScan
+  operationsFromScan,
+  registerScanSession
 } from "../src/profile-state.js";
 
 const HARDWARE_FIELDS = [
@@ -212,23 +213,34 @@ test("manual hardware edits affect one field, remove only its blocker, and inval
   assert.equal(state.fields.ram.value, 16);
 });
 
-test("task, workload, deployment, and priorities edits do not advance hardware revision", () => {
+test("clearing a hardware field keeps that field blocked", () => {
+  const state = profile({ blockingFields: ["cpuModel", "storage"] });
+  const edited = editProfileField(state, "cpuModel", "");
+
+  assert.deepEqual(edited.blockingFields, ["cpuModel", "storage"]);
+  assert.equal(edited.fields.cpuModel.value, "");
+  assert.equal(edited.hardwareRevision, 1);
+});
+
+test("task, language, workload, deployment, priorities, and internet edits do not advance hardware revision", () => {
   let state = profile({ blockingFields: [], confirmedRevision: 0 });
   state = editProfileField(state, "task", "coding-llm");
+  state = editProfileField(state, "taskLanguage", "zh");
   state = editProfileField(state, "workload", "batch");
   state = editProfileField(state, "deployment", "local-only");
   state = editProfileField(state, "priorities", ["quality", "speed"]);
+  state = editProfileField(state, "internet", "offline");
 
   assert.equal(state.hardwareRevision, 0);
   assert.equal(isCurrentProfileConfirmed(state), true);
-  for (const field of ["task", "workload", "deployment", "priorities"]) {
+  for (const field of ["task", "taskLanguage", "workload", "deployment", "priorities", "internet"]) {
     assert.equal(state.fields[field].provenance, "manual");
   }
 });
 
 test("unknown manual fields return an unchanged detached state", () => {
   const state = profile();
-  const result = editProfileField(state, "internet", "available");
+  const result = editProfileField(state, "notAField", "available");
   assert.deepEqual(result, state);
   assert.notStrictEqual(result, state);
   assert.notStrictEqual(result.fields, state.fields);
@@ -249,6 +261,26 @@ test("confirmation records only an unblocked current revision", () => {
   const laterEdit = editProfileField(confirmed, "gpuModel", "NVIDIA RTX 4080");
   assert.equal(laterEdit.hardwareRevision, 5);
   assert.equal(isCurrentProfileConfirmed(laterEdit), false);
+});
+
+test("confirmation rejects invalid hardware and GPU conflicts", () => {
+  const reviewComplete = profile({ hardwareRevision: 2, blockingFields: [] });
+
+  assert.equal(confirmProfile(reviewComplete, { hardwareValid: false }).confirmedRevision, null);
+  assert.equal(confirmProfile(reviewComplete, { gpuConflict: true }).confirmedRevision, null);
+  assert.equal(
+    confirmProfile(reviewComplete, { hardwareValid: true, gpuConflict: false }).confirmedRevision,
+    2
+  );
+});
+
+test("registering a new scan session replaces stale authority without changing revision", () => {
+  const state = profile({ currentScanSessionId: "scan-9", hardwareRevision: 3 });
+  const next = registerScanSession(state, "scan-10");
+
+  assert.equal(next.currentScanSessionId, "scan-10");
+  assert.equal(next.hardwareRevision, 3);
+  assert.equal(state.currentScanSessionId, "scan-9");
 });
 
 test("state transitions are detached, serializable, and preserve deterministic field order", () => {

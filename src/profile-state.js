@@ -11,9 +11,11 @@ const HARDWARE_FIELDS = Object.freeze([
 
 const NON_HARDWARE_FIELDS = Object.freeze([
   "task",
+  "taskLanguage",
   "workload",
   "deployment",
-  "priorities"
+  "priorities",
+  "internet"
 ]);
 
 const ALL_FIELDS = new Set([...HARDWARE_FIELDS, ...NON_HARDWARE_FIELDS]);
@@ -38,6 +40,13 @@ function hasValue(value) {
 
 function validSessionId(value) {
   return typeof value === "string" && value.length > 0;
+}
+
+export function registerScanSession(state, scanSessionId) {
+  const next = detachedState(state);
+  if (!state || typeof state !== "object" || !validSessionId(scanSessionId)) return next;
+  next.currentScanSessionId = scanSessionId;
+  return next;
 }
 
 function validOperation(operation) {
@@ -144,15 +153,17 @@ export function editProfileField(state, field, value) {
   next.fields[field] = { value: clone(value), provenance: "manual" };
   if (HARDWARE_FIELD_SET.has(field)) {
     next.hardwareRevision += 1;
-    next.blockingFields = orderedBlockers(next.blockingFields)
-      .filter((blockingField) => blockingField !== field);
+    next.blockingFields = hasValue(value)
+      ? orderedBlockers(next.blockingFields).filter((blockingField) => blockingField !== field)
+      : orderedBlockers([...next.blockingFields, field]);
   }
   return next;
 }
 
-export function confirmProfile(state) {
+export function confirmProfile(state, checks = {}) {
   const next = detachedState(state);
   if (!state || typeof state !== "object") return next;
+  if (checks.hardwareValid === false || checks.gpuConflict === true) return next;
   if (orderedBlockers(state.blockingFields).length > 0) return next;
   next.confirmedRevision = next.hardwareRevision;
   return next;
