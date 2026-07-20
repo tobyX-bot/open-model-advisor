@@ -15,6 +15,7 @@ import {
   extractTaskCandidates
 } from "../src/scanner/extractors.js";
 import { normalizeSetupText } from "../src/scanner/normalize.js";
+import { resolveCandidates } from "../src/scanner/resolve.js";
 import * as scannerPatterns from "../src/scanner/patterns.js";
 import {
   CAPACITY_AMOUNT_PATTERNS,
@@ -5519,4 +5520,403 @@ test("keeps capped segment-dense aggregate extraction materially subquadratic", 
     dense.durationMs / halfDense.durationMs < 3,
     `dense scaling ${halfDense.durationMs.toFixed(3)}ms -> ${dense.durationMs.toFixed(3)}ms`
   );
+});
+
+const RESOLVER_FIELD_ORDER = [
+  "os",
+  "deviceType",
+  "cpuModel",
+  "gpuVendor",
+  "gpuModel",
+  "ram",
+  "vram",
+  "storage",
+  "task"
+];
+
+function resolveSetup(input) {
+  const document = normalizeSetupText(input);
+  const candidates = extractCandidates(document);
+  return {
+    document,
+    candidates,
+    result: resolveCandidates(document, candidates)
+  };
+}
+
+function hasIssue(result, code, field = null) {
+  return result.issues.some((issue) => (
+    issue.code === code && (field === null || issue.fields.includes(field))
+  ));
+}
+
+function assertResolvedFieldContract(field) {
+  assert.deepEqual(Object.keys(field), [
+    "value",
+    "confidence",
+    "reasonKey",
+    "inferred",
+    "evidence"
+  ]);
+  assert.ok(["high", "medium", "low"].includes(field.confidence));
+  assert.equal(typeof field.reasonKey, "string");
+  assert.equal(typeof field.inferred, "boolean");
+  assert.ok(Array.isArray(field.evidence));
+  assert.ok(field.evidence.length > 0);
+}
+
+test("resolves no dedicated GPU atomically without taking trailing SSD digits as VRAM", () => {
+  const { result } = resolveSetup("no dedicated GPU;128GB SSD");
+
+  assert.equal(result.fields.gpuVendor.value, "none");
+  assert.equal(result.fields.gpuModel.value, "No dedicated GPU");
+  assert.equal(result.fields.vram.value, 0);
+  assert.equal(typeof result.fields.vram.value, "number");
+  assert.equal(result.fields.storage.value, 128);
+  assert.equal(result.fieldStates.vram.status, "resolved");
+  assert.equal(hasIssue(result, "conflict.vram"), false);
+});
+
+test("blocks the full GPU group when no-GPU evidence has positive explicit VRAM", () => {
+  const { result } = resolveSetup("no dedicated GPU;VRAM 8GB");
+
+  for (const field of ["gpuVendor", "gpuModel", "vram"]) {
+    assert.equal(result.fieldStates[field].status, "conflict");
+    assert.equal(result.fieldStates[field].resolved, null);
+    assert.equal(field in result.fields, false);
+    assert.ok(result.blockedFields.includes(field));
+  }
+  assert.equal(hasIssue(result, "conflict.vram", "vram"), true);
+  assert.equal(
+    result.issues.find((issue) => issue.code === "conflict.vram")?.severity,
+    "blocking"
+  );
+});
+
+test("prefers a supported CPU over generic overlap and conflicts distinct supported CPUs", () => {
+  const exactDocument = normalizeSetupText("CPU Intel Core i5-13500H");
+  const [exact] = extractCpuCandidates(exactDocument);
+  const overlappingUnknown = {
+    ...exact,
+    value: "NovaCore NX-17H",
+    source: "cpu.labeled-unknown",
+    specificity: 10,
+    confidence: "low"
+  };
+  const exactResult = resolveCandidates(exactDocument, [overlappingUnknown, exact]);
+
+  assert.equal(exactResult.fields.cpuModel.value, "Intel Core i5-13500H");
+  assert.equal(exactResult.fieldStates.cpuModel.candidates.length, 2);
+  assert.equal(hasIssue(exactResult, "unknown.cpu"), false);
+
+  const { result: conflictResult } = resolveSetup(
+    "CPU Intel Core i5-13500H;CPU AMD Ryzen 7 7800X3D"
+  );
+  assert.equal(conflictResult.fieldStates.cpuModel.status, "conflict");
+  assert.equal("cpuModel" in conflictResult.fields, false);
+  assert.equal(hasIssue(conflictResult, "conflict.cpu", "cpuModel"), true);
+  assert.ok(conflictResult.blockedFields.includes("cpuModel"));
+});
+
+test("conflicts dedicated GPU vendors and distinct supported models from one vendor", () => {
+  const vendorDocument = normalizeSetupText(
+    "GPU NVIDIA RTX 4060;GPU AMD Radeon RX 7900 XT"
+  );
+  const vendorCandidates = extractGpuCandidates(vendorDocument)
+    .filter((candidate) => candidate.field === "gpuVendor");
+  const vendorResult = resolveCandidates(vendorDocument, vendorCandidates);
+
+  assert.equal(vendorResult.fieldStates.gpuVendor.status, "conflict");
+  assert.equal("gpuVendor" in vendorResult.fields, false);
+  assert.equal(hasIssue(vendorResult, "conflict.gpuVendor", "gpuVendor"), true);
+
+  const { result: modelResult } = resolveSetup(
+    "GPU NVIDIA RTX 4060;GPU NVIDIA RTX 4070 Ti SUPER"
+  );
+  assert.equal(modelResult.fields.gpuVendor.value, "nvidia");
+  assert.equal(modelResult.fieldStates.gpuModel.status, "conflict");
+  assert.equal("gpuModel" in modelResult.fields, false);
+  assert.equal(hasIssue(modelResult, "conflict.gpuModel", "gpuModel"), true);
+});
+
+test("conflicts distinct OS and device values instead of choosing by order", () => {
+  const { result } = resolveSetup("Windows 11;macOS;desktop;laptop");
+
+  assert.equal(result.fieldStates.os.status, "conflict");
+  assert.equal(result.fieldStates.deviceType.status, "conflict");
+  assert.equal("os" in result.fields, false);
+  assert.equal("deviceType" in result.fields, false);
+  assert.equal(hasIssue(result, "conflict.os", "os"), true);
+  assert.equal(hasIssue(result, "conflict.device", "deviceType"), true);
+});
+
+test("deduplicates repeated RAM evidence and conflicts distinct explicit RAM", () => {
+  const { result: duplicate } = resolveSetup("RAM 32GB;RAM 32GB");
+
+  assert.equal(duplicate.fields.ram.value, 32);
+  assert.equal(duplicate.fields.ram.evidence.length, 2);
+  assert.equal(hasIssue(duplicate, "conflict.ram"), false);
+
+  const { result: conflict } = resolveSetup("RAM 32GB;RAM 4GB");
+  assert.equal(conflict.fieldStates.ram.status, "conflict");
+  assert.equal("ram" in conflict.fields, false);
+  assert.equal(hasIssue(conflict, "conflict.ram", "ram"), true);
+  assert.ok(conflict.blockedFields.includes("ram"));
+});
+
+test("resolves storage by free-value precedence without summing or choosing largest", () => {
+  const { result: twoFree } = resolveSetup("SSD free 128GB;SSD free 256GB");
+  assert.equal(twoFree.fieldStates.storage.status, "conflict");
+  assert.equal("storage" in twoFree.fields, false);
+  assert.equal(hasIssue(twoFree, "conflict.storage", "storage"), true);
+
+  const { result: duplicate } = resolveSetup("SSD free 128GB;SSD free 128GB");
+  assert.equal(duplicate.fields.storage.value, 128);
+  assert.equal(duplicate.fields.storage.evidence.length, 2);
+  assert.equal(hasIssue(duplicate, "conflict.storage"), false);
+
+  const { result: freePreferred } = resolveSetup(
+    "SSD total 512GB;SSD free 128GB"
+  );
+  assert.equal(freePreferred.fields.storage.value, 128);
+  assert.equal(freePreferred.fields.storage.evidence.length, 2);
+  assert.equal(hasIssue(freePreferred, "conflict.storage"), false);
+});
+
+test("keeps labeled unknown CPU and GPU models as low-confidence review evidence", () => {
+  const { result: cpu } = resolveSetup("CPU NovaCore NX-17H");
+
+  assert.equal(cpu.fieldStates.cpuModel.status, "unknown");
+  assert.equal(cpu.fieldStates.cpuModel.resolved, null);
+  assert.equal(cpu.fieldStates.cpuModel.candidates[0].confidence, "low");
+  assert.equal("cpuModel" in cpu.fields, false);
+  assert.equal(hasIssue(cpu, "unknown.cpu", "cpuModel"), true);
+
+  const { result: gpu } = resolveSetup("NVIDIA MysteryGPU Z-10");
+  assert.equal(gpu.fields.gpuVendor.value, "nvidia");
+  assert.equal(gpu.fieldStates.gpuModel.status, "unknown");
+  assert.equal(gpu.fieldStates.gpuModel.candidates[0].confidence, "low");
+  assert.equal("gpuModel" in gpu.fields, false);
+  assert.equal(hasIssue(gpu, "unknown.gpuModel", "gpuModel"), true);
+  assert.equal(gpu.fieldStates.vram.status, "missing");
+  assert.equal(hasIssue(gpu, "missing.vram", "vram"), true);
+});
+
+test("turns bounded omitted-capacity wording into field-specific missing issues", () => {
+  const { result: english } = resolveSetup(
+    "RAM, VRAM and storage were not listed"
+  );
+  const { result: chinese } = resolveSetup("内存、显存和硬盘容量没写");
+
+  for (const result of [english, chinese]) {
+    for (const field of ["ram", "vram", "storage"]) {
+      assert.equal(result.fieldStates[field].status, "missing");
+      assert.equal(field in result.fields, false);
+      assert.equal(hasIssue(result, `missing.${field}`, field), true);
+    }
+  }
+});
+
+test("rejects out-of-range RAM VRAM and storage without resolved numeric fields", () => {
+  const { result } = resolveSetup("RAM 513GB;VRAM 129GB;SSD 4097GB");
+
+  for (const field of ["ram", "vram", "storage"]) {
+    assert.equal(result.fieldStates[field].status, "invalid");
+    assert.equal(result.fieldStates[field].resolved, null);
+    assert.equal(field in result.fields, false);
+    assert.equal(hasIssue(result, "invalid.range", field), true);
+    assert.ok(result.blockedFields.includes(field));
+  }
+});
+
+test("preserves low inferred natural RAM and lets explicit RAM outrank inference", () => {
+  const { result: inferred } = resolveSetup("about 8 gigs of memory");
+
+  assert.equal(inferred.fields.ram.value, 8);
+  assert.equal(inferred.fields.ram.confidence, "low");
+  assert.equal(inferred.fields.ram.inferred, true);
+
+  const { result: explicit } = resolveSetup(
+    "about 8 gigs of memory;RAM 32GB"
+  );
+  assert.equal(explicit.fields.ram.value, 32);
+  assert.equal(explicit.fields.ram.confidence, "high");
+  assert.equal(explicit.fields.ram.inferred, false);
+  assert.equal(explicit.fields.ram.evidence.length, 2);
+});
+
+test("preserves Apple unified-memory VRAM as medium-confidence inferred evidence", () => {
+  const { result } = resolveSetup(
+    "MacBook Apple M3 Pro;36GB unified memory"
+  );
+
+  assert.equal(result.fields.vram.value, 27);
+  assert.equal(result.fields.vram.confidence, "medium");
+  assert.equal(result.fields.vram.inferred, true);
+  assert.equal(
+    result.fields.vram.evidence[0].source,
+    "capacity.vram.apple-unified-inference"
+  );
+});
+
+test("blocks mismatched dedicated GPU vendor and model evidence", () => {
+  const document = normalizeSetupText("GPU NVIDIA RTX 4060");
+  const extracted = extractGpuCandidates(document);
+  const model = extracted.find((candidate) => candidate.field === "gpuModel");
+  const vendor = extracted.find((candidate) => candidate.field === "gpuVendor");
+  const result = resolveCandidates(document, [
+    model,
+    {
+      ...vendor,
+      value: "amd",
+      source: "gpu.amd-explicit.vendor"
+    }
+  ]);
+
+  assert.equal(result.fieldStates.gpuVendor.status, "conflict");
+  assert.equal(result.fieldStates.gpuModel.status, "conflict");
+  assert.equal("gpuVendor" in result.fields, false);
+  assert.equal("gpuModel" in result.fields, false);
+  assert.ok(result.blockedFields.includes("gpuVendor"));
+  assert.ok(result.blockedFields.includes("gpuModel"));
+});
+
+test("marks required missing hardware while leaving task optional and VRAM not applicable", () => {
+  const { result } = resolveSetup("");
+  const required = [
+    "os",
+    "deviceType",
+    "cpuModel",
+    "gpuVendor",
+    "gpuModel",
+    "ram",
+    "storage"
+  ];
+
+  for (const field of required) {
+    assert.equal(result.fieldStates[field].status, "missing");
+    assert.ok(result.unresolvedFields.includes(field));
+    assert.ok(result.blockedFields.includes(field));
+  }
+  assert.equal(result.fieldStates.vram.status, "not-applicable");
+  assert.equal(result.fieldStates.task.status, "missing");
+  assert.equal(result.unresolvedFields.includes("vram"), false);
+  assert.equal(result.unresolvedFields.includes("task"), false);
+  assert.equal(result.blockedFields.includes("task"), false);
+});
+
+test("orders fields and issues deterministically regardless of candidate input order", () => {
+  const document = normalizeSetupText([
+    "Windows",
+    "macOS",
+    "CPU NovaCore NX-17H",
+    "RAM 513GB",
+    "NVIDIA MysteryGPU Z-10"
+  ].join(";"));
+  const candidates = extractCandidates(document);
+  const first = resolveCandidates(document, candidates);
+  const second = resolveCandidates(document, [...candidates].reverse());
+
+  assert.deepEqual(first, second);
+  assert.deepEqual(Object.keys(first.fieldStates), RESOLVER_FIELD_ORDER);
+  assert.deepEqual(JSON.parse(JSON.stringify(first)), first);
+
+  const severityOrder = { blocking: 0, review: 1, info: 2 };
+  const fieldIndex = (issue) => Math.min(
+    ...issue.fields.map((field) => RESOLVER_FIELD_ORDER.indexOf(field))
+  );
+  for (let index = 1; index < first.issues.length; index += 1) {
+    const previous = first.issues[index - 1];
+    const current = first.issues[index];
+    const previousTuple = [
+      severityOrder[previous.severity],
+      fieldIndex(previous),
+      previous.code
+    ];
+    const currentTuple = [
+      severityOrder[current.severity],
+      fieldIndex(current),
+      current.code
+    ];
+    assert.ok(
+      previousTuple[0] < currentTuple[0]
+      || (
+        previousTuple[0] === currentTuple[0]
+        && (
+          previousTuple[1] < currentTuple[1]
+          || (
+            previousTuple[1] === currentTuple[1]
+            && previousTuple[2] <= currentTuple[2]
+          )
+        )
+      )
+    );
+  }
+  assert.deepEqual(first.warnings, [...new Set(first.issues.map((issue) => issue.messageKey))]);
+});
+
+test("returns detached serializable results without mutating document or candidates", () => {
+  const document = normalizeSetupText(
+    "Windows laptop;CPU Intel Core i5-13500H;RAM 32GB;SSD free 512GB"
+  );
+  const candidates = extractCandidates(document);
+  const documentSnapshot = structuredClone(document);
+  const candidateSnapshot = structuredClone(candidates);
+  const result = resolveCandidates(document, candidates);
+  const serialized = JSON.stringify(result);
+
+  assert.deepEqual(document, documentSnapshot);
+  assert.deepEqual(candidates, candidateSnapshot);
+  assert.deepEqual(JSON.parse(serialized), result);
+
+  const originalRaw = candidates[0].raw;
+  result.fieldStates.os.candidates[0].raw = "changed state evidence";
+  result.fields.os.evidence[0].raw = "changed resolved evidence";
+  assert.equal(candidates[0].raw, originalRaw);
+  assert.notEqual(
+    result.fieldStates.os.candidates[0].raw,
+    result.fields.os.evidence[0].raw
+  );
+});
+
+test("exposes complete compatibility metadata for every resolved field in field order", () => {
+  const { result } = resolveSetup([
+    "Windows laptop",
+    "CPU Intel Core i5-13500H",
+    "GPU NVIDIA RTX 4060 Laptop GPU",
+    "VRAM 8GB",
+    "RAM 32GB",
+    "SSD free 512GB",
+    "coding assistant"
+  ].join(";"));
+
+  assert.deepEqual(Object.keys(result.fields), RESOLVER_FIELD_ORDER);
+  for (const field of RESOLVER_FIELD_ORDER) {
+    assert.equal(result.fieldStates[field].status, "resolved", field);
+    assertResolvedFieldContract(result.fields[field]);
+    assertResolvedFieldContract(result.fieldStates[field].resolved);
+  }
+});
+
+test("keeps representative capped candidate resolution under 500ms", () => {
+  const { document, candidates } = resolveSetup([
+    "Windows laptop",
+    "CPU Intel Core i5-13500H",
+    "GPU NVIDIA RTX 4060 Laptop GPU",
+    "VRAM 8GB",
+    "RAM 32GB",
+    "SSD free 512GB",
+    "coding assistant"
+  ].join(";"));
+  const denseCandidates = Array.from({ length: 200 }, () => (
+    candidates.map((candidate) => ({ ...candidate }))
+  )).flat();
+
+  resolveCandidates(document, denseCandidates);
+  const start = performance.now();
+  const result = resolveCandidates(document, denseCandidates);
+  const durationMs = performance.now() - start;
+
+  assert.deepEqual(Object.keys(result.fields), RESOLVER_FIELD_ORDER);
+  assert.ok(durationMs < 500, `resolver ${durationMs.toFixed(3)}ms`);
 });
