@@ -427,16 +427,16 @@ export const CAPACITY_AMOUNT_PATTERNS = freezePatterns([
 export const CAPACITY_RANGE_PATTERNS = freezePatterns([
   {
     id: "capacity.range.two-units",
-    regex: /(?<![A-Z0-9.])(?<left>\d{1,5})[ \t]*(?:TiB|TB|GiB|GB|G|gigabytes?|gigs?)[ \t]*(?:to|[-–—])[ \t]*(?<right>\d{1,5})[ \t]*(?:TiB|TB|GiB|GB|G|gigabytes?|gigs?)(?![A-Z0-9/])/iu
+    regex: /(?<![A-Z0-9.])(?<left>\d{1,5})[ \t]*(?:TiB|TB|GiB|GB|G|gigabytes?|gigs?)[ \t]*(?:to|or|或(?:者)?|至|[-–—~～])[ \t]*(?<right>\d{1,5})[ \t]*(?:TiB|TB|GiB|GB|G|gigabytes?|gigs?)(?![A-Z0-9/])/iu
   },
   {
     id: "capacity.range.shared-trailing-unit",
-    regex: /(?<![A-Z0-9.])(?<left>\d{1,5})[ \t]*(?:to|[-–—])[ \t]*(?<right>\d{1,5})[ \t]*(?:TiB|TB|GiB|GB|G|gigabytes?|gigs?)(?![A-Z0-9/])/iu,
+    regex: /(?<![A-Z0-9.])(?<left>\d{1,5})[ \t]*(?:to|or|或(?:者)?|至|[-–—~～])[ \t]*(?<right>\d{1,5})[ \t]*(?:TiB|TB|GiB|GB|G|gigabytes?|gigs?)(?![A-Z0-9/])/iu,
     bareEndpoint: "left"
   },
   {
     id: "capacity.range.shared-leading-unit",
-    regex: /(?<![A-Z0-9.])(?<left>\d{1,5})[ \t]*(?:TiB|TB|GiB|GB|G|gigabytes?|gigs?)[ \t]*(?:to|[-–—])[ \t]*(?<right>\d{1,5})(?![A-Z0-9.])/iu,
+    regex: /(?<![A-Z0-9.])(?<left>\d{1,5})[ \t]*(?:TiB|TB|GiB|GB|G|gigabytes?|gigs?)[ \t]*(?:to|or|或(?:者)?|至|[-–—~～])[ \t]*(?<right>\d{1,5})(?![A-Z0-9.])/iu,
     bareEndpoint: "right"
   }
 ]);
@@ -452,8 +452,23 @@ export const CAPACITY_DISQUALIFIER_PATTERNS = freezePatterns([
     requireAmountAdjacency: true
   },
   {
+    id: "capacity.disqualifier.english-capability",
+    regex: /\b(?:(?:can[ \t]+)?support(?:s|ed|ing)?(?:[ \t]+for)?|capable[ \t]+of)\b/iu,
+    requireCapacityAdjacency: true
+  },
+  {
     id: "capacity.disqualifier.chinese",
-    regex: /不是|并非|並非|不等于|不等於|小于|小於|少于|少於|低于|低於|大于|大於|高于|高於|至少|至多|最多|不少于|不少於|不超过|不超過|需要|要求/u
+    regex: /不是|并非|並非|不等于|不等於|小于|小於|少于|少於|低于|低於|大于|大於|高于|高於|至少|至多|最多|最高|上限|不少于|不少於|不超过|不超過|需要|要求/u
+  },
+  {
+    id: "capacity.disqualifier.chinese-capability",
+    regex: /可支持|可支援|支持|支援/u,
+    requireCapacityAdjacency: true
+  },
+  {
+    id: "capacity.disqualifier.chinese-negation",
+    regex: /没有|沒有|不含|无|無/u,
+    requireCapacityAdjacency: true
   },
   {
     id: "capacity.disqualifier.english-postposed",
@@ -472,17 +487,17 @@ export const CAPACITY_DISQUALIFIER_PATTERNS = freezePatterns([
   },
   {
     id: "capacity.disqualifier.english-uncertainty",
-    regex: /\b(?:maybe|approximately|roughly|perhaps|about|around)\b/iu,
+    regex: /\b(?:maybe|possibly|probably|approximately|roughly|perhaps|about|around)\b/iu,
     preserveNaturalMemoryAbout: true
   },
   {
     id: "capacity.disqualifier.chinese-uncertainty",
-    regex: /大约|大約|大概|近似|约|約|可能|或许|或許/u,
+    regex: /大约|大約|大概|近似|约|約|可能|或许|或許|也许|也許/u,
     preserveApproximateRamContract: true
   },
   {
     id: "capacity.disqualifier.english-postposed-uncertainty",
-    regex: /\b(?:maybe|approximately|roughly|perhaps|about|around)\b(?=[ \t]*(?:$|[,，.。!?！？]))/iu,
+    regex: /\b(?:maybe|possibly|probably|approximately|roughly|perhaps|about|around)\b(?=[ \t]*(?:$|[,，.。!?！？]))/iu,
     allowAfterCapacity: true
   },
   {
@@ -505,6 +520,18 @@ export const CAPACITY_DISQUALIFIER_PATTERNS = freezePatterns([
     id: "capacity.disqualifier.chinese-postposed",
     regex: /以上|以下|以内|以內/u,
     allowAfterCapacity: true
+  },
+  {
+    id: "capacity.disqualifier.storage-used-english",
+    regex: /\b(?:(?:is|are|was|were)[ \t]+)?(?:used|occupied)\b/iu,
+    allowAfterCapacity: true,
+    storageOnly: true
+  },
+  {
+    id: "capacity.disqualifier.storage-used-chinese",
+    regex: /已使用|已用|使用了|用了|已占用|已佔用|占用|佔用/u,
+    allowAfterCapacity: true,
+    storageOnly: true
   }
 ]);
 
@@ -523,7 +550,7 @@ export const STORAGE_KIND_PATTERNS = freezePatterns([
   {
     id: "capacity.storage-kind.free",
     kind: "free",
-    regex: /\b(?:free|available)\b|可用|剩余|剩餘|空闲|空閒|(?:硬盘|硬盤|硬碟)[ \t]*(?:还剩|還剩|剩)(?=[ \t:]*\d)/iu
+    regex: /\b(?:free|available|remaining)\b|可用|剩余|剩餘|空闲|空閒|(?:硬盘|硬盤|硬碟)[ \t]*(?:还剩|還剩|剩)(?=[ \t:]*\d)/iu
   },
   {
     id: "capacity.storage-kind.total",

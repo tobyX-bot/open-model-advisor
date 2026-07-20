@@ -3199,3 +3199,202 @@ test("recognizes boundary-safe prefix and suffix integrated Vega context", () =>
     assert.deepEqual(candidateValues(extractCapacityCandidates(normalizeSetupText(input)), "vram"), [8], input);
   }
 });
+
+test("abstains from local uncertainty capability and multilingual capacity negation", () => {
+  const fields = [
+    { label: "RAM", amount: "64GB" },
+    { label: "VRAM", amount: "12GiB" },
+    { label: "SSD", amount: "2TB" }
+  ];
+  for (const field of fields) {
+    for (const qualifier of ["possibly", "probably", "maybe", "perhaps"]) {
+      for (const input of [
+        `${qualifier} ${field.amount} ${field.label}`,
+        `${field.label} ${qualifier} ${field.amount}`
+      ]) {
+        assert.deepEqual(extractCapacityCandidates(normalizeSetupText(input)), [], input);
+      }
+    }
+    for (const input of [
+      `supports ${field.amount} ${field.label}`,
+      `support for ${field.amount} ${field.label}`,
+      `${field.label} supports ${field.amount}`,
+      `can support up to ${field.amount} ${field.label}`
+    ]) {
+      assert.deepEqual(extractCapacityCandidates(normalizeSetupText(input)), [], input);
+    }
+  }
+
+  for (const input of [
+    "没有 32GB 内存",
+    "没有内存 32GB",
+    "沒有 16GB 記憶體",
+    "沒有記憶體 16GB",
+    "不含 8GB 顯存",
+    "也许 32GB 内存",
+    "也許 16GB 記憶體",
+    "支持 2TB 固态硬盘",
+    "可支援最高 1TB 固態硬碟"
+  ]) {
+    assert.deepEqual(extractCapacityCandidates(normalizeSetupText(input)), [], input);
+  }
+
+  for (const [input, expected] of [
+    ["possibly 64GB RAM;SSD 512GB installed", [["storage", 512, "SSD 512GB"]]],
+    ["supports 2TB SSD;RAM 32GB installed", [["ram", 32, "RAM 32GB"]]],
+    ["没有独立显卡,内存 32GB installed", [["ram", 32, "内存 32GB"]]],
+    ["has 64GB RAM", [["ram", 64, "64GB RAM"]]],
+    ["equipped with 12GiB VRAM", [["vram", 12, "12GiB VRAM"]]],
+    ["SSD 2TB installed", [["storage", 2000, "SSD 2TB"]]]
+  ]) {
+    assert.deepEqual(
+      extractCapacityCandidates(normalizeSetupText(input)).map((candidate) => [
+        candidate.field,
+        candidate.value,
+        candidate.raw
+      ]),
+      expected,
+      input
+    );
+  }
+});
+
+test("abstains from alternative and localized capacity ranges without losing exact conflicts", () => {
+  const fields = [
+    { label: "RAM", left: "16", right: "64", unit: "GB" },
+    { label: "VRAM", left: "8", right: "12", unit: "GiB" },
+    { label: "storage", left: "1", right: "2", unit: "TB" }
+  ];
+  const connectors = [
+    "or", " or ", "或", " 或 ", "或者", " 或者 ",
+    "至", " 至 ", "~", " ~ ", "～", " ～ "
+  ];
+
+  for (const field of fields) {
+    for (const connector of connectors) {
+      for (const range of [
+        `${field.left}${field.unit}${connector}${field.right}${field.unit}`,
+        `${field.left}${connector}${field.right}${field.unit}`,
+        `${field.left}${field.unit}${connector}${field.right}`
+      ]) {
+        for (const input of [`${field.label} ${range}`, `${range} ${field.label}`]) {
+          assert.deepEqual(extractCapacityCandidates(normalizeSetupText(input)), [], input);
+        }
+      }
+    }
+  }
+
+  assert.deepEqual(
+    extractCapacityCandidates(normalizeSetupText("RAM 16GB, old note: RAM 64GB"))
+      .map((candidate) => [candidate.field, candidate.value, candidate.raw]),
+    [["ram", 16, "RAM 16GB"], ["ram", 64, "RAM 64GB"]]
+  );
+  assert.deepEqual(
+    extractCapacityCandidates(normalizeSetupText("RAM 16GB至64GB;VRAM 12GB;SSD 512GB"))
+      .map((candidate) => [candidate.field, candidate.value, candidate.raw]),
+    [["vram", 12, "VRAM 12GB"], ["storage", 512, "SSD 512GB"]]
+  );
+});
+
+test("suppresses Vega proximity VRAM in clause-local copular integrated context", () => {
+  const integratedCases = [
+    "the integrated GPU is AMD Radeon Vega 64 8GB",
+    "integrated graphics is AMD Radeon Vega 56 8GB",
+    "integrated graphics uses AMD Radeon Vega 64 8GB",
+    "AMD Radeon Vega 64 is onboard GPU 8GB",
+    "集成显卡是 AMD Radeon Vega 64 8GB",
+    "集成顯卡使用 AMD Radeon Vega 56 8GB",
+    "AMD Radeon Vega 64 是集成显卡 8GB",
+    "AMD Radeon Vega 56 是共享顯卡 8GB"
+  ];
+  for (const input of integratedCases) {
+    const document = normalizeSetupText(input);
+    assert.equal(
+      candidateValues(extractGpuCandidates(document), "gpuModel").includes(
+        input.includes("56") ? "AMD Radeon Vega 56" : "AMD Radeon Vega 64"
+      ),
+      true,
+      input
+    );
+    assert.deepEqual(candidateValues(extractCapacityCandidates(document), "vram"), [], input);
+  }
+
+  for (const input of [
+    "the integrated GPU is unavailable, AMD Radeon Vega 64 8GB",
+    "集成显卡不可用，AMD Radeon Vega 56 8GB",
+    "dedicated GPU is AMD Radeon Vega 64 8GB",
+    "AMD Radeon Vega 56 is a discrete GPU 8GB",
+    "AMD Radeon Vega 64 8GB"
+  ]) {
+    assert.deepEqual(candidateValues(extractCapacityCandidates(normalizeSetupText(input)), "vram"), [8], input);
+  }
+});
+
+test("rejects used or occupied storage while preserving total and available capacities", () => {
+  for (const input of [
+    "SSD 900GB used",
+    "900GB occupied on SSD",
+    "SSD used 900GB",
+    "SSD 900GB is occupied",
+    "固态硬盘 已用 900GB",
+    "已使用 900GB 固態硬碟",
+    "SSD 使用了 900GB",
+    "用了 900GB 固態硬碟",
+    "硬盘 900GB 占用",
+    "900GB 已佔用 硬碟"
+  ]) {
+    assert.deepEqual(extractStorageCandidates(normalizeSetupText(input)), [], input);
+  }
+
+  for (const [input, expected] of [
+    ["1TB SSD,900GB used", [[1000, "1TB SSD", "unknown"]]],
+    ["SSD total 1TB;SSD 900GB used;SSD 100GB free", [[1000, "SSD total 1TB", "total"], [100, "SSD 100GB free", "free"]]],
+    ["固态硬盘总容量 1TB,已用 900GB", [[1000, "固态硬盘总容量 1TB", "total"]]],
+    ["SSD 512GB available", [[512, "SSD 512GB available", "free"]]],
+    ["SSD 512GB remaining", [[512, "SSD 512GB remaining", "free"]]]
+  ]) {
+    assert.deepEqual(
+      extractStorageCandidates(normalizeSetupText(input)).map((candidate) => [
+        candidate.value,
+        candidate.raw,
+        candidate.storageKind
+      ]),
+      expected,
+      input
+    );
+  }
+});
+
+test("limits retained approximations to the frozen natural-memory contract families", () => {
+  for (const input of [
+    "RAM 大概 32GB",
+    "RAM 大約 32GB",
+    "about 8 gigs RAM",
+    "memory about 8 gigs",
+    "VRAM 大概 8GB",
+    "about 1TB storage",
+    "SSD 大約 512GB"
+  ]) {
+    assert.deepEqual(extractCapacityCandidates(normalizeSetupText(input)), [], input);
+  }
+
+  for (const [input, expected] of [
+    ["about 8 gigs of memory", [8, "about 8 gigs of memory", "low", true, "gig"]],
+    ["内存大概 32GB", [32, "内存大概 32GB", "low", true, "GB"]],
+    ["記憶體大約 16GB", [16, "記憶體大約 16GB", "low", true, "GB"]],
+    ["8 gigs of memory", [8, "8 gigs of memory", "high", false, "gig"]],
+    ["内存 32GB", [32, "内存 32GB", "high", false, "GB"]],
+    ["記憶體 16GB", [16, "記憶體 16GB", "high", false, "GB"]]
+  ]) {
+    const document = normalizeSetupText(input);
+    const candidates = extractMemoryCandidates(document);
+    assert.equal(candidates.length, 1, input);
+    const [candidate] = candidates;
+    assert.deepEqual(
+      [candidate.value, candidate.raw, candidate.confidence, candidate.inferred, candidate.sourceUnit],
+      expected,
+      input
+    );
+    assertCapacityCandidateContract(document, candidate);
+  }
+});

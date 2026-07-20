@@ -51,9 +51,9 @@ const STORAGE_M_SERIES_SUFFIX = /^[ \t:-]*(?:NVMe|SSD|storage|disk|drive)\b/iu;
 const TRANSFER_RATE_SUFFIX = /^(?:[ \t]+(?:(?:\/[ \t]*|per[ \t]+)(?:(?:ms|msecs?|milliseconds?|s|secs?|seconds?|mins?|minutes?|hrs?|hours?|days?)\b|毫秒|秒(?:钟|鐘)?|分钟|分鐘|小时|小時|天)|(?:each|every|an?)[ \t]+(?:millisecond|second|minute|hour|day)s?\b)|[ \t]*每[ \t]*(?:毫秒|秒(?:钟|鐘)?|分钟|分鐘|小时|小時|天))/iu;
 const TRANSFER_RATE_INVENTORY = /^[ \t]+(?:drive|SSD|HDD|disk|storage)\b/iu;
 const TRANSFER_RATE_PREFIX = /(?:\b(?:speed|throughput|bandwidth|rate)\b|带宽|帶寬|速度|吞吐量)[ \t:,-]*$/iu;
-const CAPACITY_RANGE_CONNECTOR = /^[ \t]*(?:-|–|—|to)[ \t]*$/iu;
-const INTEGRATED_GPU_PREFIX = /(?:\b(?:(?:integrated|onboard)(?:[ \t]+(?:GPU|graphics(?:[ \t]+card)?))?|shared[ \t]+(?:GPU|graphics(?:[ \t]+card)?))(?:[ \t]+(?:using|with))?|(?:集成|共享)(?:显卡|顯卡|图形|圖形)(?:[ \t]*(?:使用|采用|採用))?|核显|核顯)[ \t:,-]*$/iu;
-const INTEGRATED_GPU_SUFFIX = /^[ \t:,-]*(?:\b(?:(?:integrated|onboard)(?:[ \t]+(?:GPU|graphics(?:[ \t]+card)?))?|shared[ \t]+(?:GPU|graphics(?:[ \t]+card)?))\b|(?:集成|共享)(?:显卡|顯卡|图形|圖形)|核显|核顯)/iu;
+const CAPACITY_RANGE_CONNECTOR = /^[ \t]*(?:-|–|—|~|～|to|or|或(?:者)?|至)[ \t]*$/iu;
+const INTEGRATED_GPU_PREFIX = /(?:\b(?:the[ \t]+)?(?:(?:integrated|onboard)(?:[ \t]+(?:GPU|graphics(?:[ \t]+card)?))?|shared[ \t]+(?:GPU|graphics(?:[ \t]+card)?))(?:[ \t]+(?:(?:is|was|uses?|using)(?:[ \t]+(?:a|an|the))?|with))?|(?:集成|共享)(?:显卡|顯卡|图形|圖形)(?:[ \t]*(?:是|为|為|使用|采用|採用))?|(?:核显|核顯)(?:[ \t]*(?:是|为|為|使用|采用|採用))?)[ \t:,-]*$/iu;
+const INTEGRATED_GPU_SUFFIX = /^[ \t:,-]*(?:(?:(?:is|was)(?:[ \t]+(?:a|an|the))?[ \t]+)?\b(?:(?:integrated|onboard)(?:[ \t]+(?:GPU|graphics(?:[ \t]+card)?))?|shared[ \t]+(?:GPU|graphics(?:[ \t]+card)?))\b|(?:是|为|為)?[ \t]*(?:(?:集成|共享)(?:显卡|顯卡|图形|圖形)|核显|核顯))/iu;
 
 function globalRegex(regex) {
   const flags = `${regex.flags.replace(/[gy]/g, "")}g`;
@@ -441,6 +441,9 @@ function localSpanIsInClause(start, end, clause) {
 }
 
 function isRetainedApproximationMatch(segment, match, amount, ownership) {
+  const labelText = ownership
+    ? segment.text.slice(ownership.label.start, ownership.label.end)
+    : "";
   if (
     match.pattern.preserveNaturalMemoryAbout
     && ownership?.label.pattern.field === "ram"
@@ -448,17 +451,27 @@ function isRetainedApproximationMatch(segment, match, amount, ownership) {
     && ["gig", "gigabyte"].includes(amount.pattern.sourceUnit)
     && match.start === amount.start
     && /^about\b/iu.test(segment.text.slice(amount.start, amount.end))
+    && /^memory$/iu.test(labelText)
+    && /^[ \t]+of[ \t]+$/iu.test(segment.text.slice(amount.end, ownership.label.start))
   ) {
     return true;
   }
 
-  return Boolean(
+  if (!(
     match.pattern.preserveApproximateRamContract
     && ownership?.label.pattern.field === "ram"
     && ownership.amountPosition === "after-label"
     && /^(?:大约|大約|大概)$/u.test(segment.text.slice(match.start, match.end))
     && match.start >= ownership.label.end
     && match.end <= amount.start
+    && /^[ \t]*$/u.test(segment.text.slice(ownership.label.end, match.start))
+    && /^[ \t]*$/u.test(segment.text.slice(match.end, amount.start))
+  )) return false;
+
+  const qualifierText = segment.text.slice(match.start, match.end);
+  return (
+    (labelText === "内存" && qualifierText === "大概")
+    || (labelText === "記憶體" && qualifierText === "大約")
   );
 }
 
@@ -477,12 +490,21 @@ function hasAttachedDisqualifier(segment, clause, disqualifiers, amount, ownersh
     : amount.end;
 
   return disqualifiers.some((match) => {
+    if (
+      match.pattern.storageOnly
+      && ownership?.label.pattern.field !== "storage"
+    ) return false;
     if (isRetainedApproximationMatch(segment, match, amount, ownership)) return false;
 
     if (match.pattern.requireCapacityAdjacency) {
       if (!localSpanIsInClause(match.start, match.end, clause)) return false;
-      if (match.end > localStart) return false;
-      return /^[ \t:()（）-]*$/u.test(segment.text.slice(match.end, localStart));
+      if (match.end <= localStart) {
+        return /^[ \t:()（）-]*$/u.test(segment.text.slice(match.end, localStart));
+      }
+      if (match.end <= amount.start) {
+        return /^[ \t:()（）-]*$/u.test(segment.text.slice(match.end, amount.start));
+      }
+      return false;
     }
 
     if (match.pattern.requireAmountAdjacency) {
