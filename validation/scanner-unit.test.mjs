@@ -2703,3 +2703,172 @@ test("accepts spaced nonnumeric comma delimiters and sentence-final capacities",
     ]
   );
 });
+
+test("abstains from exact-looking capacity bounds and ranges across fields and orientations", () => {
+  const fields = [
+    { label: "RAM", amount: "32GB", lower: "16GB", upper: "32GB" },
+    { label: "VRAM", amount: "12GiB", lower: "8GiB", upper: "12GiB" },
+    { label: "storage", amount: "2TB", lower: "1TB", upper: "2TB" }
+  ];
+  const suffixes = ["and higher", "and greater"];
+  const rangeSeparators = ["-", " – ", " to "];
+
+  for (const field of fields) {
+    for (const suffix of suffixes) {
+      for (const input of [
+        `${field.label} ${field.amount} ${suffix}`,
+        `${field.amount} ${field.label} ${suffix}`
+      ]) {
+        assert.deepEqual(extractCapacityCandidates(normalizeSetupText(input)), [], input);
+      }
+    }
+
+    for (const separator of rangeSeparators) {
+      for (const input of [
+        `${field.label} ${field.lower}${separator}${field.upper}`,
+        `${field.lower}${separator}${field.upper} ${field.label}`
+      ]) {
+        assert.deepEqual(extractCapacityCandidates(normalizeSetupText(input)), [], input);
+      }
+    }
+  }
+  assert.deepEqual(
+    extractCapacityCandidates(normalizeSetupText("RAM 16 GB – 32 GB")),
+    []
+  );
+
+  assert.deepEqual(
+    extractCapacityCandidates(normalizeSetupText(
+      "RAM 16GB-32GB, VRAM 12GB;SSD 512GB"
+    )).map((candidate) => [candidate.field, candidate.value, candidate.raw]),
+    [["vram", 12, "VRAM 12GB"], ["storage", 512, "SSD 512GB"]]
+  );
+});
+
+test("abstains from explicit capacity absence without suppressing unrelated wording", () => {
+  const fields = [
+    { label: "RAM", amount: "32GB" },
+    { label: "VRAM", amount: "12GiB" },
+    { label: "storage", amount: "1TB" }
+  ];
+  const postposed = ["absent", "missing", "is absent", "was missing"];
+
+  for (const field of fields) {
+    for (const absence of postposed) {
+      for (const input of [
+        `${field.label} ${field.amount} ${absence}`,
+        `${field.amount} ${field.label} ${absence}`
+      ]) {
+        assert.deepEqual(extractCapacityCandidates(normalizeSetupText(input)), [], input);
+      }
+    }
+    for (const input of [
+      `without ${field.amount} ${field.label}`,
+      `no ${field.amount} ${field.label}`
+    ]) {
+      assert.deepEqual(extractCapacityCandidates(normalizeSetupText(input)), [], input);
+    }
+  }
+
+  const positives = [
+    ["RAM 32GB without overclocking", [["ram", 32, "RAM 32GB"]]],
+    ["RAM 32GB missing drivers", [["ram", 32, "RAM 32GB"]]],
+    ["RAM no ECC 32GB", [["ram", 32, "RAM no ECC 32GB"]]],
+    ["laptop without dedicated GPU, RAM 32GB", [["ram", 32, "RAM 32GB"]]],
+    ["RAM 32GB available", [["ram", 32, "RAM 32GB"]]],
+    ["RAM 32GB installed", [["ram", 32, "RAM 32GB"]]]
+  ];
+  for (const [input, expected] of positives) {
+    assert.deepEqual(
+      extractCapacityCandidates(normalizeSetupText(input)).map((candidate) => [
+        candidate.field,
+        candidate.value,
+        candidate.raw
+      ]),
+      expected,
+      input
+    );
+  }
+});
+
+test("rejects explicit non-second transfer rates while preserving inventory capacities", () => {
+  const rateSuffixes = [
+    "per minute",
+    "every minute",
+    "each hour",
+    "/hour",
+    "a minute",
+    "/min",
+    "/hr",
+    "每分钟",
+    "每分鐘",
+    "每小时",
+    "每小時"
+  ];
+  for (const suffix of rateSuffixes) {
+    for (const input of [
+      `SSD speed 7GB ${suffix}`,
+      `SSD throughput 7GB${suffix.startsWith("/") ? "" : " "}${suffix}`,
+      `7 GB ${suffix}`
+    ]) {
+      assert.deepEqual(extractCapacityCandidates(normalizeSetupText(input)), [], input);
+    }
+  }
+
+  const positives = [
+    ["a second drive 1TB", [["storage", 1000, "drive 1TB"]]],
+    ["SSD 512GB per drive", [["storage", 512, "SSD 512GB"]]],
+    ["SSD 512GB, updated an hour ago", [["storage", 512, "SSD 512GB"]]],
+    ["SSD 512GB a second SSD 1TB", [["storage", 512, "SSD 512GB"], ["storage", 1000, "SSD 1TB"]]]
+  ];
+  for (const [input, expected] of positives) {
+    assert.deepEqual(
+      extractCapacityCandidates(normalizeSetupText(input)).map((candidate) => [
+        candidate.field,
+        candidate.value,
+        candidate.raw
+      ]),
+      expected,
+      input
+    );
+  }
+});
+
+test("keeps no-GPU suppression clause-local while retaining conflicting model evidence", () => {
+  for (const input of [
+    "NVIDIA RTX 4070 12GB;no dedicated GPU",
+    "no dedicated GPU;NVIDIA RTX 4070 12GB"
+  ]) {
+    const document = normalizeSetupText(input);
+    assert.deepEqual(
+      extractCapacityCandidates(document).map((candidate) => [candidate.field, candidate.value, candidate.raw]),
+      [["vram", 12, "NVIDIA RTX 4070 12GB"]],
+      input
+    );
+    assert.equal(
+      extractGpuCandidates(document).some((candidate) => candidate.value === "No dedicated GPU"),
+      true,
+      input
+    );
+  }
+
+  assert.deepEqual(
+    extractCapacityCandidates(normalizeSetupText(
+      "no dedicated GPU 12GB RAM 32GB SSD 512GB"
+    )).map((candidate) => [candidate.field, candidate.value, candidate.raw]),
+    [["ram", 32, "RAM 32GB"], ["storage", 512, "SSD 512GB"]]
+  );
+
+  for (const [input, expected] of [
+    ["NVIDIA RTX 4070 12GB", [["vram", 12]]],
+    ["Intel Arc A550M 8GB", [["vram", 8]]],
+    ["AMD Vega 8 2GB", []],
+    ["no dedicated GPU 12GB", []]
+  ]) {
+    assert.deepEqual(
+      extractCapacityCandidates(normalizeSetupText(input)).map((candidate) => [candidate.field, candidate.value]),
+      expected,
+      input
+    );
+  }
+});

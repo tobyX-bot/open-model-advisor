@@ -47,9 +47,10 @@ const NON_APPLE_M_SERIES_PREFIX = /\b(?:Intel(?:[ \t]+Core)?|Core)[ \t]*$/iu;
 const STRONG_APPLE_M_SERIES_PREFIX = /(?:(?:\bMacBook(?:[ \t]+(?:Air|Pro))?|\bMac[ \t]+(?:mini|Studio|Pro)|\biMac)(?:[ \t]+(?:is[ \t]+)?powered[ \t]+by)?|\b(?:CPU|processor|chip|SoC)(?:[ \t]+(?:is|was))?|(?:处理器|處理器|芯片|晶片)(?:[ \t]+(?:是|为|為))?)[ \t:,-]*$/iu;
 const STORAGE_M_SERIES_PREFIX = /\b(?:NVMe|SSD|storage|disk|drive)[ \t:-]*$/iu;
 const STORAGE_M_SERIES_SUFFIX = /^[ \t:-]*(?:NVMe|SSD|storage|disk|drive)\b/iu;
-const TRANSFER_RATE_SUFFIX = /^(?:[ \t]+(?:(?:\/[ \t]*|per[ \t]+)(?:(?:s|secs?|seconds?)\b|秒)|(?:each|a)[ \t]+seconds?\b)|[ \t]*每[ \t]*秒)/iu;
+const TRANSFER_RATE_SUFFIX = /^(?:[ \t]+(?:(?:\/[ \t]*|per[ \t]+)(?:(?:ms|msecs?|milliseconds?|s|secs?|seconds?|mins?|minutes?|hrs?|hours?|days?)\b|毫秒|秒(?:钟|鐘)?|分钟|分鐘|小时|小時|天)|(?:each|every|an?)[ \t]+(?:millisecond|second|minute|hour|day)s?\b)|[ \t]*每[ \t]*(?:毫秒|秒(?:钟|鐘)?|分钟|分鐘|小时|小時|天))/iu;
 const TRANSFER_RATE_INVENTORY = /^[ \t]+(?:drive|SSD|HDD|disk|storage)\b/iu;
 const TRANSFER_RATE_PREFIX = /(?:\b(?:speed|throughput|bandwidth|rate)\b|带宽|帶寬|速度|吞吐量)[ \t:,-]*$/iu;
+const CAPACITY_RANGE_CONNECTOR = /^[ \t]*(?:-|–|—|to)[ \t]*$/iu;
 
 function globalRegex(regex) {
   const flags = `${regex.flags.replace(/[gy]/g, "")}g`;
@@ -240,6 +241,7 @@ function hasUnsafeSignPrefix(segment, match, labels) {
     return !TRAILING_CAPACITY_AMOUNT.test(segment.text.slice(0, signIndex));
   }
   if (sign !== "-") return true;
+  if (TRAILING_CAPACITY_AMOUNT.test(segment.text.slice(0, signIndex))) return false;
 
   return !labels.some((label) => (
     label.end <= signIndex
@@ -326,9 +328,19 @@ function collectCapacityAmounts(document, segment, modelCandidates, labels) {
     || left.end - right.end
     || left.patternIndex - right.patternIndex
   ));
-  return amounts.filter((amount, index) => (
+  const distinctAmounts = amounts.filter((amount, index) => (
     !amounts.slice(0, index).some((earlier) => overlaps(earlier, amount))
   ));
+  const rangeAmounts = new Set();
+  for (let index = 1; index < distinctAmounts.length; index += 1) {
+    const previous = distinctAmounts[index - 1];
+    const current = distinctAmounts[index];
+    if (CAPACITY_RANGE_CONNECTOR.test(segment.text.slice(previous.end, current.start))) {
+      rangeAmounts.add(previous);
+      rangeAmounts.add(current);
+    }
+  }
+  return distinctAmounts.filter((amount) => !rangeAmounts.has(amount));
 }
 
 function supportsCapacityField(amount, field) {
@@ -851,9 +863,9 @@ function proximityOption(segment, amount, gpuModel) {
   };
 }
 
-function proximityVramEntry(document, segment, clause, amount, gpuModels, hasNoGpu) {
+function proximityVramEntry(document, segment, clause, amount, gpuModels, hasNoGpuInClause) {
   if (
-    hasNoGpu
+    hasNoGpuInClause
     || !["GB", "GiB"].includes(amount.pattern.sourceUnit)
   ) {
     return null;
@@ -1049,13 +1061,22 @@ export function extractCapacityCandidates(document) {
           ownership.ownership
         );
       } else if (ownership.status === "unowned") {
+        const hasNoGpuInClause = gpuModels.some((candidate) => (
+          candidate.value === "No dedicated GPU"
+          && candidate.segmentIndex === segment.index
+          && localSpanIsInClause(
+            candidate.start - segment.start,
+            candidate.end - segment.start,
+            clause
+          )
+        ));
         entry = proximityVramEntry(
           document,
           segment,
           clause,
           amount,
           dedicatedGpuModels,
-          hasNoGpu
+          hasNoGpuInClause
         );
       }
       if (entry) entries.push(entry);

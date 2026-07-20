@@ -440,13 +440,18 @@ export const CAPACITY_DISQUALIFIER_PATTERNS = freezePatterns([
   },
   {
     id: "capacity.disqualifier.english-postposed",
-    regex: /\b(?:or[ \t-]+(?:more|less|greater|higher|above)|and[ \t-]+(?:above|up)|at[ \t]+(?:least|most)|min(?:imum)?|max(?:imum)?|(?:is[ \t]+)?(?:required|needed))(?![A-Z0-9-])/iu,
+    regex: /\b(?:(?:or|and)[ \t-]+(?:more|less|greater|higher|above|up)|at[ \t]+(?:least|most)|min(?:imum)?|max(?:imum)?|(?:is[ \t]+)?(?:required|needed))(?![A-Z0-9-])/iu,
     allowAfterCapacity: true
   },
   {
     id: "capacity.disqualifier.english-postposed-absence",
-    regex: /\b(?:(?:(?:modules?|DIMMs?|kits?|sticks?|memory)[ \t]+)?(?:(?:is|are|was|were)[ \t]+)?(?:(?:currently|presently|still)[ \t]+)?(?:unavailable|not[ \t]+(?:(?:currently|presently|still)[ \t]+)?(?:installed|available|present|included)))\b/iu,
+    regex: /\b(?:(?:(?:modules?|DIMMs?|kits?|sticks?|memory)[ \t]+)?(?:(?:is|are|was|were)[ \t]+)?(?:(?:currently|presently|still)[ \t]+)?(?:unavailable|not[ \t]+(?:(?:currently|presently|still)[ \t]+)?(?:installed|available|present|included))|(?:(?:is|are|was|were)[ \t]+)?(?:absent|missing)(?=[ \t]*(?:$|[,，.。!?！？])))\b/iu,
     allowAfterCapacity: true
+  },
+  {
+    id: "capacity.disqualifier.english-preposed-absence",
+    regex: /\b(?:without|no)\b/iu,
+    requireAmountAdjacency: true
   },
   {
     id: "capacity.disqualifier.symbolic-bound",
@@ -497,7 +502,7 @@ export const CAPACITY_CLAUSE_PATTERNS = freezePatterns([
   },
   {
     id: "capacity.clause.english-conjunction",
-    regex: /[ \t]+\b(?:but|and(?![ \t]+(?:above|up)(?![A-Z0-9-])(?:[ \t]*[)）])?[ \t]*(?:$|[,，.。!?！？])))\b[ \t]+/iu
+    regex: /[ \t]+\b(?:but|and(?![ \t]+(?:more|less|greater|higher|above|up)(?![A-Z0-9-])(?:[ \t]*[)）])?[ \t]*(?:$|[,，.。!?！？])))\b[ \t]+/iu
   },
   {
     id: "capacity.clause.english-with",
