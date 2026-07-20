@@ -1162,25 +1162,28 @@ function storageQualifierOption(segment, clause, qualifier, ownershipSpan) {
   };
 }
 
-function assignStorageQualifiers(segment, clause, qualifiers, ownerships) {
-  const storageSpans = [...ownerships]
+function storageOwnershipSpans(ownerships) {
+  return [...ownerships]
     .filter(([, result]) => (
       result.status === "owned"
       && result.ownership.label.pattern.field === "storage"
     ))
     .map(([amount, result]) => ({
       amount,
+      ownership: result.ownership,
       start: Math.min(result.ownership.label.start, amount.start),
       end: Math.max(result.ownership.label.end, amount.end)
     }))
     .sort((left, right) => left.start - right.start || left.end - right.end);
+}
+
+function assignStorageSemanticMatches(matches, ownerships, createOption) {
+  const storageSpans = storageOwnershipSpans(ownerships);
   const assignments = new Map(storageSpans.map((span) => [span.amount, []]));
 
-  for (const qualifier of qualifiers) {
+  for (const match of matches) {
     const options = storageSpans
-      .map((ownershipSpan) => (
-        storageQualifierOption(segment, clause, qualifier, ownershipSpan)
-      ))
+      .map((ownershipSpan) => createOption(match, ownershipSpan))
       .filter(Boolean);
     if (options.length === 0) continue;
 
@@ -1197,6 +1200,42 @@ function assignStorageQualifiers(segment, clause, qualifiers, ownerships) {
   }
 
   return assignments;
+}
+
+function assignStorageQualifiers(segment, clause, qualifiers, ownerships) {
+  return assignStorageSemanticMatches(
+    qualifiers,
+    ownerships,
+    (qualifier, ownershipSpan) => (
+      storageQualifierOption(segment, clause, qualifier, ownershipSpan)
+    )
+  );
+}
+
+function assignStorageDisqualifiers(segment, clause, disqualifiers, ownerships) {
+  const storageOnly = disqualifiers.filter((match) => match.pattern.storageOnly);
+  const assignments = assignStorageSemanticMatches(
+    storageOnly,
+    ownerships,
+    (match, ownershipSpan) => {
+      if (!hasAttachedDisqualifier(
+        segment,
+        clause,
+        [match],
+        ownershipSpan.amount,
+        ownershipSpan.ownership
+      )) return null;
+      return {
+        match,
+        evidenceSpan: expandSemanticWrapper(segment, match.start, match.end),
+        ownershipSpan
+      };
+    }
+  );
+  return new Map([...assignments].map(([amount, options]) => [
+    amount,
+    options.map((option) => option.match)
+  ]));
 }
 
 function storageEvidence(options, localStart, localEnd) {
@@ -1477,6 +1516,9 @@ function extractCapacityCandidatesWithContext(document, modelContext) {
   for (const segment of document.segments) {
     const segmentLabels = collectCapacityLabels(segment, labelMatchers);
     const disqualifiers = collectLocalPatternMatches(segment, disqualifierMatchers);
+    const nonStorageDisqualifiers = disqualifiers.filter((match) => (
+      !match.pattern.storageOnly
+    ));
     const storageQualifiers = collectStorageQualifiers(segment, storageQualifierMatchers);
     const clauseBoundaries = clauseBoundariesBySegment[segment.index];
     const segmentModelCandidates = modelCandidatesBySegment[segment.index];
@@ -1531,21 +1573,31 @@ function extractCapacityCandidatesWithContext(document, modelContext) {
           storageQualifiers,
           context.ownerships
         );
+        context.storageDisqualifiers = assignStorageDisqualifiers(
+          segment,
+          clause,
+          disqualifiers,
+          context.ownerships
+        );
         clauseContexts.set(clauseKey, context);
       }
 
       const ownership = context.ownerships.get(amount);
       if (ownership.status === "ambiguous") continue;
+      const ownedDisqualifiers = [
+        ...nonStorageDisqualifiers,
+        ...(context.storageDisqualifiers.get(amount) ?? [])
+      ];
       if (hasAttachedDisqualifier(
         segment,
         clause,
-        disqualifiers,
+        ownedDisqualifiers,
         amount,
         ownership.ownership
       )) continue;
       const retainedApproximation = isRetainedApproximation(
         segment,
-        disqualifiers,
+        ownedDisqualifiers,
         amount,
         ownership.ownership
       );

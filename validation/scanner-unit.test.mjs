@@ -5000,6 +5000,119 @@ test("replays adjacent storage qualifier ownership zones", () => {
   assert.equal(variantCount, 720);
 });
 
+test("keeps an adjacent valid storage field before an owned used field", () => {
+  for (const [input, expected] of [
+    [
+      "SSD total 100GB occupied 200GB HDD",
+      [[100, "total", "SSD total 100GB"]]
+    ],
+    [
+      "100GB total SSD occupied HDD 200GB",
+      [[100, "total", "100GB total SSD"]]
+    ],
+    [
+      "固态硬盘 总容量 100GB 已占用 200GB 硬盘",
+      [[100, "total", "固态硬盘 总容量 100GB"]]
+    ],
+    [
+      "100GB 總容量 固態硬碟 已使用 硬碟 200GB",
+      [[100, "total", "100GB 總容量 固態硬碟"]]
+    ]
+  ]) {
+    const document = normalizeSetupText(input);
+    const candidates = extractStorageCandidates(document);
+    assert.deepEqual(
+      candidates.map((candidate) => [candidate.value, candidate.storageKind, candidate.raw]),
+      expected,
+      input
+    );
+    candidates.forEach((candidate) => assertCapacityCandidateContract(document, candidate));
+  }
+
+  assert.deepEqual(extractStorageCandidates(normalizeSetupText("SSD 900GB occupied")), []);
+  assert.deepEqual(
+    extractStorageCandidates(normalizeSetupText("SSD total free 100GB"))
+      .map((candidate) => [candidate.value, candidate.storageKind, candidate.raw]),
+    [[100, "unknown", "SSD total free 100GB"]]
+  );
+});
+
+test("replays adjacent storage disqualifier ownership zones", () => {
+  const vocabularies = [
+    {
+      labels: ["SSD", "HDD", "disk"],
+      qualifiers: [["total", "total"], ["free", "free"], ["available", "free"]],
+      disqualifiers: ["occupied", "used"]
+    },
+    {
+      labels: ["drive", "SSD", "HDD"],
+      qualifiers: [["capacity", "total"], ["remaining", "free"], ["total", "total"]],
+      disqualifiers: ["in use", "consumed"]
+    },
+    {
+      labels: ["固态硬盘", "硬盘", "存储"],
+      qualifiers: [["总容量", "total"], ["可用", "free"], ["剩余", "free"]],
+      disqualifiers: ["已占用", "已使用"]
+    },
+    {
+      labels: ["固態硬碟", "硬碟", "存儲"],
+      qualifiers: [["總容量", "total"], ["可用", "free"], ["剩餘", "free"]],
+      disqualifiers: ["已佔用", "已使用"]
+    }
+  ];
+  const wrappers = [["", ""], ["(", ")"], ["（", "）"]];
+  const separators = [" ", " : ", " ， "];
+  let variantCount = 0;
+
+  for (const vocabulary of vocabularies) {
+    for (const fieldCount of [2, 3]) {
+      for (let orientationMask = 0; orientationMask < 2 ** fieldCount; orientationMask += 1) {
+        for (const [open, close] of wrappers) {
+          for (const separator of separators) {
+            for (const disqualifier of vocabulary.disqualifiers) {
+              const clauses = [];
+              const expected = [];
+              for (let index = 0; index < fieldCount; index += 1) {
+                const label = vocabulary.labels[index];
+                const amount = `${100 * (index + 1)}GB`;
+                const amountFirst = Boolean(orientationMask & (1 << index));
+                if (index === 1) {
+                  clauses.push(amountFirst
+                    ? `${open}${disqualifier}${close} ${amount} ${label}`
+                    : `${open}${disqualifier}${close} ${label} ${amount}`);
+                  continue;
+                }
+
+                const [qualifier, kind] = vocabulary.qualifiers[index];
+                const clause = amountFirst
+                  ? `${qualifier} ${amount} ${label}`
+                  : `${qualifier} ${label} ${amount}`;
+                clauses.push(clause);
+                expected.push([
+                  100 * (index + 1),
+                  kind,
+                  normalizeSetupText(clause).normalized
+                ]);
+              }
+              const input = clauses.join(separator);
+              const document = normalizeSetupText(input);
+              const candidates = extractStorageCandidates(document);
+              variantCount += 1;
+              assert.deepEqual(
+                candidates.map((candidate) => [candidate.value, candidate.storageKind, candidate.raw]),
+                expected,
+                input
+              );
+              candidates.forEach((candidate) => assertCapacityCandidateContract(document, candidate));
+            }
+          }
+        }
+      }
+    }
+  }
+  assert.equal(variantCount, 864);
+});
+
 test("keeps capped segment-dense aggregate extraction materially subquadratic", () => {
   function timedExtraction(input) {
     const document = normalizeSetupText(input);
