@@ -5113,6 +5113,88 @@ test("replays adjacent storage disqualifier ownership zones", () => {
   assert.equal(variantCount, 864);
 });
 
+test("suppresses integrated generic AMD Vega proximity case-insensitively", () => {
+  for (const [input, modelRaw, source] of [
+    ["integrated AMD VEGA 64 8GB", "AMD VEGA 64", "gpu.amd-labeled-unknown"],
+    ["integrated amd vega 56 8GB", "amd vega 56", "gpu.amd-labeled-unknown"],
+    ["AMD vEgA 64 (iGPU) 8GB", "AMD vEgA 64", "gpu.amd-labeled-unknown"],
+    ["集成显卡 AMD VeGa 56 8GB", "AMD VeGa 56", "gpu.amd-labeled-unknown"],
+    [
+      "integrated AMD RADEON VEGA 64 8GB",
+      "AMD RADEON VEGA 64",
+      "gpu.amd-radeon-vega-dedicated"
+    ]
+  ]) {
+    const document = normalizeSetupText(input);
+    const model = extractGpuCandidates(document).find((candidate) => (
+      candidate.field === "gpuModel" && candidate.raw === modelRaw
+    ));
+    assert.ok(model, input);
+    assert.equal(model.source, source, input);
+    assert.equal(document.normalized.slice(model.start, model.end), modelRaw, input);
+    assert.deepEqual(candidateValues(extractCapacityCandidates(document), "vram"), [], input);
+  }
+
+  for (const input of [
+    "dedicated AMD VEGA 64 8GB",
+    "discrete AMD vEgA 56 8GB",
+    "AMD VEGA 64 8GB",
+    "integrated graphics;AMD VEGA 64 8GB"
+  ]) {
+    assert.deepEqual(candidateValues(
+      extractCapacityCandidates(normalizeSetupText(input)),
+      "vram"
+    ), [8], input);
+  }
+
+  assert.deepEqual(
+    extractCapacityCandidates(normalizeSetupText(
+      "integrated AMD VEGA 64 with 8GB VRAM"
+    )).map((candidate) => [candidate.field, candidate.value, candidate.raw]),
+    [["vram", 8, "8GB VRAM"]]
+  );
+});
+
+test("keeps storage-dense semantic ownership bounded at the 20k cap", () => {
+  function timedStorageDense(length) {
+    const repeats = Math.floor((length + 1) / 13);
+    const input = "free SSD 1GB ".repeat(repeats).trim();
+    const document = normalizeSetupText(input);
+    const start = performance.now();
+    const candidates = extractStorageCandidates(document);
+    return {
+      candidates,
+      durationMs: performance.now() - start,
+      normalizedLength: document.normalized.length,
+      repeats
+    };
+  }
+
+  timedStorageDense(2_500);
+  const quarter = timedStorageDense(5_000);
+  const half = timedStorageDense(10_000);
+  const full = timedStorageDense(20_000);
+
+  for (const sample of [quarter, half, full]) {
+    assert.equal(sample.candidates.length, sample.repeats);
+    assert.equal(sample.candidates.every((candidate) => (
+      candidate.storageKind === "free" && candidate.raw === "free SSD 1GB"
+    )), true);
+  }
+  assert.ok(
+    full.durationMs < 500,
+    `20k storage-dense extraction ${full.durationMs.toFixed(3)}ms`
+  );
+  assert.ok(
+    half.durationMs < Math.max(200, quarter.durationMs * 3),
+    `storage scaling 5k/10k ${quarter.durationMs.toFixed(3)}ms -> ${half.durationMs.toFixed(3)}ms`
+  );
+  assert.ok(
+    full.durationMs < Math.max(400, half.durationMs * 3),
+    `storage scaling 10k/20k ${half.durationMs.toFixed(3)}ms -> ${full.durationMs.toFixed(3)}ms`
+  );
+});
+
 test("keeps capped segment-dense aggregate extraction materially subquadratic", () => {
   function timedExtraction(input) {
     const document = normalizeSetupText(input);

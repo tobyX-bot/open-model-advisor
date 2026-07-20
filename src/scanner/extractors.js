@@ -44,6 +44,7 @@ const TRAILING_CAPACITY_AMOUNT = new RegExp(
 );
 const MAX_CAPACITY_LABEL_GAP = 32;
 const MAX_GPU_PROXIMITY_GAP = 24;
+const MAX_BOUNDED_SEMANTIC_GAP = 16;
 const APPLE_PLATFORM_CONTEXT = /\b(?:macOS|MacBook|Mac[ \t]+mini|Mac[ \t]+Studio|iMac|Apple[ \t]+(?:silicon|GPU))\b|苹果电脑|蘋果電腦|苹果系统|蘋果系統/iu;
 const NON_APPLE_M_SERIES_PREFIX = /\b(?:Intel(?:[ \t]+Core)?|Core)[ \t]*$/iu;
 const STRONG_APPLE_M_SERIES_PREFIX = /(?:(?:\bMacBook(?:[ \t]+(?:Air|Pro))?|\bMac[ \t]+(?:mini|Studio|Pro)|\biMac)(?:[ \t]+(?:is[ \t]+)?powered[ \t]+by)?|\b(?:CPU|processor|chip|SoC)(?:[ \t]+(?:is|was))?|(?:处理器|處理器|芯片|晶片)(?:[ \t]+(?:是|为|為))?)[ \t:,-]*$/iu;
@@ -89,6 +90,12 @@ function compilePatternMatchers(patterns) {
 
 function overlaps(left, right) {
   return left.start < right.end && right.start < left.end;
+}
+
+function spanGapLength(left, right) {
+  if (left.end <= right.start) return right.start - left.end;
+  if (right.end <= left.start) return left.start - right.end;
+  return 0;
 }
 
 function isValidEvidence(pattern, evidence, followingText) {
@@ -1135,8 +1142,17 @@ function resolveCapacityOwnership(segment, context, amount) {
   );
 }
 
-function storageQualifierOption(segment, clause, qualifier, ownershipSpan) {
-  const evidenceSpan = expandSemanticWrapper(segment, qualifier.start, qualifier.end);
+function storageQualifierOption(
+  segment,
+  clause,
+  qualifier,
+  ownershipSpan,
+  evidenceSpan
+) {
+  if (spanGapLength(evidenceSpan, ownershipSpan) > MAX_BOUNDED_SEMANTIC_GAP) {
+    return null;
+  }
+
   let gap = "";
   if (evidenceSpan.end <= ownershipSpan.start) {
     gap = segment.text.slice(evidenceSpan.end, ownershipSpan.start);
@@ -1177,26 +1193,43 @@ function storageOwnershipSpans(ownerships) {
     .sort((left, right) => left.start - right.start || left.end - right.end);
 }
 
-function assignStorageSemanticMatches(matches, ownerships, createOption) {
+function firstStorageSpanStartingAtOrAfter(storageSpans, position) {
+  let low = 0;
+  let high = storageSpans.length;
+  while (low < high) {
+    const middle = low + Math.floor((high - low) / 2);
+    if (storageSpans[middle].start < position) low = middle + 1;
+    else high = middle;
+  }
+  return low;
+}
+
+function assignStorageSemanticMatches(segment, matches, ownerships, createOption) {
   const storageSpans = storageOwnershipSpans(ownerships);
   const assignments = new Map(storageSpans.map((span) => [span.amount, []]));
 
   for (const match of matches) {
-    const options = storageSpans
-      .map((ownershipSpan) => createOption(match, ownershipSpan))
-      .filter(Boolean);
-    if (options.length === 0) continue;
+    const evidenceSpan = expandSemanticWrapper(segment, match.start, match.end);
+    const followingIndex = firstStorageSpanStartingAtOrAfter(
+      storageSpans,
+      evidenceSpan.end
+    );
+    const preceding = storageSpans[followingIndex - 1];
+    const following = storageSpans[followingIndex];
+    const precedingContains = preceding && (
+      preceding.start < evidenceSpan.end && preceding.end > evidenceSpan.start
+    );
+    const plausibleOwners = precedingContains
+      ? [preceding, following]
+      : [following, preceding];
 
-    const evidenceSpan = options[0].evidenceSpan;
-    const containing = options.find((option) => (
-      option.ownershipSpan.start < evidenceSpan.end
-      && option.ownershipSpan.end > evidenceSpan.start
-    ));
-    const following = options.find((option) => (
-      option.ownershipSpan.start >= evidenceSpan.end
-    ));
-    const owner = containing ?? following ?? options.at(-1);
-    assignments.get(owner.ownershipSpan.amount).push(owner);
+    for (const ownershipSpan of plausibleOwners) {
+      if (!ownershipSpan) continue;
+      const option = createOption(match, ownershipSpan, evidenceSpan);
+      if (!option) continue;
+      assignments.get(ownershipSpan.amount).push(option);
+      break;
+    }
   }
 
   return assignments;
@@ -1204,10 +1237,17 @@ function assignStorageSemanticMatches(matches, ownerships, createOption) {
 
 function assignStorageQualifiers(segment, clause, qualifiers, ownerships) {
   return assignStorageSemanticMatches(
+    segment,
     qualifiers,
     ownerships,
-    (qualifier, ownershipSpan) => (
-      storageQualifierOption(segment, clause, qualifier, ownershipSpan)
+    (qualifier, ownershipSpan, evidenceSpan) => (
+      storageQualifierOption(
+        segment,
+        clause,
+        qualifier,
+        ownershipSpan,
+        evidenceSpan
+      )
     )
   );
 }
@@ -1215,9 +1255,13 @@ function assignStorageQualifiers(segment, clause, qualifiers, ownerships) {
 function assignStorageDisqualifiers(segment, clause, disqualifiers, ownerships) {
   const storageOnly = disqualifiers.filter((match) => match.pattern.storageOnly);
   const assignments = assignStorageSemanticMatches(
+    segment,
     storageOnly,
     ownerships,
-    (match, ownershipSpan) => {
+    (match, ownershipSpan, evidenceSpan) => {
+      if (spanGapLength(evidenceSpan, ownershipSpan) > MAX_BOUNDED_SEMANTIC_GAP) {
+        return null;
+      }
       if (!hasAttachedDisqualifier(
         segment,
         clause,
@@ -1227,7 +1271,7 @@ function assignStorageDisqualifiers(segment, clause, disqualifiers, ownerships) 
       )) return null;
       return {
         match,
-        evidenceSpan: expandSemanticWrapper(segment, match.start, match.end),
+        evidenceSpan,
         ownershipSpan
       };
     }
@@ -1456,7 +1500,12 @@ function segmentMatchesAnyPattern(segment, matchers) {
 }
 
 function hasExplicitIntegratedVegaContext(document, candidate, clauseBoundaries) {
-  if (!/^AMD(?: Radeon)? Vega (?:56|64)$/u.test(candidate.value)) return false;
+  const modelIdentity = candidate.value
+    .normalize("NFKC")
+    .replace(/[ \t]+/gu, " ")
+    .trim()
+    .toLowerCase();
+  if (!/^amd(?: radeon)? vega (?:56|64)$/u.test(modelIdentity)) return false;
   const segment = document.segments[candidate.segmentIndex];
   const localStart = candidate.start - segment.start;
   const localEnd = candidate.end - segment.start;
