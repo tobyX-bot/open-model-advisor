@@ -5247,9 +5247,83 @@ test("replays overlapping shared storage-label semantic ownership", () => {
   assert.equal(variantCount, 108);
 });
 
+test("does not let a suppressed storage amount reserve the following qualifier", () => {
+  for (const [input, expected] of [
+    [
+      "1TB total SSD occupied 200GB free HDD 300GB",
+      [[1000, "total", "1TB total SSD"], [300, "free", "free HDD 300GB"]]
+    ],
+    [
+      "1TB 总容量 固态硬盘 已占用 200GB 可用 硬盘 300GB",
+      [[1000, "total", "1TB 总容量 固态硬盘"], [300, "free", "可用 硬盘 300GB"]]
+    ],
+    [
+      "300GB 剩餘 硬碟 已佔用 200GB 總容量 固態硬碟 1TB",
+      [[300, "free", "300GB 剩餘 硬碟"], [1000, "total", "總容量 固態硬碟 1TB"]]
+    ]
+  ]) {
+    const document = normalizeSetupText(input);
+    const candidates = extractStorageCandidates(document);
+    assert.deepEqual(
+      candidates.map((candidate) => [candidate.value, candidate.storageKind, candidate.raw]),
+      expected,
+      input
+    );
+    candidates.forEach((candidate) => assertCapacityCandidateContract(document, candidate));
+  }
+});
+
+test("replays 36 suppressed-middle storage ownership variants", () => {
+  const vocabularies = [
+    { firstLabel: "SSD", total: "total", used: "occupied", free: "free", lastLabel: "HDD" },
+    { firstLabel: "固态硬盘", total: "总容量", used: "已占用", free: "可用", lastLabel: "硬盘" },
+    { firstLabel: "固態硬碟", total: "總容量", used: "已佔用", free: "剩餘", lastLabel: "硬碟" }
+  ];
+  const wrappers = [["", ""], ["(", ")"]];
+  let variantCount = 0;
+
+  for (const vocabulary of vocabularies) {
+    for (const [open, close] of wrappers) {
+      const total = `${open}${vocabulary.total}${close}`;
+      const used = `${open}${vocabulary.used}${close}`;
+      const free = `${open}${vocabulary.free}${close}`;
+      const firstBefore = `1TB ${total} ${vocabulary.firstLabel}`;
+      const firstAfter = `${total} ${vocabulary.firstLabel} 1TB`;
+      const lastBefore = `300GB ${free} ${vocabulary.lastLabel}`;
+      const lastAfter = `${free} ${vocabulary.lastLabel} 300GB`;
+      const layouts = [
+        [`${firstBefore} ${used} 200GB ${lastAfter}`, [[1000, "total", firstBefore], [300, "free", lastAfter]]],
+        [`${firstAfter} ${used} 200GB ${lastAfter}`, [[1000, "total", firstAfter], [300, "free", lastAfter]]],
+        [`${firstBefore} ${used} 200GB ${lastBefore}`, [[1000, "total", firstBefore], [300, "free", lastBefore]]],
+        [`${lastBefore} ${used} 200GB ${firstAfter}`, [[300, "free", lastBefore], [1000, "total", firstAfter]]],
+        [`${lastAfter} ${used} 200GB ${firstAfter}`, [[300, "free", lastAfter], [1000, "total", firstAfter]]],
+        [`${lastBefore} ${used} 200GB ${firstBefore}`, [[300, "free", lastBefore], [1000, "total", firstBefore]]]
+      ];
+
+      for (const [input, expected] of layouts) {
+        const document = normalizeSetupText(input);
+        const candidates = extractStorageCandidates(document);
+        variantCount += 1;
+        assert.deepEqual(
+          candidates.map((candidate) => [candidate.value, candidate.storageKind, candidate.raw]),
+          expected.map(([value, kind, raw]) => [
+            value,
+            kind,
+            normalizeSetupText(raw).normalized
+          ]),
+          input
+        );
+        candidates.forEach((candidate) => assertCapacityCandidateContract(document, candidate));
+      }
+    }
+  }
+  assert.equal(variantCount, 36);
+});
+
 test("keeps direct extractors equal to aggregate output across interleaved calls", () => {
   const inputs = [
     "1TB total SSD free 200GB",
+    "1TB total SSD occupied 200GB free HDD 300GB",
     "200GB 剩餘 固態硬碟 總容量 1TB",
     "SSD total 100GB occupied 200GB HDD",
     "integrated AMD VEGA 64 8GB;RAM 32GB",
@@ -5333,25 +5407,59 @@ test("keeps dense non-storage disqualifier ownership subquadratic", () => {
   );
 });
 
+test("keeps dense shared-label ownership subquadratic", () => {
+  function medianSharedLabelTime(length) {
+    const phrase = "1GB SSD 2GB ";
+    const repeats = Math.floor((length + 1) / phrase.length);
+    const document = normalizeSetupText(phrase.repeat(repeats).trim());
+    extractStorageCandidates(document);
+    const durations = [];
+    let candidates = [];
+    for (let sample = 0; sample < 5; sample += 1) {
+      const start = performance.now();
+      candidates = extractStorageCandidates(document);
+      durations.push(performance.now() - start);
+    }
+    durations.sort((left, right) => left - right);
+    assert.equal(candidates.length, repeats * 2);
+    return durations[Math.floor(durations.length / 2)];
+  }
+
+  medianSharedLabelTime(2_500);
+  const quarter = medianSharedLabelTime(5_000);
+  const half = medianSharedLabelTime(10_000);
+  const full = medianSharedLabelTime(20_000);
+  assert.ok(full < 500, `20k shared-label extraction ${full.toFixed(3)}ms`);
+  assert.ok(full / half < 3, `shared-label half/full ${half.toFixed(3)}ms -> ${full.toFixed(3)}ms`);
+  assert.ok(full / quarter < 7, `shared-label quarter/full ${quarter.toFixed(3)}ms -> ${full.toFixed(3)}ms`);
+});
+
 test("keeps storage-dense semantic ownership bounded at the 20k cap", () => {
-  function timedStorageDense(length) {
+  function medianStorageDense(length) {
     const repeats = Math.floor((length + 1) / 13);
     const input = "free SSD 1GB ".repeat(repeats).trim();
     const document = normalizeSetupText(input);
-    const start = performance.now();
-    const candidates = extractStorageCandidates(document);
+    extractStorageCandidates(document);
+    const durations = [];
+    let candidates = [];
+    for (let sample = 0; sample < 5; sample += 1) {
+      const start = performance.now();
+      candidates = extractStorageCandidates(document);
+      durations.push(performance.now() - start);
+    }
+    durations.sort((left, right) => left - right);
     return {
       candidates,
-      durationMs: performance.now() - start,
+      durationMs: durations[Math.floor(durations.length / 2)],
       normalizedLength: document.normalized.length,
       repeats
     };
   }
 
-  timedStorageDense(2_500);
-  const quarter = timedStorageDense(5_000);
-  const half = timedStorageDense(10_000);
-  const full = timedStorageDense(20_000);
+  medianStorageDense(2_500);
+  const quarter = medianStorageDense(5_000);
+  const half = medianStorageDense(10_000);
+  const full = medianStorageDense(20_000);
 
   for (const sample of [quarter, half, full]) {
     assert.equal(sample.candidates.length, sample.repeats);
@@ -5364,30 +5472,38 @@ test("keeps storage-dense semantic ownership bounded at the 20k cap", () => {
     `20k storage-dense extraction ${full.durationMs.toFixed(3)}ms`
   );
   assert.ok(
-    half.durationMs < Math.max(200, quarter.durationMs * 3),
-    `storage scaling 5k/10k ${quarter.durationMs.toFixed(3)}ms -> ${half.durationMs.toFixed(3)}ms`
+    full.durationMs / half.durationMs < 3,
+    `storage scaling 10k/20k ${half.durationMs.toFixed(3)}ms -> ${full.durationMs.toFixed(3)}ms`
   );
   assert.ok(
-    full.durationMs < Math.max(400, half.durationMs * 3),
-    `storage scaling 10k/20k ${half.durationMs.toFixed(3)}ms -> ${full.durationMs.toFixed(3)}ms`
+    full.durationMs / quarter.durationMs < 7,
+    `storage scaling 5k/20k ${quarter.durationMs.toFixed(3)}ms -> ${full.durationMs.toFixed(3)}ms`
   );
 });
 
 test("keeps capped segment-dense aggregate extraction materially subquadratic", () => {
-  function timedExtraction(input) {
+  function medianExtraction(input) {
     const document = normalizeSetupText(input);
-    const start = performance.now();
-    const candidates = extractCandidates(document);
+    extractCandidates(document);
+    const durations = [];
+    let candidates = [];
+    for (let sample = 0; sample < 5; sample += 1) {
+      const start = performance.now();
+      candidates = extractCandidates(document);
+      durations.push(performance.now() - start);
+    }
+    durations.sort((left, right) => left - right);
     return {
       candidates,
-      durationMs: performance.now() - start,
+      durationMs: durations[Math.floor(durations.length / 2)],
       segments: document.segments.length
     };
   }
 
-  const noMatch = timedExtraction("x;".repeat(10_000));
-  const halfDense = timedExtraction("M1;".repeat(3_333));
-  const dense = timedExtraction("M1;".repeat(6_666));
+  const halfNoMatch = medianExtraction("x;".repeat(5_000));
+  const noMatch = medianExtraction("x;".repeat(10_000));
+  const halfDense = medianExtraction("M1;".repeat(3_333));
+  const dense = medianExtraction("M1;".repeat(6_666));
 
   assert.equal(noMatch.segments, 10_000);
   assert.equal(noMatch.candidates.length, 0);
@@ -5396,7 +5512,11 @@ test("keeps capped segment-dense aggregate extraction materially subquadratic", 
   assert.ok(noMatch.durationMs < 500, `no-match extraction ${noMatch.durationMs.toFixed(3)}ms`);
   assert.ok(dense.durationMs < 500, `dense extraction ${dense.durationMs.toFixed(3)}ms`);
   assert.ok(
-    dense.durationMs < Math.max(120, halfDense.durationMs * 2.5),
+    noMatch.durationMs / halfNoMatch.durationMs < 3,
+    `no-match scaling ${halfNoMatch.durationMs.toFixed(3)}ms -> ${noMatch.durationMs.toFixed(3)}ms`
+  );
+  assert.ok(
+    dense.durationMs / halfDense.durationMs < 3,
     `dense scaling ${halfDense.durationMs.toFixed(3)}ms -> ${dense.durationMs.toFixed(3)}ms`
   );
 });

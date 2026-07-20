@@ -805,26 +805,18 @@ function ownershipOption(segment, amount, label) {
   };
 }
 
-function labelHasAmountInPosition(segment, amounts, label, amountPosition) {
-  return amounts.some((candidate) => (
-    ownershipOption(segment, candidate, label)?.amountPosition === amountPosition
-  ));
-}
+function adjacentLabelOwnershipOptions(segment, labelIndex, amount) {
+  const cached = labelIndex.optionsByAmount.get(amount);
+  if (cached) return cached;
 
-function adjacentLabelOwnershipOptions(segment, labels, amount) {
-  let precedingLabel = null;
-  let followingLabel = null;
-
-  for (const label of labels) {
-    if (label.end <= amount.start) {
-      precedingLabel = label;
-      continue;
-    }
-    if (label.start >= amount.end) {
-      followingLabel = label;
-      break;
-    }
+  const { labels } = labelIndex;
+  const followingIndex = firstSpanStartingAtOrAfter(labels, amount.end);
+  let precedingIndex = followingIndex - 1;
+  while (precedingIndex >= 0 && labels[precedingIndex].end > amount.start) {
+    precedingIndex -= 1;
   }
+  const precedingLabel = labels[precedingIndex] ?? null;
+  const followingLabel = labels[followingIndex] ?? null;
 
   const precedingOption = precedingLabel
     ? ownershipOption(segment, amount, precedingLabel)
@@ -833,30 +825,55 @@ function adjacentLabelOwnershipOptions(segment, labels, amount) {
     ? ownershipOption(segment, amount, followingLabel)
     : null;
 
-  return { precedingLabel, followingLabel, precedingOption, followingOption };
+  const options = {
+    precedingLabel,
+    followingLabel,
+    precedingOption,
+    followingOption
+  };
+  labelIndex.optionsByAmount.set(amount, options);
+  return options;
 }
 
-function findCapacityOwnership(segment, labels, amounts, amount) {
+function createCapacityOwnershipIndex(segment, labels, amounts) {
+  const index = {
+    labels: [...labels].sort((left, right) => (
+      left.start - right.start || left.end - right.end
+    )),
+    optionsByAmount: new Map(),
+    positionsByLabel: new Map(labels.map((label) => [label, {
+      "before-label": false,
+      "after-label": false
+    }]))
+  };
+
+  for (const amount of amounts) {
+    const { precedingOption, followingOption } = adjacentLabelOwnershipOptions(
+      segment,
+      index,
+      amount
+    );
+    for (const option of [precedingOption, followingOption]) {
+      if (!option) continue;
+      index.positionsByLabel.get(option.label)[option.amountPosition] = true;
+    }
+  }
+  return index;
+}
+
+function findCapacityOwnership(segment, labelIndex, amount) {
   const {
     precedingLabel,
     followingLabel,
     precedingOption,
     followingOption
-  } = adjacentLabelOwnershipOptions(segment, labels, amount);
+  } = adjacentLabelOwnershipOptions(segment, labelIndex, amount);
 
   if (precedingOption && followingOption) {
-    const amountBeforeList = labelHasAmountInPosition(
-      segment,
-      amounts,
-      precedingLabel,
-      "before-label"
-    );
-    const labelBeforeList = labelHasAmountInPosition(
-      segment,
-      amounts,
-      followingLabel,
-      "after-label"
-    );
+    const amountBeforeList = labelIndex.positionsByLabel
+      .get(precedingLabel)["before-label"];
+    const labelBeforeList = labelIndex.positionsByLabel
+      .get(followingLabel)["after-label"];
 
     if (amountBeforeList !== labelBeforeList) {
       return {
@@ -940,13 +957,14 @@ function extendPairingScore(previous, edge) {
   };
 }
 
-function pairCapacityClause(segment, labels, amounts, gpuModels) {
+function pairCapacityClause(segment, labelIndex, amounts, gpuModels) {
   const empty = {
     assignments: new Map(),
     matchedAmounts: new Set(),
     usedLabels: new Set()
   };
   if (amounts.length < 2) return empty;
+  const { labels } = labelIndex;
 
   const owners = [
     ...labels.map((label) => ({
@@ -978,7 +996,7 @@ function pairCapacityClause(segment, labels, amounts, gpuModels) {
   amounts.forEach((amount, amountIndex) => {
     const { precedingOption, followingOption } = adjacentLabelOwnershipOptions(
       segment,
-      labels,
+      labelIndex,
       amount
     );
     for (const ownership of [precedingOption, followingOption].filter(Boolean)) {
@@ -1145,10 +1163,7 @@ function resolveCapacityOwnership(segment, context, amount) {
   }
   return pairedOwnership ?? findCapacityOwnership(
     segment,
-    context.labels.filter((label) => !context.pairings.usedLabels.has(label)),
-    context.amounts.filter((candidate) => (
-      !context.pairings.matchedAmounts.has(candidate)
-    )),
+    context.fallbackOwnershipIndex,
     amount
   );
 }
@@ -1678,10 +1693,26 @@ function extractCapacityCandidatesWithContext(document, modelContext) {
             clause
           )
         ));
+        const ownershipIndex = createCapacityOwnershipIndex(segment, labels, amounts);
+        const pairings = pairCapacityClause(
+          segment,
+          ownershipIndex,
+          amounts,
+          clauseGpuModels
+        );
+        const fallbackLabels = labels.filter((label) => !pairings.usedLabels.has(label));
+        const fallbackAmounts = amounts.filter((candidate) => (
+          !pairings.matchedAmounts.has(candidate)
+        ));
         context = {
           labels,
           amounts,
-          pairings: pairCapacityClause(segment, labels, amounts, clauseGpuModels)
+          pairings,
+          fallbackOwnershipIndex: createCapacityOwnershipIndex(
+            segment,
+            fallbackLabels,
+            fallbackAmounts
+          )
         };
         context.ownerships = new Map(amounts.map((candidate) => [
           candidate,
@@ -1696,17 +1727,20 @@ function extractCapacityCandidatesWithContext(document, modelContext) {
           span.amount,
           span
         ]));
-        context.storageQualifiers = assignStorageQualifiers(
-          segment,
-          clause,
-          storageQualifiers,
-          storageSpans
-        );
         context.storageDisqualifiers = assignStorageDisqualifiers(
           segment,
           clause,
           disqualifiers,
           storageSpans
+        );
+        const retainedStorageSpans = storageSpans.filter((span) => (
+          (context.storageDisqualifiers.get(span.amount)?.length ?? 0) === 0
+        ));
+        context.storageQualifiers = assignStorageQualifiers(
+          segment,
+          clause,
+          storageQualifiers,
+          retainedStorageSpans
         );
         clauseContexts.set(clauseKey, context);
       }
