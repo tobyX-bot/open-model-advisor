@@ -1120,31 +1120,86 @@ function collectStorageQualifiers(segment, matchers) {
   return collectLocalPatternMatches(segment, matchers);
 }
 
-function storageEvidence(segment, clause, qualifiers, localStart, localEnd) {
-  const options = qualifiers
-    .map((qualifier) => {
-      const evidenceSpan = expandSemanticWrapper(segment, qualifier.start, qualifier.end);
-      let gap = "";
-      if (evidenceSpan.end <= localStart) gap = segment.text.slice(evidenceSpan.end, localStart);
-      else if (evidenceSpan.start >= localEnd) gap = segment.text.slice(localEnd, evidenceSpan.start);
-      const inClause = localSpanIsInClause(evidenceSpan.start, evidenceSpan.end, clause);
-      const postposedAcrossComma = (
-        evidenceSpan.start >= localEnd
-        && /[,，]/u.test(gap)
-        && isBoundedSemanticPunctuation(gap, { allowComma: true })
-        && isTerminalSemanticQualifier(segment, qualifier)
-      );
-      if (!inClause && !postposedAcrossComma) return null;
-      if (!isBoundedSemanticPunctuation(gap, { allowComma: postposedAcrossComma })) return null;
+function resolveCapacityOwnership(segment, context, amount) {
+  const pairedOwnership = context.pairings.assignments.get(amount);
+  if (pairedOwnership?.status === "reserved") {
+    return { status: "unowned", ownership: null };
+  }
+  return pairedOwnership ?? findCapacityOwnership(
+    segment,
+    context.labels.filter((label) => !context.pairings.usedLabels.has(label)),
+    context.amounts.filter((candidate) => (
+      !context.pairings.matchedAmounts.has(candidate)
+    )),
+    amount
+  );
+}
 
-      return { qualifier, evidenceSpan, distance: gap.length };
-    })
-    .filter(Boolean)
-    .sort((left, right) => (
-      left.distance - right.distance
-      || left.qualifier.patternIndex - right.qualifier.patternIndex
-      || left.qualifier.start - right.qualifier.start
+function storageQualifierOption(segment, clause, qualifier, ownershipSpan) {
+  const evidenceSpan = expandSemanticWrapper(segment, qualifier.start, qualifier.end);
+  let gap = "";
+  if (evidenceSpan.end <= ownershipSpan.start) {
+    gap = segment.text.slice(evidenceSpan.end, ownershipSpan.start);
+  } else if (evidenceSpan.start >= ownershipSpan.end) {
+    gap = segment.text.slice(ownershipSpan.end, evidenceSpan.start);
+  }
+  const inClause = localSpanIsInClause(evidenceSpan.start, evidenceSpan.end, clause);
+  const postposedAcrossComma = (
+    evidenceSpan.start >= ownershipSpan.end
+    && /[,，]/u.test(gap)
+    && isBoundedSemanticPunctuation(gap, { allowComma: true })
+    && isTerminalSemanticQualifier(segment, qualifier)
+  );
+  if (!inClause && !postposedAcrossComma) return null;
+  if (!isBoundedSemanticPunctuation(gap, { allowComma: postposedAcrossComma })) {
+    return null;
+  }
+
+  return {
+    qualifier,
+    evidenceSpan,
+    ownershipSpan
+  };
+}
+
+function assignStorageQualifiers(segment, clause, qualifiers, ownerships) {
+  const storageSpans = [...ownerships]
+    .filter(([, result]) => (
+      result.status === "owned"
+      && result.ownership.label.pattern.field === "storage"
+    ))
+    .map(([amount, result]) => ({
+      amount,
+      start: Math.min(result.ownership.label.start, amount.start),
+      end: Math.max(result.ownership.label.end, amount.end)
+    }))
+    .sort((left, right) => left.start - right.start || left.end - right.end);
+  const assignments = new Map(storageSpans.map((span) => [span.amount, []]));
+
+  for (const qualifier of qualifiers) {
+    const options = storageSpans
+      .map((ownershipSpan) => (
+        storageQualifierOption(segment, clause, qualifier, ownershipSpan)
+      ))
+      .filter(Boolean);
+    if (options.length === 0) continue;
+
+    const evidenceSpan = options[0].evidenceSpan;
+    const containing = options.find((option) => (
+      option.ownershipSpan.start < evidenceSpan.end
+      && option.ownershipSpan.end > evidenceSpan.start
     ));
+    const following = options.find((option) => (
+      option.ownershipSpan.start >= evidenceSpan.end
+    ));
+    const owner = containing ?? following ?? options.at(-1);
+    assignments.get(owner.ownershipSpan.amount).push(owner);
+  }
+
+  return assignments;
+}
+
+function storageEvidence(options, localStart, localEnd) {
   const qualifierKinds = new Set(options.map((option) => option.qualifier.pattern.kind));
   const qualifier = options[0]?.qualifier;
 
@@ -1162,8 +1217,7 @@ function storageEvidence(segment, clause, qualifiers, localStart, localEnd) {
 function explicitCapacityEntry(
   document,
   segment,
-  clause,
-  qualifiers,
+  qualifierOptions,
   amount,
   ownership,
   retainedApproximation
@@ -1178,7 +1232,7 @@ function explicitCapacityEntry(
   }
   let kind = "unknown";
   if (label.pattern.field === "storage") {
-    const evidence = storageEvidence(segment, clause, qualifiers, localStart, localEnd);
+    const evidence = storageEvidence(qualifierOptions, localStart, localEnd);
     localStart = evidence.localStart;
     localEnd = evidence.localEnd;
     kind = evidence.kind;
@@ -1467,20 +1521,20 @@ function extractCapacityCandidatesWithContext(document, modelContext) {
           amounts,
           pairings: pairCapacityClause(segment, labels, amounts, clauseGpuModels)
         };
+        context.ownerships = new Map(amounts.map((candidate) => [
+          candidate,
+          resolveCapacityOwnership(segment, context, candidate)
+        ]));
+        context.storageQualifiers = assignStorageQualifiers(
+          segment,
+          clause,
+          storageQualifiers,
+          context.ownerships
+        );
         clauseContexts.set(clauseKey, context);
       }
 
-      const pairedOwnership = context.pairings.assignments.get(amount);
-      const ownership = pairedOwnership?.status === "reserved"
-        ? { status: "unowned", ownership: null }
-        : pairedOwnership ?? findCapacityOwnership(
-          segment,
-          context.labels.filter((label) => !context.pairings.usedLabels.has(label)),
-          context.amounts.filter((candidate) => (
-            !context.pairings.matchedAmounts.has(candidate)
-          )),
-          amount
-        );
+      const ownership = context.ownerships.get(amount);
       if (ownership.status === "ambiguous") continue;
       if (hasAttachedDisqualifier(
         segment,
@@ -1501,8 +1555,7 @@ function extractCapacityCandidatesWithContext(document, modelContext) {
         entry = explicitCapacityEntry(
           document,
           segment,
-          clause,
-          storageQualifiers,
+          context.storageQualifiers.get(amount) ?? [],
           amount,
           ownership.ownership,
           retainedApproximation

@@ -4912,6 +4912,94 @@ test("marks contradictory attached storage statuses unknown without losing evide
   );
 });
 
+test("keeps adjacent storage qualifiers with their owned fields", () => {
+  for (const [input, expected] of [
+    [
+      "SSD total 100GB free HDD 200GB",
+      [[100, "total", "SSD total 100GB"], [200, "free", "free HDD 200GB"]]
+    ],
+    [
+      "free SSD 100GB total HDD 200GB",
+      [[100, "free", "free SSD 100GB"], [200, "total", "total HDD 200GB"]]
+    ],
+    [
+      "SSD total free 100GB remaining HDD 200GB",
+      [[100, "unknown", "SSD total free 100GB"], [200, "free", "remaining HDD 200GB"]]
+    ]
+  ]) {
+    const document = normalizeSetupText(input);
+    const candidates = extractStorageCandidates(document);
+    assert.deepEqual(
+      candidates.map((candidate) => [candidate.value, candidate.storageKind, candidate.raw]),
+      expected,
+      input
+    );
+    candidates.forEach((candidate) => assertCapacityCandidateContract(document, candidate));
+  }
+});
+
+test("replays adjacent storage qualifier ownership zones", () => {
+  const vocabularies = [
+    {
+      labels: ["SSD", "HDD", "disk"],
+      qualifiers: [["total", "total"], ["remaining", "free"], ["capacity", "total"]]
+    },
+    {
+      labels: ["drive", "SSD", "HDD"],
+      qualifiers: [["available", "free"], ["capacity", "total"], ["free", "free"]]
+    },
+    {
+      labels: ["固态硬盘", "硬盘", "存储"],
+      qualifiers: [["总容量", "total"], ["剩余", "free"], ["可用", "free"]]
+    },
+    {
+      labels: ["固態硬碟", "硬碟", "存儲"],
+      qualifiers: [["總容量", "total"], ["剩餘", "free"], ["可用", "free"]]
+    }
+  ];
+  const wrappers = [["", ""], ["(", ")"], ["（", "）"]];
+  const separators = [" ", " : ", " ： ", " , ", " ， "];
+  let variantCount = 0;
+
+  for (const vocabulary of vocabularies) {
+    for (const fieldCount of [2, 3]) {
+      for (let orientationMask = 0; orientationMask < 2 ** fieldCount; orientationMask += 1) {
+        for (const [open, close] of wrappers) {
+          for (const separator of separators) {
+            const clauses = [];
+            const expected = [];
+            for (let index = 0; index < fieldCount; index += 1) {
+              const label = vocabulary.labels[index];
+              const [qualifier, kind] = vocabulary.qualifiers[index];
+              const amount = `${100 * (index + 1)}GB`;
+              const clause = orientationMask & (1 << index)
+                ? `${open}${qualifier}${close} ${amount} ${label}`
+                : `${open}${qualifier}${close} ${label} ${amount}`;
+              clauses.push(clause);
+              expected.push([
+                100 * (index + 1),
+                kind,
+                normalizeSetupText(clause).normalized
+              ]);
+            }
+            const input = clauses.join(separator);
+            const document = normalizeSetupText(input);
+            const candidates = extractStorageCandidates(document);
+            variantCount += 1;
+            assert.deepEqual(
+              candidates.map((candidate) => [candidate.value, candidate.storageKind, candidate.raw]),
+              expected,
+              input
+            );
+            candidates.forEach((candidate) => assertCapacityCandidateContract(document, candidate));
+          }
+        }
+      }
+    }
+  }
+  assert.equal(variantCount, 720);
+});
+
 test("keeps capped segment-dense aggregate extraction materially subquadratic", () => {
   function timedExtraction(input) {
     const document = normalizeSetupText(input);
