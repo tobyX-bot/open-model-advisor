@@ -4343,3 +4343,165 @@ test("covers 1,837 reconstructed semantic review families", () => {
 
   assert.equal(assertionFamilies, 1_837);
 });
+
+test("abstains across the 1,080-case wrapped shared-label range sweep", () => {
+  const fields = [
+    ["RAM", "16", "64", "GB"],
+    ["VRAM", "8", "12", "GiB"],
+    ["SSD", "1", "2", "TB"],
+    ["内存", "16", "64", "GB"],
+    ["显存", "8", "12", "GiB"],
+    ["固态硬盘", "1", "2", "TB"],
+    ["記憶體", "16", "64", "GB"],
+    ["顯存", "8", "12", "GiB"],
+    ["固態硬碟", "1", "2", "TB"]
+  ];
+  const connectorFamilies = [
+    () => "to",
+    () => "or",
+    (wrapperIndex) => wrapperIndex % 2 === 0 ? "或" : "或者",
+    () => "至",
+    () => "/",
+    () => "-",
+    () => "–",
+    () => "—",
+    () => "~",
+    () => "～"
+  ];
+  const wrappers = [
+    ["(", ")"],
+    ["[", "]"],
+    ["（", "）"],
+    ["［", "］"],
+    ["【", "】"],
+    ["〔", "〕"]
+  ];
+  let sweepCount = 0;
+
+  for (const [label, left, right, unit] of fields) {
+    for (const createConnector of connectorFamilies) {
+      for (const [wrapperIndex, [open, close]] of wrappers.entries()) {
+        const connector = createConnector(wrapperIndex);
+        const connectorText = connector === "/" ? connector : ` ${connector} `;
+        const range = `${left}${unit}${connectorText}${open}${right}${unit}${close}`;
+        for (const input of [`${label} ${range}`, `${range} ${label}`]) {
+          sweepCount += 1;
+          assert.deepEqual(extractCapacityCandidates(normalizeSetupText(input)), [], input);
+        }
+      }
+    }
+  }
+  assert.equal(sweepCount, 1_080);
+
+  for (const input of [
+    "RAM 16GB or (RAM 64GB)",
+    "16GB RAM 至【64GB RAM】",
+    "VRAM 8GiB～（VRAM 12GiB）",
+    "SSD 1TB / [SSD 2TB]"
+  ]) {
+    assert.equal(extractCapacityCandidates(normalizeSetupText(input)).length, 2, input);
+  }
+});
+
+test("attaches postposed disqualifiers across bounded semantic punctuation", () => {
+  for (const input of [
+    "RAM 64GB, unsupported",
+    "RAM 64GB, (not supported)",
+    "内存 32GB，不支持",
+    "記憶體 16GB，（不支援）",
+    "SSD 900GB, in use",
+    "SSD 900GB, (consumed)",
+    "固态硬盘 900GB，已占用",
+    "固態硬碟 900GB，（已佔用）"
+  ]) {
+    assert.deepEqual(extractCapacityCandidates(normalizeSetupText(input)), [], input);
+  }
+
+  for (const [input, expected] of [
+    ["RAM 64GB, unsupported;SSD 512GB", [["storage", 512]]],
+    ["RAM 64GB, unsupported, SSD 512GB", [["storage", 512]]],
+    ["RAM 64GB, SSD 900GB, in use", [["ram", 64]]],
+    ["内存 32GB，不支持；固态硬盘 1TB", [["storage", 1000]]],
+    ["RAM 64GB installed, SSD 512GB", [["ram", 64], ["storage", 512]]],
+    ["upgraded to 64GB RAM, SSD 512GB", [["ram", 64], ["storage", 512]]]
+  ]) {
+    assert.deepEqual(
+      extractCapacityCandidates(normalizeSetupText(input)).map((candidate) => [
+        candidate.field,
+        candidate.value
+      ]),
+      expected,
+      input
+    );
+  }
+});
+
+test("retains wrapped storage status in exact evidence and rejects used status", () => {
+  const accepted = [
+    ["SSD 100GB (free)", "free"],
+    ["SSD 100GB [available]", "free"],
+    ["SSD 100GB（remaining）", "free"],
+    ["(total) SSD 100GB", "total"],
+    ["SSD [capacity] 100GB", "total"],
+    ["固态硬盘 100GB（可用）", "free"],
+    ["固态硬盘【剩余】100GB", "free"],
+    ["（总容量）固态硬盘 100GB", "total"],
+    ["固態硬碟 100GB（可用）", "free"],
+    ["固態硬碟【剩餘】100GB", "free"],
+    ["（總容量）固態硬碟 100GB", "total"],
+    ["SSD 100GB, (free)", "free"]
+  ];
+
+  for (const [input, kind] of accepted) {
+    const document = normalizeSetupText(input);
+    const candidates = extractStorageCandidates(document);
+    assert.equal(candidates.length, 1, input);
+    assert.equal(candidates[0].storageKind, kind, input);
+    assert.equal(candidates[0].raw, document.normalized, input);
+    assertCapacityCandidateContract(document, candidates[0]);
+  }
+
+  for (const input of [
+    "SSD 100GB (used)",
+    "SSD 100GB [occupied]",
+    "固态硬盘 100GB（已占用）",
+    "固態硬碟 100GB【已佔用】"
+  ]) {
+    assert.deepEqual(extractStorageCandidates(normalizeSetupText(input)), [], input);
+  }
+});
+
+test("retains punctuation only inside the three frozen natural approximation families", () => {
+  for (const [input, field, value] of [
+    ["about 8 gigs: of memory", "ram", 8],
+    ["about 8 gigs, of memory", "ram", 8],
+    ["内存:大概 32GB", "ram", 32],
+    ["内存：大概 32GB", "ram", 32],
+    ["内存，大概 32GB", "ram", 32],
+    ["記憶體:大約 16GB", "ram", 16],
+    ["記憶體：大約 16GB", "ram", 16],
+    ["記憶體，大約 16GB", "ram", 16]
+  ]) {
+    const document = normalizeSetupText(input);
+    const candidates = extractMemoryCandidates(document);
+    assert.equal(candidates.length, 1, input);
+    assert.deepEqual(
+      [candidates[0].field, candidates[0].value, candidates[0].confidence, candidates[0].inferred],
+      [field, value, "low", true],
+      input
+    );
+    assert.equal(candidates[0].raw, document.normalized, input);
+    assertCapacityCandidateContract(document, candidates[0]);
+  }
+
+  for (const input of [
+    "RAM:大概 32GB",
+    "VRAM,大約 16GB",
+    "SSD:about 1TB",
+    "内存:大约 32GB",
+    "記憶體:大概 16GB",
+    "about 8 gigs: of VRAM"
+  ]) {
+    assert.deepEqual(extractCapacityCandidates(normalizeSetupText(input)), [], input);
+  }
+});

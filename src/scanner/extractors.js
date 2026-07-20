@@ -52,7 +52,16 @@ const STORAGE_M_SERIES_SUFFIX = /^[ \t:-]*(?:NVMe|SSD|storage|disk|drive)\b/iu;
 const TRANSFER_RATE_SUFFIX = /^(?:[ \t]+(?:(?:\/[ \t]*|per[ \t]+)(?:(?:ms|msecs?|milliseconds?|s|secs?|seconds?|mins?|minutes?|hrs?|hours?|days?)\b|毫秒|秒(?:钟|鐘)?|分钟|分鐘|小时|小時|天)|(?:each|every|an?)[ \t]+(?:millisecond|second|minute|hour|day)s?\b)|[ \t]*每[ \t]*(?:毫秒|秒(?:钟|鐘)?|分钟|分鐘|小时|小時|天))/iu;
 const TRANSFER_RATE_INVENTORY = /^[ \t]+(?:drive|SSD|HDD|disk|storage)\b/iu;
 const TRANSFER_RATE_PREFIX = /(?:\b(?:speed|throughput|bandwidth|rate)\b|带宽|帶寬|速度|吞吐量)[ \t:,-]*$/iu;
-const CAPACITY_RANGE_CONNECTOR = /^[ \t]*(?:-|–|—|~|～|\/|to|or|或(?:者)?|至)[ \t]*$/iu;
+const CAPACITY_RANGE_CONNECTOR = /^(?:[ \t]*(?:\)|\]|）|］|】|〕))?[ \t]*(?:-|–|—|~|～|\/|to|or|或(?:者)?|至)[ \t]*(?:(?:\(|\[|（|［|【|〔)[ \t]*)?$/iu;
+const BOUNDED_SEMANTIC_PUNCTUATION = /^(?:(?:[ \t,:，：-])|\(|\)|\[|\]|（|）|［|］|【|】|〔|〕){0,16}$/u;
+const SEMANTIC_WRAPPER_PAIRS = new Map([
+  ["(", ")"],
+  ["[", "]"],
+  ["（", "）"],
+  ["［", "］"],
+  ["【", "】"],
+  ["〔", "〕"]
+]);
 const ENGLISH_INTEGRATED_GPU_CONTEXT_SOURCE = String.raw`(?:(?:integrated|onboard)(?:[ \t]+(?:GPU|graphics(?:[ \t]+card)?))?|shared[ \t]+(?:GPU|graphics(?:[ \t]+card)?)|iGPU)`;
 const CHINESE_INTEGRATED_GPU_CONTEXT_SOURCE = String.raw`(?:(?:(?:集成|共享)(?:式|型)?|整合(?:式|型)?|内置|內建)(?:的)?(?:显卡|顯卡|图形|圖形)?|核显|核顯)`;
 const CHINESE_COPULAR_INTEGRATED_GPU_CONTEXT_SOURCE = String.raw`(?:显卡|顯卡|图形|圖形)[ \t]*(?:是|为|為)[ \t]*(?:(?:集成|共享)(?:式|型)?|整合(?:式|型)?|内置|內建)(?:的)?`;
@@ -459,11 +468,16 @@ function collectCapacityClauseBoundaries(segment) {
 
   for (const [patternIndex, pattern] of CAPACITY_CLAUSE_PATTERNS.entries()) {
     for (const match of segment.text.matchAll(globalRegex(pattern.regex))) {
-      boundaries.push({
+      const boundary = {
         patternIndex,
         start: match.index,
         end: match.index + match[0].length
-      });
+      };
+      if (
+        pattern.id === "capacity.clause.punctuation"
+        && isFrozenApproximationPunctuationBoundary(segment, boundary)
+      ) continue;
+      boundaries.push(boundary);
     }
   }
 
@@ -497,6 +511,56 @@ function localSpanIsInClause(start, end, clause) {
   return start >= clause.start && end <= clause.end;
 }
 
+function isBoundedSemanticPunctuation(text, { allowComma = false } = {}) {
+  if (!BOUNDED_SEMANTIC_PUNCTUATION.test(text)) return false;
+  const commaCount = text.match(/[,，]/gu)?.length ?? 0;
+  return allowComma ? commaCount <= 1 : commaCount === 0;
+}
+
+function isTerminalSemanticQualifier(segment, match) {
+  const followingText = segment.text.slice(match.end);
+  const boundaryOffset = followingText.search(/[,，.。!?！？]/u);
+  const localTail = boundaryOffset < 0
+    ? followingText
+    : followingText.slice(0, boundaryOffset);
+  return !CAPACITY_TOKEN.test(localTail) && !CAPACITY_FIELD_TOKEN.test(localTail);
+}
+
+function expandSemanticWrapper(segment, start, end) {
+  let openIndex = start - 1;
+  while (openIndex >= 0 && /[ \t]/u.test(segment.text[openIndex])) openIndex -= 1;
+  const closeCharacter = SEMANTIC_WRAPPER_PAIRS.get(segment.text[openIndex]);
+  if (!closeCharacter) return { start, end };
+
+  let closeIndex = end;
+  while (closeIndex < segment.text.length && /[ \t]/u.test(segment.text[closeIndex])) {
+    closeIndex += 1;
+  }
+  if (segment.text[closeIndex] !== closeCharacter) return { start, end };
+  return { start: openIndex, end: closeIndex + 1 };
+}
+
+function isFrozenApproximationPunctuationBoundary(segment, boundary) {
+  if (!/^[,，]$/u.test(segment.text.slice(boundary.start, boundary.end))) return false;
+  const precedingText = segment.text.slice(Math.max(0, boundary.start - 48), boundary.start);
+  const followingText = segment.text.slice(boundary.end, Math.min(segment.text.length, boundary.end + 48));
+
+  return (
+    (
+      /\babout[ \t]+\d{1,5}[ \t-]*(?:gigabytes?|gigs?)$/iu.test(precedingText)
+      && /^[ \t]*of[ \t]+memory\b/iu.test(followingText)
+    )
+    || (
+      /内存$/u.test(precedingText)
+      && /^[ \t]*大概[ \t]*\d{1,5}[ \t-]*(?:TiB|TB|GiB|GB|G)\b/iu.test(followingText)
+    )
+    || (
+      /記憶體$/u.test(precedingText)
+      && /^[ \t]*大約[ \t]*\d{1,5}[ \t-]*(?:TiB|TB|GiB|GB|G)\b/iu.test(followingText)
+    )
+  );
+}
+
 function isRetainedApproximationMatch(segment, match, amount, ownership) {
   const labelText = ownership
     ? segment.text.slice(ownership.label.start, ownership.label.end)
@@ -509,7 +573,9 @@ function isRetainedApproximationMatch(segment, match, amount, ownership) {
     && match.start === amount.start
     && /^about\b/iu.test(segment.text.slice(amount.start, amount.end))
     && /^memory$/iu.test(labelText)
-    && /^[ \t]+of[ \t]+$/iu.test(segment.text.slice(amount.end, ownership.label.start))
+    && /^[ \t]*[,，:]?[ \t]*of[ \t]+$/iu.test(
+      segment.text.slice(amount.end, ownership.label.start)
+    )
   ) {
     return true;
   }
@@ -521,7 +587,10 @@ function isRetainedApproximationMatch(segment, match, amount, ownership) {
     && /^(?:大约|大約|大概)$/u.test(segment.text.slice(match.start, match.end))
     && match.start >= ownership.label.end
     && match.end <= amount.start
-    && /^[ \t]*$/u.test(segment.text.slice(ownership.label.end, match.start))
+    && isBoundedSemanticPunctuation(
+      segment.text.slice(ownership.label.end, match.start),
+      { allowComma: true }
+    )
     && /^[ \t]*$/u.test(segment.text.slice(match.end, amount.start))
   )) return false;
 
@@ -568,23 +637,35 @@ function hasAttachedDisqualifier(segment, clause, disqualifiers, amount, ownersh
     if (isCompleteBinaryCapacityConnector(segment, clause, match)) return false;
     if (isRetainedApproximationMatch(segment, match, amount, ownership)) return false;
 
+    const postposedGap = match.start >= localEnd
+      ? segment.text.slice(localEnd, match.start)
+      : "";
+    if (
+      match.pattern.allowAfterCapacity
+      && match.start >= localEnd
+      && !localSpanIsInClause(match.start, match.end, clause)
+      && /[,，]/u.test(postposedGap)
+      && isBoundedSemanticPunctuation(postposedGap, { allowComma: true })
+      && isTerminalSemanticQualifier(segment, match)
+    ) return true;
+
     if (match.pattern.requireCapacityAdjacency) {
       if (
         !localSpanIsInClause(match.start, match.end, clause)
         && !(
           match.pattern.allowAcrossCapacityIntroducer
           && match.end <= localStart
-          && /^[ \t:()（）-]*$/u.test(segment.text.slice(match.end, localStart))
+          && isBoundedSemanticPunctuation(segment.text.slice(match.end, localStart))
         )
       ) return false;
       if (match.end <= localStart) {
-        return /^[ \t:()（）-]*$/u.test(segment.text.slice(match.end, localStart));
+        return isBoundedSemanticPunctuation(segment.text.slice(match.end, localStart));
       }
       if (match.end <= amount.start) {
-        return /^[ \t:()（）-]*$/u.test(segment.text.slice(match.end, amount.start));
+        return isBoundedSemanticPunctuation(segment.text.slice(match.end, amount.start));
       }
       if (match.start >= localEnd && match.pattern.allowAfterCapacity) {
-        return /^[ \t:()（）-]*$/u.test(segment.text.slice(localEnd, match.start));
+        return isBoundedSemanticPunctuation(segment.text.slice(localEnd, match.start));
       }
       return false;
     }
@@ -592,7 +673,7 @@ function hasAttachedDisqualifier(segment, clause, disqualifiers, amount, ownersh
     if (match.pattern.requireAmountAdjacency) {
       if (!localSpanIsInClause(match.start, match.end, clause)) return false;
       if (match.end > amount.start) return false;
-      return /^[ \t:()（）-]*$/u.test(segment.text.slice(match.end, amount.start));
+      return isBoundedSemanticPunctuation(segment.text.slice(match.end, amount.start));
     }
 
     if (
@@ -605,14 +686,14 @@ function hasAttachedDisqualifier(segment, clause, disqualifiers, amount, ownersh
 
     if (match.end <= localStart) {
       if (!localSpanIsInClause(match.start, match.end, clause)) return false;
-      return /^[ \t:()（）-]*$/u.test(segment.text.slice(match.end, localStart));
+      return isBoundedSemanticPunctuation(segment.text.slice(match.end, localStart));
     }
 
     if (match.start >= localEnd && match.pattern.allowAfterCapacity) {
       if (!localSpanIsInClause(match.start, match.end, clause)) return false;
       const gap = segment.text.slice(localEnd, match.start);
       if (match.pattern.requireAdjacentAfterCapacity && gap.length > 0) return false;
-      return /^[ \t:()（）-]*$/u.test(gap);
+      return isBoundedSemanticPunctuation(gap);
     }
     return false;
   });
@@ -972,14 +1053,22 @@ function collectStorageQualifiers(segment) {
 
 function storageEvidence(segment, clause, qualifiers, localStart, localEnd) {
   const options = qualifiers
-    .filter((qualifier) => localSpanIsInClause(qualifier.start, qualifier.end, clause))
     .map((qualifier) => {
+      const evidenceSpan = expandSemanticWrapper(segment, qualifier.start, qualifier.end);
       let gap = "";
-      if (qualifier.end <= localStart) gap = segment.text.slice(qualifier.end, localStart);
-      else if (qualifier.start >= localEnd) gap = segment.text.slice(localEnd, qualifier.start);
-      if (!/^[ \t:]*$/u.test(gap)) return null;
+      if (evidenceSpan.end <= localStart) gap = segment.text.slice(evidenceSpan.end, localStart);
+      else if (evidenceSpan.start >= localEnd) gap = segment.text.slice(localEnd, evidenceSpan.start);
+      const inClause = localSpanIsInClause(evidenceSpan.start, evidenceSpan.end, clause);
+      const postposedAcrossComma = (
+        evidenceSpan.start >= localEnd
+        && /[,，]/u.test(gap)
+        && isBoundedSemanticPunctuation(gap, { allowComma: true })
+        && isTerminalSemanticQualifier(segment, qualifier)
+      );
+      if (!inClause && !postposedAcrossComma) return null;
+      if (!isBoundedSemanticPunctuation(gap, { allowComma: postposedAcrossComma })) return null;
 
-      return { qualifier, distance: gap.length };
+      return { qualifier, evidenceSpan, distance: gap.length };
     })
     .filter(Boolean)
     .sort((left, right) => (
@@ -990,8 +1079,8 @@ function storageEvidence(segment, clause, qualifiers, localStart, localEnd) {
   const qualifier = options[0]?.qualifier;
 
   return {
-    localStart: qualifier ? Math.min(localStart, qualifier.start) : localStart,
-    localEnd: qualifier ? Math.max(localEnd, qualifier.end) : localEnd,
+    localStart: qualifier ? Math.min(localStart, options[0].evidenceSpan.start) : localStart,
+    localEnd: qualifier ? Math.max(localEnd, options[0].evidenceSpan.end) : localEnd,
     kind: qualifier?.pattern.kind ?? "unknown"
   };
 }

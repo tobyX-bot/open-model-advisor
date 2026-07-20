@@ -482,19 +482,33 @@ export const CAPACITY_AMOUNT_PATTERNS = freezePatterns([
   }
 ]);
 
+const CAPACITY_RANGE_CONNECTOR_SOURCE = String.raw`(?:to|or|或(?:者)?|至|\/|[-–—~～])`;
+const CAPACITY_RANGE_OPEN_WRAPPER_SOURCE = String.raw`(?:[ \t]*(?:\(|\[|（|［|【|〔)[ \t]*)?`;
+const CAPACITY_RANGE_CLOSE_WRAPPER_SOURCE = String.raw`(?:[ \t]*(?:\)|\]|）|］|】|〕))?`;
+const CAPACITY_RANGE_UNIT_SOURCE = String.raw`(?:TiB|TB|GiB|GB|G|gigabytes?|gigs?)`;
+
 export const CAPACITY_RANGE_PATTERNS = freezePatterns([
   {
     id: "capacity.range.two-units",
-    regex: /(?<![A-Z0-9.])(?<left>\d{1,5})[ \t]*(?:TiB|TB|GiB|GB|G|gigabytes?|gigs?)[ \t]*(?:to|or|或(?:者)?|至|\/|[-–—~～])[ \t]*(?<right>\d{1,5})[ \t]*(?:TiB|TB|GiB|GB|G|gigabytes?|gigs?)(?![A-Z0-9/])/iu
+    regex: new RegExp(
+      String.raw`(?<![A-Z0-9.])${CAPACITY_RANGE_OPEN_WRAPPER_SOURCE}(?<left>\d{1,5})[ \t]*${CAPACITY_RANGE_UNIT_SOURCE}${CAPACITY_RANGE_CLOSE_WRAPPER_SOURCE}[ \t]*${CAPACITY_RANGE_CONNECTOR_SOURCE}[ \t]*${CAPACITY_RANGE_OPEN_WRAPPER_SOURCE}(?<right>\d{1,5})[ \t]*${CAPACITY_RANGE_UNIT_SOURCE}${CAPACITY_RANGE_CLOSE_WRAPPER_SOURCE}(?![A-Z0-9/])`,
+      "iu"
+    )
   },
   {
     id: "capacity.range.shared-trailing-unit",
-    regex: /(?<![A-Z0-9.])(?<left>\d{1,5})[ \t]*(?:to|or|或(?:者)?|至|\/|[-–—~～])[ \t]*(?<right>\d{1,5})[ \t]*(?:TiB|TB|GiB|GB|G|gigabytes?|gigs?)(?![A-Z0-9/])/iu,
+    regex: new RegExp(
+      String.raw`(?<![A-Z0-9.])${CAPACITY_RANGE_OPEN_WRAPPER_SOURCE}(?<left>\d{1,5})${CAPACITY_RANGE_CLOSE_WRAPPER_SOURCE}[ \t]*${CAPACITY_RANGE_CONNECTOR_SOURCE}[ \t]*${CAPACITY_RANGE_OPEN_WRAPPER_SOURCE}(?<right>\d{1,5})[ \t]*${CAPACITY_RANGE_UNIT_SOURCE}${CAPACITY_RANGE_CLOSE_WRAPPER_SOURCE}(?![A-Z0-9/])`,
+      "iu"
+    ),
     bareEndpoint: "left"
   },
   {
     id: "capacity.range.shared-leading-unit",
-    regex: /(?<![A-Z0-9.])(?<left>\d{1,5})[ \t]*(?:TiB|TB|GiB|GB|G|gigabytes?|gigs?)[ \t]*(?:to|or|或(?:者)?|至|\/|[-–—~～])[ \t]*(?<right>\d{1,5})(?![A-Z0-9.])/iu,
+    regex: new RegExp(
+      String.raw`(?<![A-Z0-9.])${CAPACITY_RANGE_OPEN_WRAPPER_SOURCE}(?<left>\d{1,5})[ \t]*${CAPACITY_RANGE_UNIT_SOURCE}${CAPACITY_RANGE_CLOSE_WRAPPER_SOURCE}[ \t]*${CAPACITY_RANGE_CONNECTOR_SOURCE}[ \t]*${CAPACITY_RANGE_OPEN_WRAPPER_SOURCE}(?<right>\d{1,5})${CAPACITY_RANGE_CLOSE_WRAPPER_SOURCE}(?![A-Z0-9.])`,
+      "iu"
+    ),
     bareEndpoint: "right"
   }
 ]);
