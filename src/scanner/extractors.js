@@ -27,6 +27,7 @@ const FORBIDDEN_GENERIC_LABEL = new RegExp(
   String.raw`(?:${CAPACITY_FIELD_SOURCE}|\b(?:task|workload|with)\b|任务|任務|用途)`,
   "iu"
 );
+const CAPACITY_FIELD_TOKEN = new RegExp(CAPACITY_FIELD_SOURCE, "iu");
 const COPULAR_APPLE_M_SERIES = /^(?:is|was)[ \t]+M[1-4](?:[ \t]*(?:Pro|Max|Ultra))?$/iu;
 const TRAILING_PLAIN_NUMBER = new RegExp(
   String.raw`(?:^|[ \t])${CAPACITY_INTEGER_SOURCE}$`,
@@ -51,10 +52,10 @@ const STORAGE_M_SERIES_SUFFIX = /^[ \t:-]*(?:NVMe|SSD|storage|disk|drive)\b/iu;
 const TRANSFER_RATE_SUFFIX = /^(?:[ \t]+(?:(?:\/[ \t]*|per[ \t]+)(?:(?:ms|msecs?|milliseconds?|s|secs?|seconds?|mins?|minutes?|hrs?|hours?|days?)\b|毫秒|秒(?:钟|鐘)?|分钟|分鐘|小时|小時|天)|(?:each|every|an?)[ \t]+(?:millisecond|second|minute|hour|day)s?\b)|[ \t]*每[ \t]*(?:毫秒|秒(?:钟|鐘)?|分钟|分鐘|小时|小時|天))/iu;
 const TRANSFER_RATE_INVENTORY = /^[ \t]+(?:drive|SSD|HDD|disk|storage)\b/iu;
 const TRANSFER_RATE_PREFIX = /(?:\b(?:speed|throughput|bandwidth|rate)\b|带宽|帶寬|速度|吞吐量)[ \t:,-]*$/iu;
-const CAPACITY_RANGE_CONNECTOR = /^[ \t]*(?:-|–|—|~|～|to|or|或(?:者)?|至)[ \t]*$/iu;
-const ENGLISH_INTEGRATED_GPU_CONTEXT_SOURCE = String.raw`(?:(?:integrated|onboard)(?:[ \t]+(?:GPU|graphics(?:[ \t]+card)?))?|shared[ \t]+(?:GPU|graphics(?:[ \t]+card)?))`;
-const CHINESE_INTEGRATED_GPU_CONTEXT_SOURCE = String.raw`(?:(?:集成|共享|整合(?:式)?|内置|內建)(?:的)?(?:显卡|顯卡|图形|圖形)?|核显|核顯)`;
-const CHINESE_COPULAR_INTEGRATED_GPU_CONTEXT_SOURCE = String.raw`(?:显卡|顯卡|图形|圖形)[ \t]*(?:是|为|為)[ \t]*(?:集成|共享|整合(?:式)?|内置|內建)(?:的)?`;
+const CAPACITY_RANGE_CONNECTOR = /^[ \t]*(?:-|–|—|~|～|\/|to|or|或(?:者)?|至)[ \t]*$/iu;
+const ENGLISH_INTEGRATED_GPU_CONTEXT_SOURCE = String.raw`(?:(?:integrated|onboard)(?:[ \t]+(?:GPU|graphics(?:[ \t]+card)?))?|shared[ \t]+(?:GPU|graphics(?:[ \t]+card)?)|iGPU)`;
+const CHINESE_INTEGRATED_GPU_CONTEXT_SOURCE = String.raw`(?:(?:(?:集成|共享)(?:式|型)?|整合(?:式|型)?|内置|內建)(?:的)?(?:显卡|顯卡|图形|圖形)?|核显|核顯)`;
+const CHINESE_COPULAR_INTEGRATED_GPU_CONTEXT_SOURCE = String.raw`(?:显卡|顯卡|图形|圖形)[ \t]*(?:是|为|為)[ \t]*(?:(?:集成|共享)(?:式|型)?|整合(?:式|型)?|内置|內建)(?:的)?`;
 const INTEGRATED_GPU_PREFIX = new RegExp(
   String.raw`(?:\b(?:the[ \t]+)?${ENGLISH_INTEGRATED_GPU_CONTEXT_SOURCE}(?:[ \t]+(?:(?:is|was|uses?|using)(?:[ \t]+(?:a|an|the))?|with))?|${CHINESE_INTEGRATED_GPU_CONTEXT_SOURCE}(?:[ \t]*(?:是|为|為|使用|采用|採用))?|${CHINESE_COPULAR_INTEGRATED_GPU_CONTEXT_SOURCE})[ \t:,()（）-]*$`,
   "iu"
@@ -242,7 +243,47 @@ function capacityNumberStart(match) {
   return match.index + match[0].indexOf(match.groups.amount);
 }
 
-function hasUnsafeSignPrefix(segment, match, labels) {
+function plusClauseBoundary(text, start, step) {
+  for (let index = start; index >= 0 && index < text.length; index += step) {
+    if (/[+,&，.。!?！？]/u.test(text[index])) return index;
+  }
+  return step < 0 ? -1 : text.length;
+}
+
+function isCompleteCapacityPlusConjunction(
+  segment,
+  signIndex,
+  match,
+  labels,
+  pattern,
+  modelCandidates
+) {
+  const leftStart = plusClauseBoundary(segment.text, signIndex - 1, -1) + 1;
+  const rightEnd = plusClauseBoundary(segment.text, signIndex + 1, 1);
+  const leftText = segment.text.slice(leftStart, signIndex);
+  if (!CAPACITY_TOKEN.test(leftText)) return false;
+
+  const hasLeftOwner = labels.some((label) => (
+    label.start >= leftStart && label.end <= signIndex
+  )) || modelCandidates.some((candidate) => (
+    candidate.field === "gpuModel"
+    && isDedicatedGpuModel(candidate)
+    && candidate.segmentIndex === segment.index
+    && candidate.start - segment.start >= leftStart
+    && candidate.end - segment.start <= signIndex
+  ));
+  if (!hasLeftOwner) return false;
+
+  return labels.some((label) => (
+    label.start > signIndex
+    && label.end <= rightEnd
+    && supportsCapacityField({ pattern }, label.pattern.field)
+    && match.index >= signIndex
+    && match.index + match[0].length <= rightEnd
+  ));
+}
+
+function hasUnsafeSignPrefix(segment, match, labels, pattern, modelCandidates) {
   const numberStart = capacityNumberStart(match);
   let signIndex = numberStart - 1;
   while (signIndex >= 0 && /[ \t]/u.test(segment.text[signIndex])) signIndex -= 1;
@@ -250,7 +291,14 @@ function hasUnsafeSignPrefix(segment, match, labels) {
   const sign = segment.text[signIndex];
   if (!/[+\-−±]/u.test(sign ?? "")) return false;
   if (sign === "+") {
-    return !TRAILING_CAPACITY_AMOUNT.test(segment.text.slice(0, signIndex));
+    return !isCompleteCapacityPlusConjunction(
+      segment,
+      signIndex,
+      match,
+      labels,
+      pattern,
+      modelCandidates
+    );
   }
   if (sign !== "-") return true;
   if (TRAILING_CAPACITY_AMOUNT.test(segment.text.slice(0, signIndex))) return false;
@@ -367,7 +415,7 @@ function collectCapacityAmounts(document, segment, modelCandidates, labels) {
       };
       if (
         ranges.some((range) => overlaps(range, amountSpan))
-        || hasUnsafeSignPrefix(segment, match, labels)
+        || hasUnsafeSignPrefix(segment, match, labels, pattern, modelCandidates)
         || hasTransferRateSuffix(document, segment, match)
         || hasUnsafeDigitCommaPrefix(segment, match, modelCandidates)
       ) continue;
@@ -490,6 +538,20 @@ function isRetainedApproximation(segment, disqualifiers, amount, ownership) {
   ));
 }
 
+function isCompleteBinaryCapacityConnector(segment, clause, match) {
+  if (!match.pattern.binaryRangeConnector) return false;
+  if (!/^[~～]$/u.test(segment.text.slice(match.start, match.end))) return false;
+
+  const leftText = segment.text.slice(clause.start, match.start);
+  const rightText = segment.text.slice(match.end, clause.end);
+  return (
+    CAPACITY_TOKEN.test(leftText)
+    && CAPACITY_FIELD_TOKEN.test(leftText)
+    && CAPACITY_TOKEN.test(rightText)
+    && CAPACITY_FIELD_TOKEN.test(rightText)
+  );
+}
+
 function hasAttachedDisqualifier(segment, clause, disqualifiers, amount, ownership) {
   const localStart = ownership
     ? Math.min(ownership.label.start, amount.start)
@@ -503,10 +565,18 @@ function hasAttachedDisqualifier(segment, clause, disqualifiers, amount, ownersh
       match.pattern.storageOnly
       && ownership?.label.pattern.field !== "storage"
     ) return false;
+    if (isCompleteBinaryCapacityConnector(segment, clause, match)) return false;
     if (isRetainedApproximationMatch(segment, match, amount, ownership)) return false;
 
     if (match.pattern.requireCapacityAdjacency) {
-      if (!localSpanIsInClause(match.start, match.end, clause)) return false;
+      if (
+        !localSpanIsInClause(match.start, match.end, clause)
+        && !(
+          match.pattern.allowAcrossCapacityIntroducer
+          && match.end <= localStart
+          && /^[ \t:()（）-]*$/u.test(segment.text.slice(match.end, localStart))
+        )
+      ) return false;
       if (match.end <= localStart) {
         return /^[ \t:()（）-]*$/u.test(segment.text.slice(match.end, localStart));
       }

@@ -365,6 +365,8 @@ export const CAPACITY_LABEL_PATTERNS = freezePatterns([
   }
 ]);
 
+const CAPACITY_LABEL_AFTER_COMPACT_SLASH_SOURCE = String.raw`(?=\/[ \t]*(?:(?:RAM|VRAM|memory|storage|SSD|HDD|disk|drive)\b|内存|內存|記憶體|显存|顯存|存储|存儲|固态硬盘|固態硬盤|固态硬碟|固態硬碟|硬盘|硬盤|硬碟))`;
+
 export const CAPACITY_AMOUNT_PATTERNS = freezePatterns([
   {
     id: "capacity.amount.tib",
@@ -421,22 +423,78 @@ export const CAPACITY_AMOUNT_PATTERNS = freezePatterns([
     memory: true,
     storage: false,
     regex: /(?<![A-Z0-9.])(?<amount>\d{1,5})[ \t-]*G(?![A-Z0-9/])/iu
+  },
+  {
+    id: "capacity.amount.tib-before-compact-label-slash",
+    sourceUnit: "TiB",
+    multiplier: 1024,
+    memory: true,
+    storage: true,
+    regex: new RegExp(String.raw`(?<![A-Z0-9.])(?<amount>\d{1,5})[ \t-]*TiB${CAPACITY_LABEL_AFTER_COMPACT_SLASH_SOURCE}`, "iu")
+  },
+  {
+    id: "capacity.amount.tb-before-compact-label-slash",
+    sourceUnit: "TB",
+    multiplier: 1000,
+    memory: true,
+    storage: true,
+    regex: new RegExp(String.raw`(?<![A-Z0-9.])(?<amount>\d{1,5})[ \t-]*TB${CAPACITY_LABEL_AFTER_COMPACT_SLASH_SOURCE}`, "iu")
+  },
+  {
+    id: "capacity.amount.gib-before-compact-label-slash",
+    sourceUnit: "GiB",
+    multiplier: 1,
+    memory: true,
+    storage: true,
+    regex: new RegExp(String.raw`(?<![A-Z0-9.])(?<amount>\d{1,5})[ \t-]*GiB${CAPACITY_LABEL_AFTER_COMPACT_SLASH_SOURCE}`, "iu")
+  },
+  {
+    id: "capacity.amount.gb-before-compact-label-slash",
+    sourceUnit: "GB",
+    multiplier: 1,
+    memory: true,
+    storage: true,
+    regex: new RegExp(String.raw`(?<![A-Z0-9.])(?<amount>\d{1,5})[ \t-]*GB${CAPACITY_LABEL_AFTER_COMPACT_SLASH_SOURCE}`, "iu")
+  },
+  {
+    id: "capacity.amount.gigabyte-before-compact-label-slash",
+    sourceUnit: "gigabyte",
+    multiplier: 1,
+    memory: true,
+    storage: false,
+    regex: new RegExp(String.raw`(?<![A-Z0-9.])(?<amount>\d{1,5})[ \t-]*gigabytes?\b${CAPACITY_LABEL_AFTER_COMPACT_SLASH_SOURCE}`, "iu")
+  },
+  {
+    id: "capacity.amount.gig-before-compact-label-slash",
+    sourceUnit: "gig",
+    multiplier: 1,
+    memory: true,
+    storage: false,
+    regex: new RegExp(String.raw`(?<![A-Z0-9.])(?<amount>\d{1,5})[ \t-]*gigs?\b${CAPACITY_LABEL_AFTER_COMPACT_SLASH_SOURCE}`, "iu")
+  },
+  {
+    id: "capacity.amount.g-before-compact-label-slash",
+    sourceUnit: "G",
+    multiplier: 1,
+    memory: true,
+    storage: false,
+    regex: new RegExp(String.raw`(?<![A-Z0-9.])(?<amount>\d{1,5})[ \t-]*G${CAPACITY_LABEL_AFTER_COMPACT_SLASH_SOURCE}`, "iu")
   }
 ]);
 
 export const CAPACITY_RANGE_PATTERNS = freezePatterns([
   {
     id: "capacity.range.two-units",
-    regex: /(?<![A-Z0-9.])(?<left>\d{1,5})[ \t]*(?:TiB|TB|GiB|GB|G|gigabytes?|gigs?)[ \t]*(?:to|or|或(?:者)?|至|[-–—~～])[ \t]*(?<right>\d{1,5})[ \t]*(?:TiB|TB|GiB|GB|G|gigabytes?|gigs?)(?![A-Z0-9/])/iu
+    regex: /(?<![A-Z0-9.])(?<left>\d{1,5})[ \t]*(?:TiB|TB|GiB|GB|G|gigabytes?|gigs?)[ \t]*(?:to|or|或(?:者)?|至|\/|[-–—~～])[ \t]*(?<right>\d{1,5})[ \t]*(?:TiB|TB|GiB|GB|G|gigabytes?|gigs?)(?![A-Z0-9/])/iu
   },
   {
     id: "capacity.range.shared-trailing-unit",
-    regex: /(?<![A-Z0-9.])(?<left>\d{1,5})[ \t]*(?:to|or|或(?:者)?|至|[-–—~～])[ \t]*(?<right>\d{1,5})[ \t]*(?:TiB|TB|GiB|GB|G|gigabytes?|gigs?)(?![A-Z0-9/])/iu,
+    regex: /(?<![A-Z0-9.])(?<left>\d{1,5})[ \t]*(?:to|or|或(?:者)?|至|\/|[-–—~～])[ \t]*(?<right>\d{1,5})[ \t]*(?:TiB|TB|GiB|GB|G|gigabytes?|gigs?)(?![A-Z0-9/])/iu,
     bareEndpoint: "left"
   },
   {
     id: "capacity.range.shared-leading-unit",
-    regex: /(?<![A-Z0-9.])(?<left>\d{1,5})[ \t]*(?:TiB|TB|GiB|GB|G|gigabytes?|gigs?)[ \t]*(?:to|or|或(?:者)?|至|[-–—~～])[ \t]*(?<right>\d{1,5})(?![A-Z0-9.])/iu,
+    regex: /(?<![A-Z0-9.])(?<left>\d{1,5})[ \t]*(?:TiB|TB|GiB|GB|G|gigabytes?|gigs?)[ \t]*(?:to|or|或(?:者)?|至|\/|[-–—~～])[ \t]*(?<right>\d{1,5})(?![A-Z0-9.])/iu,
     bareEndpoint: "right"
   }
 ]);
@@ -448,12 +506,13 @@ export const CAPACITY_DISQUALIFIER_PATTERNS = freezePatterns([
   },
   {
     id: "capacity.disqualifier.english-exact-negation",
-    regex: /\b(?:(?:do|does|did)[ \t]+not[ \t]+(?:have|include|contain|come[ \t]+with)|not)\b/iu,
-    requireCapacityAdjacency: true
+    regex: /\b(?:(?:do|does|did)[ \t]+not[ \t]+(?:have|include|contain|come[ \t]+with)|(?:(?:is|are|was|were)[ \t]+)?not[ \t]+(?:equipped|configured|supplied|fitted)[ \t]+with|lacks?|lacking|not)\b/iu,
+    requireCapacityAdjacency: true,
+    allowAcrossCapacityIntroducer: true
   },
   {
     id: "capacity.disqualifier.english-capability",
-    regex: /\b(?:(?:(?:is|are|was|were)[ \t]+)?(?:not[ \t]+)?supported|(?:can[ \t]+)?support(?:s|ed|ing)?(?:[ \t]+for)?|capable[ \t]+of)\b/iu,
+    regex: /\b(?:(?:(?:is|are|was|were)[ \t]+)?(?:(?:not[ \t]+)?supported|unsupported)|(?:can[ \t]+)?support(?:s|ed|ing)?(?:[ \t]+for)?|capable[ \t]+of)\b/iu,
     requireCapacityAdjacency: true,
     allowAfterCapacity: true
   },
@@ -474,7 +533,7 @@ export const CAPACITY_DISQUALIFIER_PATTERNS = freezePatterns([
   },
   {
     id: "capacity.disqualifier.chinese-hardware-absence",
-    regex: /(?:没有|沒有|未)[ \t]*(?:配备|配備|装有|裝有|安装|安裝|包含|配有)/u,
+    regex: /(?:没有|沒有|未)[ \t]*(?:配备|配備|装有|裝有|安装|安裝|包含|配有)|不具备|不具備|不支持|不支援/u,
     requireCapacityAdjacency: true,
     allowAfterCapacity: true
   },
@@ -514,6 +573,12 @@ export const CAPACITY_DISQUALIFIER_PATTERNS = freezePatterns([
     allowAfterCapacity: true
   },
   {
+    id: "capacity.disqualifier.approximation-notation",
+    regex: /\b(?:estimated(?:[ \t]+(?:at|to[ \t]+be))?|estimate)\b|[~～≈≃]|(?:估计|估計|预计|預計)(?:[ \t]*(?:为|為))?/iu,
+    allowAfterCapacity: true,
+    binaryRangeConnector: true
+  },
+  {
     id: "capacity.disqualifier.symbolic-bound",
     regex: /(?:<=|>=|[<>≤≥])/u,
     allowAfterCapacity: true
@@ -531,13 +596,13 @@ export const CAPACITY_DISQUALIFIER_PATTERNS = freezePatterns([
   },
   {
     id: "capacity.disqualifier.storage-used-english",
-    regex: /\b(?:(?:(?:is|are|was|were)[ \t]+)?(?:used|occupied)(?:[ \t]+(?:disk[ \t]+)?(?:space|capacity)(?:[ \t]+on)?)?|(?:space|capacity)[ \t]+(?:(?:is|are|was|were)[ \t]+)?(?:used|occupied))\b/iu,
+    regex: /\b(?:in[ \t]+use|(?:(?:(?:is|are|was|were)[ \t]+)?(?:used|occupied|consumed)|consuming)(?:[ \t]+(?:disk[ \t]+)?(?:space|capacity)(?:[ \t]+on)?)?|(?:space|capacity)[ \t]+(?:(?:is|are|was|were|is[ \t]+being|was[ \t]+being)[ \t]+)?(?:used|occupied|consumed|consuming))\b/iu,
     allowAfterCapacity: true,
     storageOnly: true
   },
   {
     id: "capacity.disqualifier.storage-used-chinese",
-    regex: /(?:(?:已使用|已用|使用了|用了|已占用|已佔用|占用|佔用)[ \t]*(?:空间|空間|容量)?|(?:空间|空間|容量)[ \t]*(?:已使用|已用|使用了|用了|已占用|已佔用|占用|佔用))/u,
+    regex: /(?:(?:已使用|已用|使用了|用了|已占用|已佔用|占用|佔用|(?:已)?被(?:使用|占用|佔用|消耗))[ \t]*(?:空间|空間|容量)?|(?:空间|空間|容量)[ \t]*(?:已使用|已用|使用了|用了|已占用|已佔用|占用|佔用|(?:已)?被(?:使用|占用|佔用|消耗)))/u,
     allowAfterCapacity: true,
     storageOnly: true
   }
