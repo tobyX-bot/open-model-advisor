@@ -5155,6 +5155,184 @@ test("suppresses integrated generic AMD Vega proximity case-insensitively", () =
   );
 });
 
+test("assigns storage semantics across overlapping shared-label ownerships", () => {
+  for (const [input, expected] of [
+    [
+      "1TB total SSD free 200GB",
+      [[1000, "total", "1TB total SSD"], [200, "free", "SSD free 200GB"]]
+    ],
+    [
+      "200GB free SSD total 1TB",
+      [[200, "free", "200GB free SSD"], [1000, "total", "SSD total 1TB"]]
+    ],
+    [
+      "1TB 总容量 固态硬盘 可用 200GB",
+      [[1000, "total", "1TB 总容量 固态硬盘"], [200, "free", "固态硬盘 可用 200GB"]]
+    ],
+    [
+      "200GB 剩餘 固態硬碟 總容量 1TB",
+      [[200, "free", "200GB 剩餘 固態硬碟"], [1000, "total", "固態硬碟 總容量 1TB"]]
+    ]
+  ]) {
+    const document = normalizeSetupText(input);
+    const candidates = extractStorageCandidates(document);
+    assert.deepEqual(
+      candidates.map((candidate) => [candidate.value, candidate.storageKind, candidate.raw]),
+      expected,
+      input
+    );
+    candidates.forEach((candidate) => assertCapacityCandidateContract(document, candidate));
+  }
+
+  assert.deepEqual(
+    extractStorageCandidates(normalizeSetupText("1TB total free SSD"))
+      .map((candidate) => [candidate.value, candidate.storageKind, candidate.raw]),
+    [[1000, "unknown", "1TB total free SSD"]]
+  );
+  assert.deepEqual(
+    extractStorageCandidates(normalizeSetupText("1TB total SSD occupied 200GB"))
+      .map((candidate) => [candidate.value, candidate.storageKind, candidate.raw]),
+    [[1000, "total", "1TB total SSD"]]
+  );
+  assert.deepEqual(
+    extractStorageCandidates(normalizeSetupText("SSD total 100GB free HDD 200GB"))
+      .map((candidate) => [candidate.value, candidate.storageKind, candidate.raw]),
+    [[100, "total", "SSD total 100GB"], [200, "free", "free HDD 200GB"]]
+  );
+});
+
+test("replays overlapping shared storage-label semantic ownership", () => {
+  const vocabularies = [
+    { label: "SSD", total: "total", free: ["free", "remaining"] },
+    { label: "固态硬盘", total: "总容量", free: ["可用", "剩余"] },
+    { label: "固態硬碟", total: "總容量", free: ["可用", "剩餘"] }
+  ];
+  const wrappers = [["", ""], ["(", ")"], ["（", "）"]];
+  const separators = [" ", " : ", " ： "];
+  let variantCount = 0;
+
+  for (const vocabulary of vocabularies) {
+    for (const free of vocabulary.free) {
+      for (const mirrored of [false, true]) {
+        for (const [open, close] of wrappers) {
+          for (const separator of separators) {
+            const wrappedTotal = `${open}${vocabulary.total}${close}`;
+            const wrappedFree = `${open}${free}${close}`;
+            const input = mirrored
+              ? `200GB${separator}${wrappedFree}${separator}${vocabulary.label}${separator}${wrappedTotal}${separator}1TB`
+              : `1TB${separator}${wrappedTotal}${separator}${vocabulary.label}${separator}${wrappedFree}${separator}200GB`;
+            const expected = mirrored
+              ? [
+                [200, "free", normalizeSetupText(`200GB${separator}${wrappedFree}${separator}${vocabulary.label}`).normalized],
+                [1000, "total", normalizeSetupText(`${vocabulary.label}${separator}${wrappedTotal}${separator}1TB`).normalized]
+              ]
+              : [
+                [1000, "total", normalizeSetupText(`1TB${separator}${wrappedTotal}${separator}${vocabulary.label}`).normalized],
+                [200, "free", normalizeSetupText(`${vocabulary.label}${separator}${wrappedFree}${separator}200GB`).normalized]
+              ];
+            const document = normalizeSetupText(input);
+            const candidates = extractStorageCandidates(document);
+            variantCount += 1;
+            assert.deepEqual(
+              candidates.map((candidate) => [candidate.value, candidate.storageKind, candidate.raw]),
+              expected,
+              input
+            );
+            candidates.forEach((candidate) => assertCapacityCandidateContract(document, candidate));
+          }
+        }
+      }
+    }
+  }
+  assert.equal(variantCount, 108);
+});
+
+test("keeps direct extractors equal to aggregate output across interleaved calls", () => {
+  const inputs = [
+    "1TB total SSD free 200GB",
+    "200GB 剩餘 固態硬碟 總容量 1TB",
+    "SSD total 100GB occupied 200GB HDD",
+    "integrated AMD VEGA 64 8GB;RAM 32GB",
+    "dedicated AMD vEgA 56 8GB;SSD 512GB",
+    "Apple M2 Max unified memory 32GB",
+    "Mac Studio M3 Ultra with 64GB unified memory",
+    "no dedicated GPU 12GB RAM 32GB SSD 512GB",
+    "NVIDIA RTX 4070 12GB;without a dedicated GPU",
+    "RAM 16GB to 32GB;SSD 512GB",
+    "RAM maybe 64GB;SSD 1TB",
+    "内存大概 32GB;固态硬盘 1TB"
+  ];
+  const families = [
+    [extractSystemCandidates, new Set(["os", "deviceType"])],
+    [extractCpuCandidates, new Set(["cpuModel"])],
+    [extractGpuCandidates, new Set(["gpuModel", "gpuVendor"])],
+    [extractTaskCandidates, new Set(["task"])],
+    [extractMemoryCandidates, new Set(["ram", "vram"])],
+    [extractStorageCandidates, new Set(["storage"])],
+    [extractCapacityCandidates, new Set(["ram", "vram", "storage"])]
+  ];
+  const documents = inputs.map((input) => normalizeSetupText(input));
+  const snapshots = documents.map((document) => JSON.stringify(document));
+  const expected = documents.map((document) => families.map(([extract]) => (
+    JSON.stringify(extract(document))
+  )));
+
+  for (let round = 0; round < 4; round += 1) {
+    const order = round % 2 === 0
+      ? documents.map((_, index) => index)
+      : documents.map((_, index) => documents.length - 1 - index);
+    for (const documentIndex of order) {
+      const document = documents[documentIndex];
+      const aggregate = extractCandidates(document);
+      for (let familyIndex = families.length - 1; familyIndex >= 0; familyIndex -= 1) {
+        const [extract, fields] = families[familyIndex];
+        const direct = extract(document);
+        const aggregateFamily = aggregate.filter((candidate) => fields.has(candidate.field));
+        assert.equal(JSON.stringify(direct), expected[documentIndex][familyIndex]);
+        assert.deepEqual(direct, aggregateFamily, inputs[documentIndex]);
+      }
+      assert.equal(JSON.stringify(document), snapshots[documentIndex]);
+    }
+  }
+});
+
+test("keeps dense non-storage disqualifier ownership subquadratic", () => {
+  function medianDenseTime(length) {
+    const phrase = "RAM maybe 1GB ";
+    const repeats = Math.floor((length + 1) / phrase.length);
+    const document = normalizeSetupText(phrase.repeat(repeats).trim());
+    extractCapacityCandidates(document);
+    const durations = [];
+    for (let sample = 0; sample < 5; sample += 1) {
+      const start = performance.now();
+      const candidates = extractCapacityCandidates(document);
+      durations.push(performance.now() - start);
+      assert.deepEqual(candidates, []);
+    }
+    durations.sort((left, right) => left - right);
+    return {
+      durationMs: durations[Math.floor(durations.length / 2)],
+      normalizedLength: document.normalized.length,
+      repeats
+    };
+  }
+
+  medianDenseTime(2_500);
+  const quarter = medianDenseTime(5_000);
+  const half = medianDenseTime(10_000);
+  const full = medianDenseTime(20_000);
+  assert.equal([quarter.repeats, half.repeats, full.repeats].join(","), "357,714,1428");
+  assert.ok(full.durationMs < 500, `20k RAM uncertainty ${full.durationMs.toFixed(3)}ms`);
+  assert.ok(
+    full.durationMs / half.durationMs < 3,
+    `RAM scaling half/full ${half.durationMs.toFixed(3)}ms -> ${full.durationMs.toFixed(3)}ms`
+  );
+  assert.ok(
+    full.durationMs / quarter.durationMs < 7,
+    `RAM scaling quarter/full ${quarter.durationMs.toFixed(3)}ms -> ${full.durationMs.toFixed(3)}ms`
+  );
+});
+
 test("keeps storage-dense semantic ownership bounded at the 20k cap", () => {
   function timedStorageDense(length) {
     const repeats = Math.floor((length + 1) / 13);

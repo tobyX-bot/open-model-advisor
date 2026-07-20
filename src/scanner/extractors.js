@@ -241,9 +241,17 @@ function collectCapacityLabels(segment, matchers) {
   ));
 
   const accepted = [];
+  const occupied = new Uint8Array(segment.text.length);
   for (const match of matches) {
-    if (accepted.some((entry) => overlaps(entry, match))) continue;
+    let isOccupied = false;
+    for (let index = match.start; index < match.end; index += 1) {
+      if (occupied[index] === 0) continue;
+      isOccupied = true;
+      break;
+    }
+    if (isOccupied) continue;
     accepted.push(match);
+    occupied.fill(1, match.start, match.end);
   }
 
   accepted.sort((left, right) => (
@@ -503,9 +511,12 @@ function collectCapacityAmounts(
     || left.end - right.end
     || left.patternIndex - right.patternIndex
   ));
-  const distinctAmounts = amounts.filter((amount, index) => (
-    !amounts.slice(0, index).some((earlier) => overlaps(earlier, amount))
-  ));
+  const distinctAmounts = [];
+  let furthestEarlierEnd = -1;
+  for (const amount of amounts) {
+    if (amount.start >= furthestEarlierEnd) distinctAmounts.push(amount);
+    furthestEarlierEnd = Math.max(furthestEarlierEnd, amount.end);
+  }
   const rangeAmounts = new Set();
   for (let index = 1; index < distinctAmounts.length; index += 1) {
     const previous = distinctAmounts[index - 1];
@@ -1178,39 +1189,91 @@ function storageQualifierOption(
   };
 }
 
-function storageOwnershipSpans(ownerships) {
+function storageLabelCoreSpan(segment, label, qualifiers) {
+  let start = label.start;
+  let qualifierIndex = firstSpanStartingAtOrAfter(qualifiers, start);
+  while (qualifierIndex < qualifiers.length) {
+    const qualifier = qualifiers[qualifierIndex];
+    if (qualifier.start !== start || qualifier.end >= label.end) break;
+    start = qualifier.end;
+    while (start < label.end && /[ \t]/u.test(segment.text[start])) start += 1;
+    qualifierIndex = firstSpanStartingAtOrAfter(qualifiers, start);
+  }
+  return { start, end: label.end };
+}
+
+function storageOwnershipSpans(segment, ownerships, qualifiers) {
   return [...ownerships]
     .filter(([, result]) => (
       result.status === "owned"
       && result.ownership.label.pattern.field === "storage"
     ))
-    .map(([amount, result]) => ({
-      amount,
-      ownership: result.ownership,
-      start: Math.min(result.ownership.label.start, amount.start),
-      end: Math.max(result.ownership.label.end, amount.end)
-    }))
+    .map(([amount, result]) => {
+      const labelSpan = storageLabelCoreSpan(
+        segment,
+        result.ownership.label,
+        qualifiers
+      );
+      return {
+        amount,
+        ownership: result.ownership,
+        labelSpan,
+        start: Math.min(labelSpan.start, amount.start),
+        end: Math.max(labelSpan.end, amount.end)
+      };
+    })
     .sort((left, right) => left.start - right.start || left.end - right.end);
 }
 
-function firstStorageSpanStartingAtOrAfter(storageSpans, position) {
+function firstSpanStartingAtOrAfter(spans, position) {
   let low = 0;
-  let high = storageSpans.length;
+  let high = spans.length;
   while (low < high) {
     const middle = low + Math.floor((high - low) / 2);
-    if (storageSpans[middle].start < position) low = middle + 1;
+    if (spans[middle].start < position) low = middle + 1;
     else high = middle;
   }
   return low;
 }
 
-function assignStorageSemanticMatches(segment, matches, ownerships, createOption) {
-  const storageSpans = storageOwnershipSpans(ownerships);
+function createDisqualifierPositionIndex(matches) {
+  return {
+    matches,
+    maxMatchLength: matches.reduce((length, match) => (
+      Math.max(length, match.end - match.start)
+    ), 0)
+  };
+}
+
+function disqualifiersNearOwnership(index, amount, ownership) {
+  const localStart = ownership
+    ? Math.min(ownership.label.start, amount.start)
+    : amount.start;
+  const localEnd = ownership
+    ? Math.max(ownership.label.end, amount.end)
+    : amount.end;
+  const earliestStart = localStart
+    - index.maxMatchLength
+    - MAX_BOUNDED_SEMANTIC_GAP;
+  const latestStart = localEnd + MAX_BOUNDED_SEMANTIC_GAP;
+  const nearby = [];
+  let matchIndex = firstSpanStartingAtOrAfter(index.matches, earliestStart);
+  while (
+    matchIndex < index.matches.length
+    && index.matches[matchIndex].start <= latestStart
+  ) {
+    nearby.push(index.matches[matchIndex]);
+    matchIndex += 1;
+  }
+  return nearby;
+}
+
+function assignStorageSemanticMatches(segment, matches, storageSpans, createOption) {
   const assignments = new Map(storageSpans.map((span) => [span.amount, []]));
 
   for (const match of matches) {
     const evidenceSpan = expandSemanticWrapper(segment, match.start, match.end);
-    const followingIndex = firstStorageSpanStartingAtOrAfter(
+    const followingIndex = firstSpanStartingAtOrAfter(
       storageSpans,
       evidenceSpan.end
     );
@@ -1235,11 +1298,11 @@ function assignStorageSemanticMatches(segment, matches, ownerships, createOption
   return assignments;
 }
 
-function assignStorageQualifiers(segment, clause, qualifiers, ownerships) {
+function assignStorageQualifiers(segment, clause, qualifiers, storageSpans) {
   return assignStorageSemanticMatches(
     segment,
     qualifiers,
-    ownerships,
+    storageSpans,
     (qualifier, ownershipSpan, evidenceSpan) => (
       storageQualifierOption(
         segment,
@@ -1252,12 +1315,12 @@ function assignStorageQualifiers(segment, clause, qualifiers, ownerships) {
   );
 }
 
-function assignStorageDisqualifiers(segment, clause, disqualifiers, ownerships) {
+function assignStorageDisqualifiers(segment, clause, disqualifiers, storageSpans) {
   const storageOnly = disqualifiers.filter((match) => match.pattern.storageOnly);
   const assignments = assignStorageSemanticMatches(
     segment,
     storageOnly,
-    ownerships,
+    storageSpans,
     (match, ownershipSpan, evidenceSpan) => {
       if (spanGapLength(evidenceSpan, ownershipSpan) > MAX_BOUNDED_SEMANTIC_GAP) {
         return null;
@@ -1303,11 +1366,16 @@ function explicitCapacityEntry(
   qualifierOptions,
   amount,
   ownership,
+  storageOwnershipSpan,
   retainedApproximation
 ) {
   const { label, amountPosition } = ownership;
-  let localStart = Math.min(label.start, amount.start);
-  let localEnd = Math.max(label.end, amount.end);
+  let localStart = storageOwnershipSpan
+    ? storageOwnershipSpan.start
+    : Math.min(label.start, amount.start);
+  let localEnd = storageOwnershipSpan
+    ? storageOwnershipSpan.end
+    : Math.max(label.end, amount.end);
   if (retainedApproximation) {
     const wrappedAmount = expandSemanticWrapper(segment, amount.start, amount.end);
     localStart = Math.min(localStart, wrappedAmount.start, retainedApproximation.start);
@@ -1568,6 +1636,9 @@ function extractCapacityCandidatesWithContext(document, modelContext) {
     const nonStorageDisqualifiers = disqualifiers.filter((match) => (
       !match.pattern.storageOnly
     ));
+    const nonStorageDisqualifierIndex = createDisqualifierPositionIndex(
+      nonStorageDisqualifiers
+    );
     const storageQualifiers = collectStorageQualifiers(segment, storageQualifierMatchers);
     const clauseBoundaries = clauseBoundariesBySegment[segment.index];
     const segmentModelCandidates = modelCandidatesBySegment[segment.index];
@@ -1616,17 +1687,26 @@ function extractCapacityCandidatesWithContext(document, modelContext) {
           candidate,
           resolveCapacityOwnership(segment, context, candidate)
         ]));
+        const storageSpans = storageOwnershipSpans(
+          segment,
+          context.ownerships,
+          storageQualifiers
+        );
+        context.storageOwnerships = new Map(storageSpans.map((span) => [
+          span.amount,
+          span
+        ]));
         context.storageQualifiers = assignStorageQualifiers(
           segment,
           clause,
           storageQualifiers,
-          context.ownerships
+          storageSpans
         );
         context.storageDisqualifiers = assignStorageDisqualifiers(
           segment,
           clause,
           disqualifiers,
-          context.ownerships
+          storageSpans
         );
         clauseContexts.set(clauseKey, context);
       }
@@ -1634,7 +1714,11 @@ function extractCapacityCandidatesWithContext(document, modelContext) {
       const ownership = context.ownerships.get(amount);
       if (ownership.status === "ambiguous") continue;
       const ownedDisqualifiers = [
-        ...nonStorageDisqualifiers,
+        ...disqualifiersNearOwnership(
+          nonStorageDisqualifierIndex,
+          amount,
+          ownership.ownership
+        ),
         ...(context.storageDisqualifiers.get(amount) ?? [])
       ];
       if (hasAttachedDisqualifier(
@@ -1659,6 +1743,7 @@ function extractCapacityCandidatesWithContext(document, modelContext) {
           context.storageQualifiers.get(amount) ?? [],
           amount,
           ownership.ownership,
+          context.storageOwnerships.get(amount),
           retainedApproximation
         );
       } else if (ownership.status === "unowned") {
