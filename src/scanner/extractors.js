@@ -565,16 +565,25 @@ function isRetainedApproximationMatch(segment, match, amount, ownership) {
   const labelText = ownership
     ? segment.text.slice(ownership.label.start, ownership.label.end)
     : "";
+  const wrappedAmount = expandSemanticWrapper(segment, amount.start, amount.end);
+  const naturalAboutIsAttached = (
+    match.start === amount.start
+    && /^about\b/iu.test(segment.text.slice(amount.start, amount.end))
+  );
+  const naturalAboutOwnsWrappedAmount = (
+    /^about$/iu.test(segment.text.slice(match.start, match.end))
+    && match.end <= wrappedAmount.start
+    && /^[ \t]*$/u.test(segment.text.slice(match.end, wrappedAmount.start))
+  );
   if (
     match.pattern.preserveNaturalMemoryAbout
     && ownership?.label.pattern.field === "ram"
     && ownership.amountPosition === "before-label"
     && ["gig", "gigabyte"].includes(amount.pattern.sourceUnit)
-    && match.start === amount.start
-    && /^about\b/iu.test(segment.text.slice(amount.start, amount.end))
+    && (naturalAboutIsAttached || naturalAboutOwnsWrappedAmount)
     && /^memory$/iu.test(labelText)
     && /^[ \t]*[,，:]?[ \t]*of[ \t]+$/iu.test(
-      segment.text.slice(amount.end, ownership.label.start)
+      segment.text.slice(wrappedAmount.end, ownership.label.start)
     )
   ) {
     return true;
@@ -591,7 +600,7 @@ function isRetainedApproximationMatch(segment, match, amount, ownership) {
       segment.text.slice(ownership.label.end, match.start),
       { allowComma: true }
     )
-    && /^[ \t]*$/u.test(segment.text.slice(match.end, amount.start))
+    && /^[ \t]*$/u.test(segment.text.slice(match.end, wrappedAmount.start))
   )) return false;
 
   const qualifierText = segment.text.slice(match.start, match.end);
@@ -602,9 +611,9 @@ function isRetainedApproximationMatch(segment, match, amount, ownership) {
 }
 
 function isRetainedApproximation(segment, disqualifiers, amount, ownership) {
-  return disqualifiers.some((match) => (
+  return disqualifiers.find((match) => (
     isRetainedApproximationMatch(segment, match, amount, ownership)
-  ));
+  )) ?? null;
 }
 
 function isCompleteBinaryCapacityConnector(segment, clause, match) {
@@ -1097,6 +1106,11 @@ function explicitCapacityEntry(
   const { label, amountPosition } = ownership;
   let localStart = Math.min(label.start, amount.start);
   let localEnd = Math.max(label.end, amount.end);
+  if (retainedApproximation) {
+    const wrappedAmount = expandSemanticWrapper(segment, amount.start, amount.end);
+    localStart = Math.min(localStart, wrappedAmount.start, retainedApproximation.start);
+    localEnd = Math.max(localEnd, wrappedAmount.end, retainedApproximation.end);
+  }
   let kind = "unknown";
   if (label.pattern.field === "storage") {
     const evidence = storageEvidence(segment, clause, qualifiers, localStart, localEnd);
@@ -1119,7 +1133,7 @@ function explicitCapacityEntry(
     source: `capacity.${label.pattern.field}.${amountPosition}`,
     specificity: label.pattern.specificity,
     confidence: retainedApproximation ? "low" : label.pattern.confidence,
-    inferred: retainedApproximation,
+    inferred: Boolean(retainedApproximation),
     amountPosition,
     sourceUnit: amount.pattern.sourceUnit
   };

@@ -365,7 +365,7 @@ export const CAPACITY_LABEL_PATTERNS = freezePatterns([
   }
 ]);
 
-const CAPACITY_LABEL_AFTER_COMPACT_SLASH_SOURCE = String.raw`(?=\/[ \t]*(?:(?:RAM|VRAM|memory|storage|SSD|HDD|disk|drive)\b|内存|內存|記憶體|显存|顯存|存储|存儲|固态硬盘|固態硬盤|固态硬碟|固態硬碟|硬盘|硬盤|硬碟))`;
+const CAPACITY_LABEL_AFTER_COMPACT_SLASH_SOURCE = String.raw`(?=\/[ \t]*(?:(?:\(|\[|（|［|【|〔)[ \t]*)?(?:(?:RAM|VRAM|memory|storage|SSD|HDD|disk|drive)\b|内存|內存|記憶體|显存|顯存|存储|存儲|固态硬盘|固態硬盤|固态硬碟|固態硬碟|硬盘|硬盤|硬碟))`;
 
 export const CAPACITY_AMOUNT_PATTERNS = freezePatterns([
   {

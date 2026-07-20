@@ -4505,3 +4505,336 @@ test("retains punctuation only inside the three frozen natural approximation fam
     assert.deepEqual(extractCapacityCandidates(normalizeSetupText(input)), [], input);
   }
 });
+
+test("replays 1,188 wrapped repeated-label range variants as conflict evidence", () => {
+  const fields = [
+    ["ram", "RAM", "16", "64", "GB", 1],
+    ["vram", "VRAM", "8", "12", "GiB", 1],
+    ["storage", "SSD", "1", "2", "TB", 1000],
+    ["ram", "内存", "16", "64", "GB", 1],
+    ["vram", "显存", "8", "12", "GiB", 1],
+    ["storage", "固态硬盘", "1", "2", "TB", 1000],
+    ["ram", "記憶體", "16", "64", "GB", 1],
+    ["vram", "顯存", "8", "12", "GiB", 1],
+    ["storage", "固態硬碟", "1", "2", "TB", 1000]
+  ];
+  const connectors = ["/", "to", "or", "或", "或者", "至", "-", "–", "—", "~", "～"];
+  const wrappers = [
+    ["(", ")"],
+    ["[", "]"],
+    ["（", "）"],
+    ["［", "］"],
+    ["【", "】"],
+    ["〔", "〕"]
+  ];
+  let variantCount = 0;
+  let compactSlashLabelFirstCount = 0;
+
+  for (const [field, label, left, right, unit, multiplier] of fields) {
+    for (const connector of connectors) {
+      const connectorText = connector === "/" ? connector : ` ${connector} `;
+      for (const [open, close] of wrappers) {
+        for (const amountFirst of [false, true]) {
+          const leftClause = amountFirst
+            ? `${left}${unit} ${label}`
+            : `${label} ${left}${unit}`;
+          const rightClause = amountFirst
+            ? `${right}${unit} ${label}`
+            : `${label} ${right}${unit}`;
+          const input = `${leftClause}${connectorText}${open}${rightClause}${close}`;
+          variantCount += 1;
+          if (connector === "/" && !amountFirst) compactSlashLabelFirstCount += 1;
+
+          const document = normalizeSetupText(input);
+          const candidates = extractCapacityCandidates(document);
+          assert.deepEqual(
+            candidates.map((candidate) => [candidate.field, candidate.value]),
+            [[field, Number(left) * multiplier], [field, Number(right) * multiplier]],
+            input
+          );
+          candidates.forEach((candidate) => assertCapacityCandidateContract(document, candidate));
+        }
+      }
+    }
+  }
+  assert.equal(variantCount, 1_188);
+  assert.equal(compactSlashLabelFirstCount, 54);
+
+  assert.deepEqual(extractCapacityCandidates(normalizeSetupText("RAM 16GB/(64GB)")), []);
+  assert.deepEqual(extractCapacityCandidates(normalizeSetupText("SSD speed 7GB/s")), []);
+  assert.deepEqual(
+    extractCapacityCandidates(normalizeSetupText("RAM 16GB / SSD 512GB")).map((candidate) => [
+      candidate.field,
+      candidate.value
+    ]),
+    [["ram", 16], ["storage", 512]]
+  );
+  assert.deepEqual(extractCapacityCandidates(normalizeSetupText("+64GB RAM")), []);
+});
+
+test("retains all 18 approved natural approximation wrapper variants", () => {
+  const wrappers = [
+    ["(", ")"],
+    ["[", "]"],
+    ["（", "）"],
+    ["［", "］"],
+    ["【", "】"],
+    ["〔", "〕"]
+  ];
+  const families = [
+    [(open, close) => `about ${open}8 gigs${close} of memory`, 8, "gig"],
+    [(open, close) => `内存:大概 ${open}32GB${close}`, 32, "GB"],
+    [(open, close) => `記憶體:大約 ${open}16GB${close}`, 16, "GB"]
+  ];
+  let variantCount = 0;
+
+  for (const [createInput, value, sourceUnit] of families) {
+    for (const [open, close] of wrappers) {
+      const input = createInput(open, close);
+      const document = normalizeSetupText(input);
+      const candidates = extractMemoryCandidates(document);
+      variantCount += 1;
+      assert.equal(candidates.length, 1, input);
+      assert.deepEqual(
+        [
+          candidates[0].field,
+          candidates[0].value,
+          candidates[0].confidence,
+          candidates[0].inferred,
+          candidates[0].sourceUnit,
+          candidates[0].raw
+        ],
+        ["ram", value, "low", true, sourceUnit, document.normalized],
+        input
+      );
+      assertCapacityCandidateContract(document, candidates[0]);
+    }
+  }
+  assert.equal(variantCount, 18);
+
+  for (const input of [
+    "RAM maybe (32GB)",
+    "VRAM approximately [12GiB]",
+    "SSD about（1TB）",
+    "RAM 大概【32GB】"
+  ]) {
+    assert.deepEqual(extractCapacityCandidates(normalizeSetupText(input)), [], input);
+  }
+
+  for (const input of ["8 gigs of memory", "内存 32GB", "記憶體 16GB"]) {
+    const [candidate] = extractMemoryCandidates(normalizeSetupText(input));
+    assert.deepEqual([candidate.confidence, candidate.inferred], ["high", false], input);
+  }
+});
+
+test("replays 5,940 wrapped shared-label ranges without endpoint leakage", () => {
+  const fields = [
+    ["RAM", "16", "64", "GB"],
+    ["VRAM", "8", "12", "GiB"],
+    ["SSD", "1", "2", "TB"],
+    ["内存", "16", "64", "GB"],
+    ["显存", "8", "12", "GiB"],
+    ["固态硬盘", "1", "2", "TB"],
+    ["記憶體", "16", "64", "GB"],
+    ["顯存", "8", "12", "GiB"],
+    ["固態硬碟", "1", "2", "TB"]
+  ];
+  const connectors = ["/", "to", "or", "或", "或者", "至", "-", "–", "—", "~", "～"];
+  const wrappers = [
+    ["(", ")"],
+    ["[", "]"],
+    ["（", "）"],
+    ["［", "］"],
+    ["【", "】"],
+    ["〔", "〕"]
+  ];
+  let variantCount = 0;
+
+  for (const [label, left, right, unit] of fields) {
+    for (const connector of connectors) {
+      const joiner = connector === "/" ? connector : ` ${connector} `;
+      for (const [open, close] of wrappers) {
+        const ranges = [
+          `${left}${unit}${joiner}${open}${right}${unit}${close}`,
+          `${left}${joiner}${open}${right}${unit}${close}`,
+          `${left}${unit}${joiner}${open}${right}${close}`,
+          `${open}${left}${unit}${close}${joiner}${open}${right}${unit}${close}`,
+          `${open}${left}${close}${joiner}${open}${right}${unit}${close}`
+        ];
+        for (const range of ranges) {
+          for (const input of [`${label} ${range}`, `${range} ${label}`]) {
+            variantCount += 1;
+            assert.deepEqual(extractCapacityCandidates(normalizeSetupText(input)), [], input);
+          }
+        }
+      }
+    }
+  }
+  assert.equal(variantCount, 5_940);
+});
+
+test("replays 1,624 bounded qualifier ownership cases", () => {
+  const cases = [
+    ["ram", "RAM", "64GB", 64, "not equipped with"],
+    ["vram", "VRAM", "12GiB", 12, "not equipped with"],
+    ["storage", "SSD", "2TB", 2000, "not equipped with"],
+    ["ram", "RAM", "64GB", 64, "lacks"],
+    ["vram", "VRAM", "12GiB", 12, "lacks"],
+    ["storage", "SSD", "2TB", 2000, "lacks"],
+    ["ram", "RAM", "64GB", 64, "does not have"],
+    ["vram", "VRAM", "12GiB", 12, "does not have"],
+    ["storage", "SSD", "2TB", 2000, "does not have"],
+    ["ram", "内存", "32GB", 32, "没有配备"],
+    ["vram", "显存", "12GiB", 12, "没有配备"],
+    ["storage", "固态硬盘", "1TB", 1000, "没有配备"],
+    ["ram", "記憶體", "16GB", 16, "沒有配備"],
+    ["vram", "顯存", "8GiB", 8, "沒有配備"],
+    ["storage", "固態硬碟", "1TB", 1000, "沒有配備"],
+    ["ram", "RAM", "64GB", 64, "unsupported"],
+    ["vram", "VRAM", "12GiB", 12, "unsupported"],
+    ["storage", "SSD", "2TB", 2000, "unsupported"],
+    ["ram", "RAM", "64GB", 64, "not supported"],
+    ["vram", "VRAM", "12GiB", 12, "not supported"],
+    ["storage", "SSD", "2TB", 2000, "not supported"],
+    ["ram", "内存", "32GB", 32, "不支持"],
+    ["vram", "显存", "12GiB", 12, "不支持"],
+    ["storage", "固态硬盘", "1TB", 1000, "不支持"],
+    ["ram", "記憶體", "16GB", 16, "不支援"],
+    ["vram", "顯存", "8GiB", 8, "不支援"],
+    ["storage", "固態硬碟", "1TB", 1000, "不支援"],
+    ["storage", "SSD", "900GB", 900, "in use"],
+    ["storage", "固态硬盘", "900GB", 900, "已占用"]
+  ];
+  const wrappers = [
+    ["", ""],
+    ["(", ")"],
+    ["[", "]"],
+    ["（", "）"],
+    ["［", "］"],
+    ["【", "】"],
+    ["〔", "〕"]
+  ];
+  const layouts = [
+    (qualifier, label, amount) => `${qualifier} ${label} ${amount}`,
+    (qualifier, label, amount) => `${qualifier}: ${label} ${amount}`,
+    (qualifier, label, amount) => `${qualifier} - ${label} ${amount}`,
+    (qualifier, label, amount) => `${qualifier}: ${label}: ${amount}`,
+    (qualifier, label, amount) => `${qualifier} ${amount} ${label}`,
+    (qualifier, label, amount) => `${qualifier}: ${amount} ${label}`,
+    (qualifier, label, amount) => `${qualifier} - ${amount} ${label}`,
+    (qualifier, label, amount) => `${qualifier}: ${amount}: ${label}`
+  ];
+  let variantCount = 0;
+
+  for (const [field, label, amount, value, qualifier] of cases) {
+    const unrelated = field === "storage" ? "RAM 32GB" : "SSD 512GB";
+    const unrelatedExpected = field === "storage" ? ["ram", 32] : ["storage", 512];
+    for (const [open, close] of wrappers) {
+      const wrappedQualifier = `${open}${qualifier}${close}`;
+      for (const createInput of layouts) {
+        const input = `${createInput(wrappedQualifier, label, amount)};${unrelated}`;
+        const candidates = extractCapacityCandidates(normalizeSetupText(input));
+        variantCount += 1;
+        assert.equal(
+          candidates.some((candidate) => candidate.field === field && candidate.value === value),
+          false,
+          input
+        );
+        assert.equal(
+          candidates.some((candidate) => (
+            candidate.field === unrelatedExpected[0]
+            && candidate.value === unrelatedExpected[1]
+          )),
+          true,
+          input
+        );
+      }
+    }
+  }
+  assert.equal(variantCount, 1_624);
+});
+
+test("replays 210 wrapped storage-kind evidence variants", () => {
+  const statuses = [
+    ["SSD", "100GB", "free", "free"],
+    ["SSD", "100GB", "capacity", "total"],
+    ["固态硬盘", "100GB", "可用", "free"],
+    ["固态硬盘", "100GB", "总容量", "total"],
+    ["固態硬碟", "100GB", "剩餘", "free"]
+  ];
+  const wrappers = [
+    ["(", ")"],
+    ["[", "]"],
+    ["（", "）"],
+    ["［", "］"],
+    ["【", "】"],
+    ["〔", "〕"]
+  ];
+  const layouts = [
+    (label, amount, status) => `${label} ${amount} ${status}`,
+    (label, amount, status) => `${label} ${status} ${amount}`,
+    (label, amount, status) => `${status} ${label} ${amount}`,
+    (label, amount, status) => `${amount} ${label} ${status}`,
+    (label, amount, status) => `${amount} ${status} ${label}`,
+    (label, amount, status) => `${status} ${amount} ${label}`,
+    (label, amount, status) => `${label}: ${amount}, ${status}`
+  ];
+  let variantCount = 0;
+
+  for (const [label, amount, status, kind] of statuses) {
+    for (const [open, close] of wrappers) {
+      const wrappedStatus = `${open}${status}${close}`;
+      for (const createInput of layouts) {
+        const input = createInput(label, amount, wrappedStatus);
+        const document = normalizeSetupText(input);
+        const candidates = extractStorageCandidates(document);
+        variantCount += 1;
+        assert.equal(candidates.length, 1, input);
+        assert.equal(candidates[0].storageKind, kind, input);
+        assert.equal(candidates[0].raw, document.normalized, input);
+        assertCapacityCandidateContract(document, candidates[0]);
+      }
+    }
+  }
+  assert.equal(variantCount, 210);
+});
+
+test("replays 288 wrapped plus ownership variants", () => {
+  const fields = [
+    { field: "ram", label: "RAM", amount: "16GB", value: 16 },
+    { field: "vram", label: "VRAM", amount: "12GiB", value: 12 },
+    { field: "storage", label: "SSD", amount: "512GB", value: 512 }
+  ];
+  const permutations = [
+    [0, 1, 2], [0, 2, 1], [1, 0, 2],
+    [1, 2, 0], [2, 0, 1], [2, 1, 0]
+  ];
+  const wrappers = [["(", ")"], ["【", "】"]];
+  let variantCount = 0;
+
+  for (const order of permutations) {
+    for (let orientationMask = 0; orientationMask < 8; orientationMask += 1) {
+      for (const plus of ["+", " + ", "+ "]) {
+        for (const [open, close] of wrappers) {
+          const input = order.map((fieldIndex, position) => {
+            const field = fields[fieldIndex];
+            const clause = orientationMask & (1 << position)
+              ? `${field.amount} ${field.label}`
+              : `${field.label} ${field.amount}`;
+            return `${open}${clause}${close}`;
+          }).join(plus);
+          const document = normalizeSetupText(input);
+          const candidates = extractCapacityCandidates(document);
+          variantCount += 1;
+          assert.deepEqual(
+            candidates.map((candidate) => [candidate.field, candidate.value]),
+            order.map((fieldIndex) => [fields[fieldIndex].field, fields[fieldIndex].value]),
+            input
+          );
+          candidates.forEach((candidate) => assertCapacityCandidateContract(document, candidate));
+        }
+      }
+    }
+  }
+  assert.equal(variantCount, 288);
+});
