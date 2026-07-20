@@ -19,6 +19,7 @@ import {
   CAPACITY_AMOUNT_PATTERNS,
   CAPACITY_CLAUSE_PATTERNS,
   CAPACITY_LABEL_PATTERNS,
+  CAPACITY_RANGE_PATTERNS,
   CPU_MODEL_PATTERNS,
   GPU_MODEL_PATTERNS,
   STORAGE_KIND_PATTERNS,
@@ -392,6 +393,7 @@ test("deep freezes every exported pattern collection", () => {
     CAPACITY_LABEL_PATTERNS,
     CAPACITY_AMOUNT_PATTERNS,
     CAPACITY_CLAUSE_PATTERNS,
+    CAPACITY_RANGE_PATTERNS,
     scannerPatterns.CAPACITY_DISQUALIFIER_PATTERNS,
     scannerPatterns.DEDICATED_GPU_EVIDENCE_PATTERNS,
     STORAGE_KIND_PATTERNS,
@@ -2871,4 +2873,214 @@ test("keeps no-GPU suppression clause-local while retaining conflicting model ev
       input
     );
   }
+});
+
+test("abstains from compact and shared-unit ranges across fields and orientations", () => {
+  const fields = [
+    { label: "RAM", lower: "16", upper: "32", unit: "GB" },
+    { label: "VRAM", lower: "8", upper: "12", unit: "GiB" },
+    { label: "storage", lower: "1", upper: "2", unit: "TB" }
+  ];
+  const connectors = ["to", " to", "to ", " to ", "-", " -", "- ", " - ", "–", " –", "– ", " – "];
+
+  for (const field of fields) {
+    for (const connector of connectors) {
+      const ranges = [
+        `${field.lower}${field.unit}${connector}${field.upper}${field.unit}`,
+        `${field.lower}${connector}${field.upper}${field.unit}`,
+        `${field.lower}${field.unit}${connector}${field.upper}`
+      ];
+      for (const range of ranges) {
+        for (const input of [`${field.label} ${range}`, `${range} ${field.label}`]) {
+          assert.deepEqual(extractCapacityCandidates(normalizeSetupText(input)), [], input);
+        }
+      }
+    }
+  }
+
+  assert.deepEqual(
+    extractCapacityCandidates(normalizeSetupText(
+      "RAM 16GB to32GB;VRAM 12GB;SSD 512GB"
+    )).map((candidate) => [candidate.field, candidate.value, candidate.raw]),
+    [["vram", 12, "VRAM 12GB"], ["storage", 512, "SSD 512GB"]]
+  );
+  const modelControl = normalizeSetupText(
+    "NVIDIA RTX 4070;RAM 16-32GB;SSD 512GB;move files from 16 to 32 folders"
+  );
+  assert.deepEqual(candidateValues(extractGpuCandidates(modelControl), "gpuModel"), ["NVIDIA RTX 4070"]);
+  assert.deepEqual(
+    extractCapacityCandidates(modelControl).map((candidate) => [candidate.field, candidate.value, candidate.raw]),
+    [["storage", 512, "SSD 512GB"]]
+  );
+});
+
+test("attaches preposed absence to the complete owned capacity evidence", () => {
+  const fields = [
+    { label: "RAM", amount: "32GB" },
+    { label: "VRAM", amount: "12GiB" },
+    { label: "storage", amount: "1TB" }
+  ];
+
+  for (const field of fields) {
+    for (const absence of ["without", "no"]) {
+      for (const input of [
+        `${absence} ${field.label} ${field.amount}`,
+        `${absence} ${field.amount} ${field.label}`
+      ]) {
+        assert.deepEqual(extractCapacityCandidates(normalizeSetupText(input)), [], input);
+      }
+    }
+  }
+
+  for (const [input, expected] of [
+    ["RAM 32GB without overclocking", [["ram", 32, "RAM 32GB"]]],
+    ["RAM 32GB missing drivers", [["ram", 32, "RAM 32GB"]]],
+    ["RAM no ECC 32GB", [["ram", 32, "RAM no ECC 32GB"]]],
+    ["laptop without dedicated GPU, RAM 32GB", [["ram", 32, "RAM 32GB"]]],
+    ["no concern about upgrades, RAM 32GB", [["ram", 32, "RAM 32GB"]]]
+  ]) {
+    assert.deepEqual(
+      extractCapacityCandidates(normalizeSetupText(input)).map((candidate) => [
+        candidate.field,
+        candidate.value,
+        candidate.raw
+      ]),
+      expected,
+      input
+    );
+  }
+});
+
+test("abstains from clause-local capacity uncertainty without changing natural-memory evidence", () => {
+  const fields = [
+    { label: "RAM", amount: "32GB" },
+    { label: "VRAM", amount: "12GiB" },
+    { label: "storage", amount: "1TB" }
+  ];
+  const englishUncertainty = ["maybe", "approximately", "roughly", "perhaps", "about", "around"];
+
+  for (const field of fields) {
+    for (const uncertainty of englishUncertainty) {
+      for (const input of [
+        `${field.label} ${uncertainty} ${field.amount}`,
+        `${uncertainty} ${field.amount} ${field.label}`
+      ]) {
+        assert.deepEqual(extractCapacityCandidates(normalizeSetupText(input)), [], input);
+      }
+    }
+  }
+
+  const chineseFields = [
+    { label: "内存", amount: "32GB" },
+    { label: "顯存", amount: "12GiB" },
+    { label: "存储", amount: "1TB" }
+  ];
+  for (const field of chineseFields) {
+    for (const uncertainty of ["约", "約", "近似", "可能", "或许", "或許"]) {
+      for (const input of [
+        `${field.label}${uncertainty}${field.amount}`,
+        `${uncertainty}${field.amount}${field.label}`
+      ]) {
+        assert.deepEqual(extractCapacityCandidates(normalizeSetupText(input)), [], input);
+      }
+    }
+  }
+
+  for (const input of ["RAM 32GB maybe", "内存32GB左右", "顯存12GiB上下"]) {
+    assert.deepEqual(extractCapacityCandidates(normalizeSetupText(input)), [], input);
+  }
+  for (const input of ["显存大概 12GiB", "大約 1TB 存储"]) {
+    assert.deepEqual(extractCapacityCandidates(normalizeSetupText(input)), [], input);
+  }
+
+  for (const [input, expected] of [
+    ["RAM 32GB, maybe upgrade later", [["ram", 32, "RAM 32GB"]]],
+    ["Maybe laptop choice, RAM 32GB", [["ram", 32, "RAM 32GB"]]],
+    ["about 8 gigs of memory", [["ram", 8, "about 8 gigs of memory"]]],
+    ["内存大概 32GB", [["ram", 32, "内存大概 32GB"]]],
+    ["記憶體大約 16GB", [["ram", 16, "記憶體大約 16GB"]]]
+  ]) {
+    assert.deepEqual(
+      extractCapacityCandidates(normalizeSetupText(input)).map((candidate) => [
+        candidate.field,
+        candidate.value,
+        candidate.raw
+      ]),
+      expected,
+      input
+    );
+  }
+});
+
+test("emits canonical no-GPU evidence for without and discrete-graphics wording", () => {
+  const conflictSeparators = [";", ", "];
+  for (const separator of conflictSeparators) {
+    for (const input of [
+      `NVIDIA RTX 4070 12GB${separator}laptop without dedicated GPU`,
+      `laptop without dedicated GPU${separator}NVIDIA RTX 4070 12GB`
+    ]) {
+      const document = normalizeSetupText(input);
+      assert.deepEqual(
+        extractCapacityCandidates(document).map((candidate) => [candidate.field, candidate.value, candidate.raw]),
+        [["vram", 12, "NVIDIA RTX 4070 12GB"]],
+        input
+      );
+      assert.equal(
+        extractGpuCandidates(document).some((candidate) => candidate.value === "No dedicated GPU"),
+        true,
+        input
+      );
+    }
+  }
+
+  for (const input of [
+    "without dedicated GPU",
+    "without a dedicated GPU",
+    "without discrete GPU",
+    "without a discrete GPU",
+    "no discrete graphics",
+    "没有独立显卡",
+    "沒有獨立顯卡",
+    "不含独立显卡",
+    "不含獨立顯卡"
+  ]) {
+    assert.deepEqual(candidateValues(extractGpuCandidates(normalizeSetupText(input)), "gpuModel"), [
+      "No dedicated GPU"
+    ], input);
+  }
+
+  const sameClause = normalizeSetupText(
+    "without a dedicated GPU 12GB RAM 32GB SSD 512GB"
+  );
+  assert.deepEqual(
+    extractCapacityCandidates(sameClause).map((candidate) => [candidate.field, candidate.value, candidate.raw]),
+    [["ram", 32, "RAM 32GB"], ["storage", 512, "SSD 512GB"]]
+  );
+  assert.deepEqual(candidateValues(extractGpuCandidates(sameClause), "gpuModel"), ["No dedicated GPU"]);
+});
+
+test("uses explicit integrated context to override Vega proximity dedication only", () => {
+  for (const input of [
+    "integrated AMD Radeon Vega 64 8GB",
+    "integrated AMD Radeon Vega 56 8GB",
+    "integrated Vega 56 8GB"
+  ]) {
+    assert.deepEqual(candidateValues(extractCapacityCandidates(normalizeSetupText(input)), "vram"), [], input);
+  }
+
+  for (const input of [
+    "dedicated AMD Radeon Vega 64 8GB",
+    "discrete AMD Radeon Vega 56 8GB",
+    "AMD Radeon Vega 64 8GB"
+  ]) {
+    assert.deepEqual(candidateValues(extractCapacityCandidates(normalizeSetupText(input)), "vram"), [8], input);
+  }
+
+  const integrated = normalizeSetupText("integrated AMD Radeon Vega 64 8GB");
+  assert.deepEqual(candidateValues(extractGpuCandidates(integrated), "gpuModel"), ["AMD Radeon Vega 64"]);
+  assert.deepEqual(
+    extractCapacityCandidates(normalizeSetupText("integrated AMD Radeon Vega 64 with 8GB VRAM"))
+      .map((candidate) => [candidate.field, candidate.value, candidate.raw]),
+    [["vram", 8, "8GB VRAM"]]
+  );
 });

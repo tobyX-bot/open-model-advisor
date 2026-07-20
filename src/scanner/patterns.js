@@ -255,7 +255,7 @@ export const GPU_MODEL_PATTERNS = freezePatterns([
     field: "gpuModel",
     vendor: "none",
     dedicated: false,
-    regex: /no[ \t]+dedicated[ \t]+gpu|no[ \t]+gpu|cpu[ \t]*-?[ \t]*only|integrated[ \t]+graphics[ \t]+only|无独立显卡|無獨立顯卡|没有独显|沒有獨顯|仅[ \t]*cpu|僅[ \t]*cpu|只有[ \t]*cpu|核显|核顯|集成显卡|集成顯卡/iu,
+    regex: /\b(?:no|without(?:[ \t]+a)?)[ \t]+(?:dedicated|discrete)[ \t]+(?:GPU|graphics(?:[ \t]+card)?)\b|no[ \t]+gpu|cpu[ \t]*-?[ \t]*only|integrated[ \t]+graphics[ \t]+only|无独立显卡|無獨立顯卡|没有(?:独显|独立显卡)|沒有(?:獨顯|獨立顯卡)|不(?:含|带|帶)(?:独立显卡|獨立顯卡)|仅[ \t]*cpu|僅[ \t]*cpu|只有[ \t]*cpu|核显|核顯|集成显卡|集成顯卡/iu,
     confidence: "high",
     specificity: 100,
     normalize() {
@@ -424,6 +424,23 @@ export const CAPACITY_AMOUNT_PATTERNS = freezePatterns([
   }
 ]);
 
+export const CAPACITY_RANGE_PATTERNS = freezePatterns([
+  {
+    id: "capacity.range.two-units",
+    regex: /(?<![A-Z0-9.])(?<left>\d{1,5})[ \t]*(?:TiB|TB|GiB|GB|G|gigabytes?|gigs?)[ \t]*(?:to|[-–—])[ \t]*(?<right>\d{1,5})[ \t]*(?:TiB|TB|GiB|GB|G|gigabytes?|gigs?)(?![A-Z0-9/])/iu
+  },
+  {
+    id: "capacity.range.shared-trailing-unit",
+    regex: /(?<![A-Z0-9.])(?<left>\d{1,5})[ \t]*(?:to|[-–—])[ \t]*(?<right>\d{1,5})[ \t]*(?:TiB|TB|GiB|GB|G|gigabytes?|gigs?)(?![A-Z0-9/])/iu,
+    bareEndpoint: "left"
+  },
+  {
+    id: "capacity.range.shared-leading-unit",
+    regex: /(?<![A-Z0-9.])(?<left>\d{1,5})[ \t]*(?:TiB|TB|GiB|GB|G|gigabytes?|gigs?)[ \t]*(?:to|[-–—])[ \t]*(?<right>\d{1,5})(?![A-Z0-9.])/iu,
+    bareEndpoint: "right"
+  }
+]);
+
 export const CAPACITY_DISQUALIFIER_PATTERNS = freezePatterns([
   {
     id: "capacity.disqualifier.english",
@@ -451,7 +468,27 @@ export const CAPACITY_DISQUALIFIER_PATTERNS = freezePatterns([
   {
     id: "capacity.disqualifier.english-preposed-absence",
     regex: /\b(?:without|no)\b/iu,
-    requireAmountAdjacency: true
+    requireCapacityAdjacency: true
+  },
+  {
+    id: "capacity.disqualifier.english-uncertainty",
+    regex: /\b(?:maybe|approximately|roughly|perhaps|about|around)\b/iu,
+    preserveNaturalMemoryAbout: true
+  },
+  {
+    id: "capacity.disqualifier.chinese-uncertainty",
+    regex: /大约|大約|大概|近似|约|約|可能|或许|或許/u,
+    preserveApproximateRamContract: true
+  },
+  {
+    id: "capacity.disqualifier.english-postposed-uncertainty",
+    regex: /\b(?:maybe|approximately|roughly|perhaps|about|around)\b(?=[ \t]*(?:$|[,，.。!?！？]))/iu,
+    allowAfterCapacity: true
+  },
+  {
+    id: "capacity.disqualifier.chinese-postposed-uncertainty",
+    regex: /(?:左右|上下)(?=[ \t]*(?:$|[,，.。!?！？]))/u,
+    allowAfterCapacity: true
   },
   {
     id: "capacity.disqualifier.symbolic-bound",

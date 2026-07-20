@@ -3,6 +3,7 @@ import {
   CAPACITY_CLAUSE_PATTERNS,
   CAPACITY_DISQUALIFIER_PATTERNS,
   CAPACITY_LABEL_PATTERNS,
+  CAPACITY_RANGE_PATTERNS,
   CPU_MODEL_PATTERNS,
   DEDICATED_GPU_EVIDENCE_PATTERNS,
   GPU_MODEL_PATTERNS,
@@ -51,6 +52,7 @@ const TRANSFER_RATE_SUFFIX = /^(?:[ \t]+(?:(?:\/[ \t]*|per[ \t]+)(?:(?:ms|msecs?
 const TRANSFER_RATE_INVENTORY = /^[ \t]+(?:drive|SSD|HDD|disk|storage)\b/iu;
 const TRANSFER_RATE_PREFIX = /(?:\b(?:speed|throughput|bandwidth|rate)\b|带宽|帶寬|速度|吞吐量)[ \t:,-]*$/iu;
 const CAPACITY_RANGE_CONNECTOR = /^[ \t]*(?:-|–|—|to)[ \t]*$/iu;
+const INTEGRATED_GPU_PREFIX = /(?:\b(?:integrated|onboard|shared)(?:[ \t]+graphics)?|集成显卡|集成顯卡|核显|核顯)[ \t:,-]*$/iu;
 
 function globalRegex(regex) {
   const flags = `${regex.flags.replace(/[gy]/g, "")}g`;
@@ -302,13 +304,60 @@ function hasUnsafeDigitCommaPrefix(segment, match, modelCandidates) {
   return !endsWithKnownUnparsedModel;
 }
 
+function collectCapacityRanges(segment, modelCandidates) {
+  const ranges = [];
+
+  for (const [patternIndex, pattern] of CAPACITY_RANGE_PATTERNS.entries()) {
+    for (const match of segment.text.matchAll(globalRegex(pattern.regex))) {
+      if (pattern.bareEndpoint) {
+        const endpoint = match.groups?.[pattern.bareEndpoint];
+        if (!endpoint) continue;
+        const endpointOffset = pattern.bareEndpoint === "left"
+          ? match[0].indexOf(endpoint)
+          : match[0].lastIndexOf(endpoint);
+        const endpointSpan = {
+          start: match.index + endpointOffset,
+          end: match.index + endpointOffset + endpoint.length
+        };
+        const overlapsModel = modelCandidates.some((candidate) => (
+          candidate.segmentIndex === segment.index
+          && overlaps(endpointSpan, {
+            start: candidate.start - segment.start,
+            end: candidate.end - segment.start
+          })
+        ));
+        if (overlapsModel) continue;
+      }
+
+      ranges.push({
+        patternIndex,
+        start: match.index,
+        end: match.index + match[0].length
+      });
+    }
+  }
+
+  ranges.sort((left, right) => (
+    left.start - right.start
+    || left.end - right.end
+    || left.patternIndex - right.patternIndex
+  ));
+  return ranges;
+}
+
 function collectCapacityAmounts(document, segment, modelCandidates, labels) {
   const amounts = [];
+  const ranges = collectCapacityRanges(segment, modelCandidates);
 
   for (const [patternIndex, pattern] of CAPACITY_AMOUNT_PATTERNS.entries()) {
     for (const match of segment.text.matchAll(globalRegex(pattern.regex))) {
+      const amountSpan = {
+        start: match.index,
+        end: match.index + match[0].length
+      };
       if (
-        hasUnsafeSignPrefix(segment, match, labels)
+        ranges.some((range) => overlaps(range, amountSpan))
+        || hasUnsafeSignPrefix(segment, match, labels)
         || hasTransferRateSuffix(document, segment, match)
         || hasUnsafeDigitCommaPrefix(segment, match, modelCandidates)
       ) continue;
@@ -399,6 +448,34 @@ function hasAttachedDisqualifier(segment, clause, disqualifiers, amount, ownersh
     : amount.end;
 
   return disqualifiers.some((match) => {
+    if (
+      match.pattern.preserveNaturalMemoryAbout
+      && ownership?.label.pattern.field === "ram"
+      && ownership.amountPosition === "before-label"
+      && ["gig", "gigabyte"].includes(amount.pattern.sourceUnit)
+      && match.start === amount.start
+      && /^about\b/iu.test(segment.text.slice(amount.start, amount.end))
+    ) {
+      return false;
+    }
+
+    if (
+      match.pattern.preserveApproximateRamContract
+      && ownership?.label.pattern.field === "ram"
+      && ownership.amountPosition === "after-label"
+      && /^(?:大约|大約|大概)$/u.test(segment.text.slice(match.start, match.end))
+      && match.start >= ownership.label.end
+      && match.end <= amount.start
+    ) {
+      return false;
+    }
+
+    if (match.pattern.requireCapacityAdjacency) {
+      if (!localSpanIsInClause(match.start, match.end, clause)) return false;
+      if (match.end > localStart) return false;
+      return /^[ \t:()（）-]*$/u.test(segment.text.slice(match.end, localStart));
+    }
+
     if (match.pattern.requireAmountAdjacency) {
       if (!localSpanIsInClause(match.start, match.end, clause)) return false;
       if (match.end > amount.start) return false;
@@ -970,13 +1047,24 @@ function isDedicatedGpuModel(candidate) {
   ));
 }
 
+function hasExplicitIntegratedVegaContext(document, candidate) {
+  if (candidate.source !== "gpu.amd-radeon-vega-dedicated") return false;
+  const segment = document.segments[candidate.segmentIndex];
+  const localStart = candidate.start - segment.start;
+  const precedingText = segment.text.slice(Math.max(0, localStart - 32), localStart);
+  return INTEGRATED_GPU_PREFIX.test(precedingText);
+}
+
 export function extractCapacityCandidates(document) {
   const cpuCandidates = extractCpuCandidates(document);
   const gpuCandidates = extractGpuCandidates(document);
   const gpuModels = gpuCandidates.filter((candidate) => (
     candidate.field === "gpuModel"
   ));
-  const dedicatedGpuModels = gpuModels.filter(isDedicatedGpuModel);
+  const dedicatedGpuModels = gpuModels.filter((candidate) => (
+    isDedicatedGpuModel(candidate)
+    && !hasExplicitIntegratedVegaContext(document, candidate)
+  ));
   const hasNoGpu = gpuCandidates.some((candidate) => (
     candidate.field === "gpuModel" && candidate.value === "No dedicated GPU"
   ));
