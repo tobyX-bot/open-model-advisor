@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
+import { performance } from "node:perf_hooks";
 import test from "node:test";
 
 import {
@@ -4837,4 +4838,104 @@ test("replays 288 wrapped plus ownership variants", () => {
     }
   }
   assert.equal(variantCount, 288);
+});
+
+test("suppresses integrated Vega 56 and 64 proximity independently of model source", () => {
+  for (const [input, model] of [
+    ["integrated AMD Vega 64 8GB", "AMD Vega 64"],
+    ["integrated AMD Vega 56 8GB", "AMD Vega 56"],
+    ["AMD Vega 64 (iGPU) 8GB", "AMD Vega 64"],
+    ["AMD Vega 56（集成显卡）8GB", "AMD Vega 56"]
+  ]) {
+    const document = normalizeSetupText(input);
+    const gpuModels = extractGpuCandidates(document).filter((candidate) => (
+      candidate.field === "gpuModel"
+    ));
+    const vegaModel = gpuModels.find((candidate) => candidate.value === model);
+    assert.ok(vegaModel, input);
+    assert.equal(vegaModel.source, "gpu.amd-labeled-unknown", input);
+    assert.deepEqual(candidateValues(extractCapacityCandidates(document), "vram"), [], input);
+  }
+
+  for (const input of [
+    "dedicated AMD Vega 64 8GB",
+    "discrete AMD Vega 56 8GB",
+    "AMD Vega 64 8GB",
+    "integrated graphics;AMD Vega 64 8GB"
+  ]) {
+    assert.deepEqual(candidateValues(extractCapacityCandidates(normalizeSetupText(input)), "vram"), [8], input);
+  }
+
+  assert.deepEqual(
+    extractCapacityCandidates(normalizeSetupText("integrated AMD Vega 64 with 8GB VRAM"))
+      .map((candidate) => [candidate.field, candidate.value, candidate.raw]),
+    [["vram", 8, "8GB VRAM"]]
+  );
+});
+
+test("marks contradictory attached storage statuses unknown without losing evidence", () => {
+  for (const input of [
+    "SSD total free 100GB",
+    "free SSD 100GB total",
+    "固态硬盘总容量可用 100GB",
+    "可用 固態硬碟 100GB 總容量"
+  ]) {
+    const document = normalizeSetupText(input);
+    const candidates = extractStorageCandidates(document);
+    assert.equal(candidates.length, 1, input);
+    assert.deepEqual(
+      [candidates[0].value, candidates[0].storageKind, candidates[0].raw],
+      [100, "unknown", document.normalized],
+      input
+    );
+    assertCapacityCandidateContract(document, candidates[0]);
+  }
+
+  for (const [input, kind] of [
+    ["SSD free 100GB", "free"],
+    ["SSD 100GB available", "free"],
+    ["SSD remaining 100GB", "free"],
+    ["SSD total 100GB", "total"],
+    ["SSD 100GB capacity", "total"]
+  ]) {
+    const document = normalizeSetupText(input);
+    const [candidate] = extractStorageCandidates(document);
+    assert.deepEqual([candidate.storageKind, candidate.raw], [kind, document.normalized], input);
+  }
+
+  const mixed = extractCapacityCandidates(normalizeSetupText(
+    "SSD total free 100GB;RAM 32GB;SSD 900GB used"
+  ));
+  assert.deepEqual(
+    mixed.map((candidate) => [candidate.field, candidate.value, candidate.storageKind]),
+    [["storage", 100, "unknown"], ["ram", 32, undefined]]
+  );
+});
+
+test("keeps capped segment-dense aggregate extraction materially subquadratic", () => {
+  function timedExtraction(input) {
+    const document = normalizeSetupText(input);
+    const start = performance.now();
+    const candidates = extractCandidates(document);
+    return {
+      candidates,
+      durationMs: performance.now() - start,
+      segments: document.segments.length
+    };
+  }
+
+  const noMatch = timedExtraction("x;".repeat(10_000));
+  const halfDense = timedExtraction("M1;".repeat(3_333));
+  const dense = timedExtraction("M1;".repeat(6_666));
+
+  assert.equal(noMatch.segments, 10_000);
+  assert.equal(noMatch.candidates.length, 0);
+  assert.equal(dense.segments, 6_666);
+  assert.equal(dense.candidates.length, 6_666);
+  assert.ok(noMatch.durationMs < 500, `no-match extraction ${noMatch.durationMs.toFixed(3)}ms`);
+  assert.ok(dense.durationMs < 500, `dense extraction ${dense.durationMs.toFixed(3)}ms`);
+  assert.ok(
+    dense.durationMs < Math.max(120, halfDense.durationMs * 2.5),
+    `dense scaling ${halfDense.durationMs.toFixed(3)}ms -> ${dense.durationMs.toFixed(3)}ms`
+  );
 });

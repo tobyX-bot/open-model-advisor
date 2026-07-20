@@ -79,6 +79,14 @@ function globalRegex(regex) {
   return new RegExp(regex.source, flags);
 }
 
+function compilePatternMatchers(patterns) {
+  return patterns.map((pattern, patternIndex) => ({
+    pattern,
+    patternIndex,
+    matcher: globalRegex(pattern.regex)
+  }));
+}
+
 function overlaps(left, right) {
   return left.start < right.end && right.start < left.end;
 }
@@ -94,7 +102,7 @@ function isValidEvidence(pattern, evidence, followingText) {
   return !TASK_PATTERNS.some((taskPattern) => taskPattern.regex.test(evidence));
 }
 
-function candidateFromMatch(document, segment, pattern, match) {
+function candidateFromMatch(document, segment, pattern, match, context) {
   if (pattern.requiresAppleContext) {
     const precedingText = segment.text.slice(Math.max(0, match.index - 32), match.index);
     const followingText = segment.text.slice(match.index + match[0].length, match.index + match[0].length + 32);
@@ -107,7 +115,7 @@ function candidateFromMatch(document, segment, pattern, match) {
       || STORAGE_M_SERIES_SUFFIX.test(followingText)
     );
     if (
-      !APPLE_PLATFORM_CONTEXT.test(document.normalized)
+      !context.hasApplePlatformContext
       || NON_APPLE_M_SERIES_PREFIX.test(precedingText)
       || (
         pattern.rejectsStorageContext
@@ -146,36 +154,45 @@ function candidateFromMatch(document, segment, pattern, match) {
 
 function collectPatternMatches(document, patterns) {
   const accepted = [];
+  const matchers = compilePatternMatchers(patterns);
+  const context = Object.freeze({
+    hasApplePlatformContext: patterns.some((pattern) => pattern.requiresAppleContext)
+      ? APPLE_PLATFORM_CONTEXT.test(document.normalized)
+      : false
+  });
 
   for (const segment of document.segments) {
-    for (const [patternIndex, pattern] of patterns.entries()) {
-      const matcher = globalRegex(pattern.regex);
-      for (const match of segment.text.matchAll(matcher)) {
-        const candidate = candidateFromMatch(document, segment, pattern, match);
+    const segmentAccepted = [];
+    for (const { patternIndex, pattern, matcher } of matchers) {
+      matcher.lastIndex = 0;
+      let match = matcher.exec(segment.text);
+      while (match) {
+        const candidate = candidateFromMatch(document, segment, pattern, match, context);
+        if (match[0].length === 0) matcher.lastIndex += 1;
+        match = matcher.exec(segment.text);
         if (!candidate) continue;
 
-        const shadowed = accepted.some((entry) => (
-          entry.candidate.segmentIndex === candidate.segmentIndex
-          && entry.candidate.field === candidate.field
+        const shadowed = segmentAccepted.some((entry) => (
+          entry.candidate.field === candidate.field
           && entry.candidate.specificity >= candidate.specificity
           && overlaps(entry.candidate, candidate)
         ));
         if (shadowed) continue;
 
-        for (let index = accepted.length - 1; index >= 0; index -= 1) {
-          const entry = accepted[index];
+        for (let index = segmentAccepted.length - 1; index >= 0; index -= 1) {
+          const entry = segmentAccepted[index];
           if (
-            entry.candidate.segmentIndex === candidate.segmentIndex
-            && entry.candidate.field === candidate.field
+            entry.candidate.field === candidate.field
             && entry.candidate.specificity < candidate.specificity
             && overlaps(entry.candidate, candidate)
           ) {
-            accepted.splice(index, 1);
+            segmentAccepted.splice(index, 1);
           }
         }
-        accepted.push({ candidate, pattern, patternIndex });
+        segmentAccepted.push({ candidate, pattern, patternIndex });
       }
     }
+    accepted.push(...segmentAccepted);
   }
 
   accepted.sort((left, right) => (
@@ -191,17 +208,21 @@ function collectSimpleCandidates(document, patterns) {
   return collectPatternMatches(document, patterns).map((entry) => entry.candidate);
 }
 
-function collectCapacityLabels(segment) {
+function collectCapacityLabels(segment, matchers) {
   const matches = [];
 
-  for (const [patternIndex, pattern] of CAPACITY_LABEL_PATTERNS.entries()) {
-    for (const match of segment.text.matchAll(globalRegex(pattern.regex))) {
+  for (const { patternIndex, pattern, matcher } of matchers) {
+    matcher.lastIndex = 0;
+    let match = matcher.exec(segment.text);
+    while (match) {
       matches.push({
         pattern,
         patternIndex,
         start: match.index,
         end: match.index + match[0].length
       });
+      if (match[0].length === 0) matcher.lastIndex += 1;
+      match = matcher.exec(segment.text);
     }
   }
 
@@ -226,17 +247,21 @@ function collectCapacityLabels(segment) {
   return accepted;
 }
 
-function collectLocalPatternMatches(segment, patterns) {
+function collectLocalPatternMatches(segment, matchers) {
   const matches = [];
 
-  for (const [patternIndex, pattern] of patterns.entries()) {
-    for (const match of segment.text.matchAll(globalRegex(pattern.regex))) {
+  for (const { patternIndex, pattern, matcher } of matchers) {
+    matcher.lastIndex = 0;
+    let match = matcher.exec(segment.text);
+    while (match) {
       matches.push({
         pattern,
         patternIndex,
         start: match.index,
         end: match.index + match[0].length
       });
+      if (match[0].length === 0) matcher.lastIndex += 1;
+      match = matcher.exec(segment.text);
     }
   }
 
@@ -371,14 +396,20 @@ function hasUnsafeDigitCommaPrefix(segment, match, modelCandidates) {
   return !endsWithKnownUnparsedModel;
 }
 
-function collectCapacityRanges(segment, modelCandidates) {
+function collectCapacityRanges(segment, modelCandidates, matchers) {
   const ranges = [];
 
-  for (const [patternIndex, pattern] of CAPACITY_RANGE_PATTERNS.entries()) {
-    for (const match of segment.text.matchAll(globalRegex(pattern.regex))) {
+  for (const { patternIndex, pattern, matcher } of matchers) {
+    matcher.lastIndex = 0;
+    let match = matcher.exec(segment.text);
+    while (match) {
       if (pattern.bareEndpoint) {
         const endpoint = match.groups?.[pattern.bareEndpoint];
-        if (!endpoint) continue;
+        if (!endpoint) {
+          if (match[0].length === 0) matcher.lastIndex += 1;
+          match = matcher.exec(segment.text);
+          continue;
+        }
         const endpointOffset = pattern.bareEndpoint === "left"
           ? match[0].indexOf(endpoint)
           : match[0].lastIndexOf(endpoint);
@@ -393,7 +424,11 @@ function collectCapacityRanges(segment, modelCandidates) {
             end: candidate.end - segment.start
           })
         ));
-        if (overlapsModel) continue;
+        if (overlapsModel) {
+          if (match[0].length === 0) matcher.lastIndex += 1;
+          match = matcher.exec(segment.text);
+          continue;
+        }
       }
 
       ranges.push({
@@ -401,6 +436,8 @@ function collectCapacityRanges(segment, modelCandidates) {
         start: match.index,
         end: match.index + match[0].length
       });
+      if (match[0].length === 0) matcher.lastIndex += 1;
+      match = matcher.exec(segment.text);
     }
   }
 
@@ -412,12 +449,21 @@ function collectCapacityRanges(segment, modelCandidates) {
   return ranges;
 }
 
-function collectCapacityAmounts(document, segment, modelCandidates, labels) {
+function collectCapacityAmounts(
+  document,
+  segment,
+  modelCandidates,
+  labels,
+  amountMatchers,
+  rangeMatchers
+) {
   const amounts = [];
-  const ranges = collectCapacityRanges(segment, modelCandidates);
+  const ranges = collectCapacityRanges(segment, modelCandidates, rangeMatchers);
 
-  for (const [patternIndex, pattern] of CAPACITY_AMOUNT_PATTERNS.entries()) {
-    for (const match of segment.text.matchAll(globalRegex(pattern.regex))) {
+  for (const { patternIndex, pattern, matcher } of amountMatchers) {
+    matcher.lastIndex = 0;
+    let match = matcher.exec(segment.text);
+    while (match) {
       const amountSpan = {
         start: match.index,
         end: match.index + match[0].length
@@ -427,7 +473,11 @@ function collectCapacityAmounts(document, segment, modelCandidates, labels) {
         || hasUnsafeSignPrefix(segment, match, labels, pattern, modelCandidates)
         || hasTransferRateSuffix(document, segment, match)
         || hasUnsafeDigitCommaPrefix(segment, match, modelCandidates)
-      ) continue;
+      ) {
+        if (match[0].length === 0) matcher.lastIndex += 1;
+        match = matcher.exec(segment.text);
+        continue;
+      }
 
       amounts.push({
         pattern,
@@ -436,6 +486,8 @@ function collectCapacityAmounts(document, segment, modelCandidates, labels) {
         start: match.index,
         end: match.index + match[0].length
       });
+      if (match[0].length === 0) matcher.lastIndex += 1;
+      match = matcher.exec(segment.text);
     }
   }
 
@@ -463,11 +515,13 @@ function supportsCapacityField(amount, field) {
   return field === "storage" ? amount.pattern.storage : amount.pattern.memory;
 }
 
-function collectCapacityClauseBoundaries(segment) {
+function collectCapacityClauseBoundaries(segment, matchers) {
   const boundaries = [];
 
-  for (const [patternIndex, pattern] of CAPACITY_CLAUSE_PATTERNS.entries()) {
-    for (const match of segment.text.matchAll(globalRegex(pattern.regex))) {
+  for (const { patternIndex, pattern, matcher } of matchers) {
+    matcher.lastIndex = 0;
+    let match = matcher.exec(segment.text);
+    while (match) {
       const boundary = {
         patternIndex,
         start: match.index,
@@ -476,8 +530,14 @@ function collectCapacityClauseBoundaries(segment) {
       if (
         pattern.id === "capacity.clause.punctuation"
         && isFrozenApproximationPunctuationBoundary(segment, boundary)
-      ) continue;
+      ) {
+        if (match[0].length === 0) matcher.lastIndex += 1;
+        match = matcher.exec(segment.text);
+        continue;
+      }
       boundaries.push(boundary);
+      if (match[0].length === 0) matcher.lastIndex += 1;
+      match = matcher.exec(segment.text);
     }
   }
 
@@ -1056,8 +1116,8 @@ function pairCapacityClause(segment, labels, amounts, gpuModels) {
   return { assignments, matchedAmounts, usedLabels };
 }
 
-function collectStorageQualifiers(segment) {
-  return collectLocalPatternMatches(segment, STORAGE_KIND_PATTERNS);
+function collectStorageQualifiers(segment, matchers) {
+  return collectLocalPatternMatches(segment, matchers);
 }
 
 function storageEvidence(segment, clause, qualifiers, localStart, localEnd) {
@@ -1085,12 +1145,17 @@ function storageEvidence(segment, clause, qualifiers, localStart, localEnd) {
       || left.qualifier.patternIndex - right.qualifier.patternIndex
       || left.qualifier.start - right.qualifier.start
     ));
+  const qualifierKinds = new Set(options.map((option) => option.qualifier.pattern.kind));
   const qualifier = options[0]?.qualifier;
 
   return {
-    localStart: qualifier ? Math.min(localStart, options[0].evidenceSpan.start) : localStart,
-    localEnd: qualifier ? Math.max(localEnd, options[0].evidenceSpan.end) : localEnd,
-    kind: qualifier?.pattern.kind ?? "unknown"
+    localStart: qualifier
+      ? Math.min(localStart, ...options.map((option) => option.evidenceSpan.start))
+      : localStart,
+    localEnd: qualifier
+      ? Math.max(localEnd, ...options.map((option) => option.evidenceSpan.end))
+      : localEnd,
+    kind: qualifierKinds.size === 1 ? qualifier.pattern.kind : "unknown"
   };
 }
 
@@ -1238,7 +1303,7 @@ export function extractCpuCandidates(document) {
   return collectSimpleCandidates(document, CPU_MODEL_PATTERNS);
 }
 
-export function extractGpuCandidates(document) {
+function collectGpuCandidates(document) {
   const candidates = [];
 
   for (const { candidate, pattern } of collectPatternMatches(document, GPU_MODEL_PATTERNS)) {
@@ -1261,25 +1326,51 @@ export function extractGpuCandidates(document) {
   return candidates;
 }
 
+export function extractGpuCandidates(document) {
+  return collectGpuCandidates(document);
+}
+
 export function extractTaskCandidates(document) {
   return collectSimpleCandidates(document, TASK_PATTERNS);
 }
 
-function isDedicatedGpuModel(candidate) {
-  return GPU_MODEL_PATTERNS.some((pattern) => (
-    pattern.id === candidate.source && pattern.dedicated === true
-  ));
+function isDedicatedGpuModel(candidate, dedicatedSourceIds = null) {
+  return dedicatedSourceIds
+    ? dedicatedSourceIds.has(candidate.source)
+    : GPU_MODEL_PATTERNS.some((pattern) => (
+      pattern.id === candidate.source && pattern.dedicated === true
+    ));
 }
 
-function hasExplicitIntegratedVegaContext(document, candidate) {
-  if (candidate.source !== "gpu.amd-radeon-vega-dedicated") return false;
+function createModelExtractionContext(document) {
+  return Object.freeze({
+    cpuCandidates: collectSimpleCandidates(document, CPU_MODEL_PATTERNS),
+    gpuCandidates: collectGpuCandidates(document)
+  });
+}
+
+function candidatesBySegment(document, candidates) {
+  const grouped = Array.from({ length: document.segments.length }, () => []);
+  for (const candidate of candidates) grouped[candidate.segmentIndex].push(candidate);
+  return grouped;
+}
+
+function segmentMatchesAnyPattern(segment, matchers) {
+  return matchers.some(({ matcher }) => {
+    matcher.lastIndex = 0;
+    return matcher.test(segment.text);
+  });
+}
+
+function hasExplicitIntegratedVegaContext(document, candidate, clauseBoundaries) {
+  if (!/^AMD(?: Radeon)? Vega (?:56|64)$/u.test(candidate.value)) return false;
   const segment = document.segments[candidate.segmentIndex];
   const localStart = candidate.start - segment.start;
   const localEnd = candidate.end - segment.start;
   const clause = capacityClause(
     segment,
     { start: localStart, end: localEnd },
-    collectCapacityClauseBoundaries(segment)
+    clauseBoundaries
   );
   const precedingText = segment.text.slice(Math.max(clause.start, localStart - 64), localStart);
   const followingText = segment.text.slice(localEnd, Math.min(clause.end, localEnd + 64));
@@ -1289,15 +1380,25 @@ function hasExplicitIntegratedVegaContext(document, candidate) {
   );
 }
 
-export function extractCapacityCandidates(document) {
-  const cpuCandidates = extractCpuCandidates(document);
-  const gpuCandidates = extractGpuCandidates(document);
+function extractCapacityCandidatesWithContext(document, modelContext) {
+  const { cpuCandidates, gpuCandidates } = modelContext;
   const gpuModels = gpuCandidates.filter((candidate) => (
     candidate.field === "gpuModel"
   ));
+  const clauseMatchers = compilePatternMatchers(CAPACITY_CLAUSE_PATTERNS);
+  const clauseBoundariesBySegment = document.segments.map((segment) => (
+    collectCapacityClauseBoundaries(segment, clauseMatchers)
+  ));
+  const dedicatedSourceIds = new Set(GPU_MODEL_PATTERNS
+    .filter((pattern) => pattern.dedicated === true)
+    .map((pattern) => pattern.id));
   const dedicatedGpuModels = gpuModels.filter((candidate) => (
-    isDedicatedGpuModel(candidate)
-    && !hasExplicitIntegratedVegaContext(document, candidate)
+    isDedicatedGpuModel(candidate, dedicatedSourceIds)
+    && !hasExplicitIntegratedVegaContext(
+      document,
+      candidate,
+      clauseBoundariesBySegment[candidate.segmentIndex]
+    )
   ));
   const hasNoGpu = gpuCandidates.some((candidate) => (
     candidate.field === "gpuModel" && candidate.value === "No dedicated GPU"
@@ -1306,14 +1407,30 @@ export function extractCapacityCandidates(document) {
     ...cpuCandidates.filter((candidate) => candidate.field === "cpuModel"),
     ...gpuCandidates.filter((candidate) => candidate.field === "gpuModel")
   ];
+  const modelCandidatesBySegment = candidatesBySegment(document, modelCandidates);
+  const gpuModelsBySegment = candidatesBySegment(document, gpuModels);
+  const dedicatedGpuModelsBySegment = candidatesBySegment(document, dedicatedGpuModels);
+  const labelMatchers = compilePatternMatchers(CAPACITY_LABEL_PATTERNS);
+  const disqualifierMatchers = compilePatternMatchers(CAPACITY_DISQUALIFIER_PATTERNS);
+  const storageQualifierMatchers = compilePatternMatchers(STORAGE_KIND_PATTERNS);
+  const amountMatchers = compilePatternMatchers(CAPACITY_AMOUNT_PATTERNS);
+  const rangeMatchers = compilePatternMatchers(CAPACITY_RANGE_PATTERNS);
+  const dedicatedEvidenceMatchers = compilePatternMatchers(DEDICATED_GPU_EVIDENCE_PATTERNS);
   const entries = [];
   let hasExplicitVramEvidence = false;
+  let hasDedicatedGpuEvidence = false;
 
   for (const segment of document.segments) {
-    const segmentLabels = collectCapacityLabels(segment);
-    const disqualifiers = collectLocalPatternMatches(segment, CAPACITY_DISQUALIFIER_PATTERNS);
-    const storageQualifiers = collectStorageQualifiers(segment);
-    const clauseBoundaries = collectCapacityClauseBoundaries(segment);
+    const segmentLabels = collectCapacityLabels(segment, labelMatchers);
+    const disqualifiers = collectLocalPatternMatches(segment, disqualifierMatchers);
+    const storageQualifiers = collectStorageQualifiers(segment, storageQualifierMatchers);
+    const clauseBoundaries = clauseBoundariesBySegment[segment.index];
+    const segmentModelCandidates = modelCandidatesBySegment[segment.index];
+    const segmentGpuModels = gpuModelsBySegment[segment.index];
+    const segmentDedicatedGpuModels = dedicatedGpuModelsBySegment[segment.index];
+    if (!hasDedicatedGpuEvidence) {
+      hasDedicatedGpuEvidence = segmentMatchesAnyPattern(segment, dedicatedEvidenceMatchers);
+    }
     if (segmentLabels.some((label) => label.pattern.field === "vram")) {
       hasExplicitVramEvidence = true;
     }
@@ -1321,8 +1438,10 @@ export function extractCapacityCandidates(document) {
     const segmentAmounts = collectCapacityAmounts(
       document,
       segment,
-      modelCandidates,
-      segmentLabels
+      segmentModelCandidates,
+      segmentLabels,
+      amountMatchers,
+      rangeMatchers
     );
     const clauseContexts = new Map();
     for (const amount of segmentAmounts) {
@@ -1336,9 +1455,8 @@ export function extractCapacityCandidates(document) {
         const amounts = segmentAmounts.filter((candidate) => (
           localSpanIsInClause(candidate.start, candidate.end, clause)
         ));
-        const clauseGpuModels = gpuModels.filter((candidate) => (
-          candidate.segmentIndex === segment.index
-          && localSpanIsInClause(
+        const clauseGpuModels = segmentGpuModels.filter((candidate) => (
+          localSpanIsInClause(
             candidate.start - segment.start,
             candidate.end - segment.start,
             clause
@@ -1390,9 +1508,8 @@ export function extractCapacityCandidates(document) {
           retainedApproximation
         );
       } else if (ownership.status === "unowned") {
-        const hasNoGpuInClause = gpuModels.some((candidate) => (
+        const hasNoGpuInClause = segmentGpuModels.some((candidate) => (
           candidate.value === "No dedicated GPU"
-          && candidate.segmentIndex === segment.index
           && localSpanIsInClause(
             candidate.start - segment.start,
             candidate.end - segment.start,
@@ -1404,7 +1521,7 @@ export function extractCapacityCandidates(document) {
           segment,
           clause,
           amount,
-          dedicatedGpuModels,
+          segmentDedicatedGpuModels,
           hasNoGpuInClause
         );
       }
@@ -1425,9 +1542,7 @@ export function extractCapacityCandidates(document) {
     entry.candidate.field === "vram"
   ));
   const hasDedicatedGpuModel = dedicatedGpuModels.length > 0;
-  const hasDedicatedGpu = hasDedicatedGpuModel || document.segments.some((segment) => (
-    DEDICATED_GPU_EVIDENCE_PATTERNS.some((pattern) => pattern.regex.test(segment.text))
-  ));
+  const hasDedicatedGpu = hasDedicatedGpuModel || hasDedicatedGpuEvidence;
   const allowAppleInference = (
     hasAppleMSeries
     && !hasNoGpu
@@ -1445,6 +1560,10 @@ export function extractCapacityCandidates(document) {
   return candidates;
 }
 
+export function extractCapacityCandidates(document) {
+  return extractCapacityCandidatesWithContext(document, createModelExtractionContext(document));
+}
+
 export function extractMemoryCandidates(document) {
   return extractCapacityCandidates(document).filter((candidate) => candidate.field !== "storage");
 }
@@ -1454,11 +1573,12 @@ export function extractStorageCandidates(document) {
 }
 
 export function extractCandidates(document) {
+  const modelContext = createModelExtractionContext(document);
   return [
     ...extractSystemCandidates(document),
-    ...extractCpuCandidates(document),
-    ...extractGpuCandidates(document),
-    ...extractCapacityCandidates(document),
+    ...modelContext.cpuCandidates,
+    ...modelContext.gpuCandidates,
+    ...extractCapacityCandidatesWithContext(document, modelContext),
     ...extractTaskCandidates(document)
   ];
 }
