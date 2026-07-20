@@ -52,7 +52,8 @@ const TRANSFER_RATE_SUFFIX = /^(?:[ \t]+(?:(?:\/[ \t]*|per[ \t]+)(?:(?:ms|msecs?
 const TRANSFER_RATE_INVENTORY = /^[ \t]+(?:drive|SSD|HDD|disk|storage)\b/iu;
 const TRANSFER_RATE_PREFIX = /(?:\b(?:speed|throughput|bandwidth|rate)\b|带宽|帶寬|速度|吞吐量)[ \t:,-]*$/iu;
 const CAPACITY_RANGE_CONNECTOR = /^[ \t]*(?:-|–|—|to)[ \t]*$/iu;
-const INTEGRATED_GPU_PREFIX = /(?:\b(?:integrated|onboard|shared)(?:[ \t]+graphics)?|集成显卡|集成顯卡|核显|核顯)[ \t:,-]*$/iu;
+const INTEGRATED_GPU_PREFIX = /(?:\b(?:(?:integrated|onboard)(?:[ \t]+(?:GPU|graphics(?:[ \t]+card)?))?|shared[ \t]+(?:GPU|graphics(?:[ \t]+card)?))(?:[ \t]+(?:using|with))?|(?:集成|共享)(?:显卡|顯卡|图形|圖形)(?:[ \t]*(?:使用|采用|採用))?|核显|核顯)[ \t:,-]*$/iu;
+const INTEGRATED_GPU_SUFFIX = /^[ \t:,-]*(?:\b(?:(?:integrated|onboard)(?:[ \t]+(?:GPU|graphics(?:[ \t]+card)?))?|shared[ \t]+(?:GPU|graphics(?:[ \t]+card)?))\b|(?:集成|共享)(?:显卡|顯卡|图形|圖形)|核显|核顯)/iu;
 
 function globalRegex(regex) {
   const flags = `${regex.flags.replace(/[gy]/g, "")}g`;
@@ -439,6 +440,34 @@ function localSpanIsInClause(start, end, clause) {
   return start >= clause.start && end <= clause.end;
 }
 
+function isRetainedApproximationMatch(segment, match, amount, ownership) {
+  if (
+    match.pattern.preserveNaturalMemoryAbout
+    && ownership?.label.pattern.field === "ram"
+    && ownership.amountPosition === "before-label"
+    && ["gig", "gigabyte"].includes(amount.pattern.sourceUnit)
+    && match.start === amount.start
+    && /^about\b/iu.test(segment.text.slice(amount.start, amount.end))
+  ) {
+    return true;
+  }
+
+  return Boolean(
+    match.pattern.preserveApproximateRamContract
+    && ownership?.label.pattern.field === "ram"
+    && ownership.amountPosition === "after-label"
+    && /^(?:大约|大約|大概)$/u.test(segment.text.slice(match.start, match.end))
+    && match.start >= ownership.label.end
+    && match.end <= amount.start
+  );
+}
+
+function isRetainedApproximation(segment, disqualifiers, amount, ownership) {
+  return disqualifiers.some((match) => (
+    isRetainedApproximationMatch(segment, match, amount, ownership)
+  ));
+}
+
 function hasAttachedDisqualifier(segment, clause, disqualifiers, amount, ownership) {
   const localStart = ownership
     ? Math.min(ownership.label.start, amount.start)
@@ -448,27 +477,7 @@ function hasAttachedDisqualifier(segment, clause, disqualifiers, amount, ownersh
     : amount.end;
 
   return disqualifiers.some((match) => {
-    if (
-      match.pattern.preserveNaturalMemoryAbout
-      && ownership?.label.pattern.field === "ram"
-      && ownership.amountPosition === "before-label"
-      && ["gig", "gigabyte"].includes(amount.pattern.sourceUnit)
-      && match.start === amount.start
-      && /^about\b/iu.test(segment.text.slice(amount.start, amount.end))
-    ) {
-      return false;
-    }
-
-    if (
-      match.pattern.preserveApproximateRamContract
-      && ownership?.label.pattern.field === "ram"
-      && ownership.amountPosition === "after-label"
-      && /^(?:大约|大約|大概)$/u.test(segment.text.slice(match.start, match.end))
-      && match.start >= ownership.label.end
-      && match.end <= amount.start
-    ) {
-      return false;
-    }
+    if (isRetainedApproximationMatch(segment, match, amount, ownership)) return false;
 
     if (match.pattern.requireCapacityAdjacency) {
       if (!localSpanIsInClause(match.start, match.end, clause)) return false;
@@ -883,7 +892,15 @@ function storageEvidence(segment, clause, qualifiers, localStart, localEnd) {
   };
 }
 
-function explicitCapacityEntry(document, segment, clause, qualifiers, amount, ownership) {
+function explicitCapacityEntry(
+  document,
+  segment,
+  clause,
+  qualifiers,
+  amount,
+  ownership,
+  retainedApproximation
+) {
   const { label, amountPosition } = ownership;
   let localStart = Math.min(label.start, amount.start);
   let localEnd = Math.max(label.end, amount.end);
@@ -908,8 +925,8 @@ function explicitCapacityEntry(document, segment, clause, qualifiers, amount, ow
     end,
     source: `capacity.${label.pattern.field}.${amountPosition}`,
     specificity: label.pattern.specificity,
-    confidence: label.pattern.confidence,
-    inferred: false,
+    confidence: retainedApproximation ? "low" : label.pattern.confidence,
+    inferred: retainedApproximation,
     amountPosition,
     sourceUnit: amount.pattern.sourceUnit
   };
@@ -1051,8 +1068,18 @@ function hasExplicitIntegratedVegaContext(document, candidate) {
   if (candidate.source !== "gpu.amd-radeon-vega-dedicated") return false;
   const segment = document.segments[candidate.segmentIndex];
   const localStart = candidate.start - segment.start;
-  const precedingText = segment.text.slice(Math.max(0, localStart - 32), localStart);
-  return INTEGRATED_GPU_PREFIX.test(precedingText);
+  const localEnd = candidate.end - segment.start;
+  const clause = capacityClause(
+    segment,
+    { start: localStart, end: localEnd },
+    collectCapacityClauseBoundaries(segment)
+  );
+  const precedingText = segment.text.slice(Math.max(clause.start, localStart - 64), localStart);
+  const followingText = segment.text.slice(localEnd, Math.min(clause.end, localEnd + 64));
+  return (
+    INTEGRATED_GPU_PREFIX.test(precedingText)
+    || INTEGRATED_GPU_SUFFIX.test(followingText)
+  );
 }
 
 export function extractCapacityCandidates(document) {
@@ -1137,6 +1164,12 @@ export function extractCapacityCandidates(document) {
         amount,
         ownership.ownership
       )) continue;
+      const retainedApproximation = isRetainedApproximation(
+        segment,
+        disqualifiers,
+        amount,
+        ownership.ownership
+      );
 
       let entry = null;
       if (ownership.status === "owned") {
@@ -1146,7 +1179,8 @@ export function extractCapacityCandidates(document) {
           clause,
           storageQualifiers,
           amount,
-          ownership.ownership
+          ownership.ownership,
+          retainedApproximation
         );
       } else if (ownership.status === "unowned") {
         const hasNoGpuInClause = gpuModels.some((candidate) => (

@@ -3084,3 +3084,118 @@ test("uses explicit integrated context to override Vega proximity dedication onl
     [["vram", 8, "8GB VRAM"]]
   );
 });
+
+test("marks retained natural-memory approximations as low-confidence inferred values", () => {
+  for (const [input, expected] of [
+    [
+      "about 8 gigs of memory",
+      {
+        field: "ram",
+        value: 8,
+        raw: "about 8 gigs of memory",
+        segmentIndex: 0,
+        start: 0,
+        end: "about 8 gigs of memory".length,
+        source: "capacity.ram.before-label",
+        specificity: 100,
+        confidence: "low",
+        inferred: true,
+        amountPosition: "before-label",
+        sourceUnit: "gig"
+      }
+    ],
+    [
+      "内存大概 32GB",
+      {
+        field: "ram",
+        value: 32,
+        raw: "内存大概 32GB",
+        segmentIndex: 0,
+        start: 0,
+        end: "内存大概 32GB".length,
+        source: "capacity.ram.after-label",
+        specificity: 100,
+        confidence: "low",
+        inferred: true,
+        amountPosition: "after-label",
+        sourceUnit: "GB"
+      }
+    ],
+    [
+      "記憶體大約 16GB",
+      {
+        field: "ram",
+        value: 16,
+        raw: "記憶體大約 16GB",
+        segmentIndex: 0,
+        start: 0,
+        end: "記憶體大約 16GB".length,
+        source: "capacity.ram.after-label",
+        specificity: 100,
+        confidence: "low",
+        inferred: true,
+        amountPosition: "after-label",
+        sourceUnit: "GB"
+      }
+    ]
+  ]) {
+    const document = normalizeSetupText(input);
+    const candidates = extractMemoryCandidates(document);
+    assert.deepEqual(candidates, [expected], input);
+    assertCapacityCandidateContract(document, candidates[0]);
+  }
+
+  for (const [input, expectedRaw, sourceUnit] of [
+    ["8 gigs of memory", "8 gigs of memory", "gig"],
+    ["内存 32GB", "内存 32GB", "GB"],
+    ["記憶體 16GB", "記憶體 16GB", "GB"]
+  ]) {
+    const document = normalizeSetupText(input);
+    const [candidate] = extractMemoryCandidates(document);
+    assert.deepEqual(
+      [candidate.raw, candidate.confidence, candidate.inferred, candidate.sourceUnit],
+      [expectedRaw, "high", false, sourceUnit],
+      input
+    );
+    assertCapacityCandidateContract(document, candidate);
+  }
+});
+
+test("recognizes boundary-safe prefix and suffix integrated Vega context", () => {
+  const integratedCases = [
+    "integrated GPU AMD Radeon Vega 64 8GB",
+    "integrated graphics using AMD Radeon Vega 64 8GB",
+    "AMD Radeon Vega 64 integrated graphics 8GB",
+    "AMD Radeon Vega 56 onboard GPU 8GB",
+    "集成显卡 AMD Radeon Vega 64 8GB",
+    "集成顯卡 AMD Radeon Vega 56 8GB",
+    "共享显卡 AMD Radeon Vega 64 8GB",
+    "共享顯卡 AMD Radeon Vega 56 8GB",
+    "AMD Radeon Vega 64 共享显卡 8GB",
+    "AMD Radeon Vega 56 共享顯卡 8GB"
+  ];
+
+  for (const input of integratedCases) {
+    const document = normalizeSetupText(input);
+    assert.equal(
+      candidateValues(extractGpuCandidates(document), "gpuModel").includes(
+        input.includes("56") ? "AMD Radeon Vega 56" : "AMD Radeon Vega 64"
+      ),
+      true,
+      input
+    );
+    assert.deepEqual(candidateValues(extractCapacityCandidates(document), "vram"), [], input);
+  }
+
+  for (const input of [
+    "dedicated AMD Radeon Vega 64 8GB",
+    "discrete AMD Radeon Vega 56 8GB",
+    "AMD Radeon Vega 64 8GB",
+    "integrated graphics, AMD Radeon Vega 64 8GB",
+    "AMD Radeon Vega 64 8GB, integrated graphics",
+    "integrated graphics;AMD Radeon Vega 64 8GB",
+    "共享显卡，AMD Radeon Vega 64 8GB"
+  ]) {
+    assert.deepEqual(candidateValues(extractCapacityCandidates(normalizeSetupText(input)), "vram"), [8], input);
+  }
+});
