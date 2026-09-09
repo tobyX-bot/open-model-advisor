@@ -1,5 +1,10 @@
 # Model Digger
 
+
+**[Try the live app](https://tobyx-bot.github.io/open-model-advisor/) · [Product case study](docs/portfolio-case-study.md) · [Current test evidence](docs/portfolio-validation.md)**
+
+Product direction, interaction design, and AI-assisted development by Toby Xu.
+
 Model Digger is a static, local-first tool for finding practical open-model starting points that fit a specific computer and workload.
 
 The app runs entirely in the browser, loads only the local `models.json` catalog, and does not send hardware inputs, pasted setup text, task selections, or priorities to a backend. Model-card links are static curation references, not runtime API calls.
